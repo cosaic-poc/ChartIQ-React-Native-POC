@@ -8,11 +8,11 @@
     "start": "react-native start",
     "test": "jest",
     "lint": "eslint .",
+    "prestart": "cd web && npm install && npm start",
     "postinstall": "cd web && npm install; cd ../ios && pod install",
     "chartiq": "cd web && npm start & npm run ios"
   },
   "dependencies": {
-    "chartiq": "file:chartiq-8.1.0.tgz",
     "react": "16.13.1",
     "react-native": "0.63.3",
     "react-native-webview": "^10.10.2"
