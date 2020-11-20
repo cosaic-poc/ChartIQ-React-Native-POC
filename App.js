@@ -6,7 +6,9 @@
  * @flow strict-local
  */
 
-import React from 'react';
+import React, { useState } from 'react';
+import Button from './SampleComponents/Button';
+
 import {
   SafeAreaView,
   StyleSheet,
@@ -25,11 +27,17 @@ import { WebView } from 'react-native-webview';
 
 // ...
 const App: () => React$Node = () => {
+  const [price, setPrice] = useState(0)
   return (
     <>
       <Header />
+      <Button value={price} />
       <WebView
-        source={{uri: 'http://localhost:3000/sample-template-basic.html'}}
+        source={{uri: 'http://localhost:3000/sample-template-native-sdk.html'}}
+        onMessage={event => {
+          const { data } = event.nativeEvent
+          setPrice(JSON.parse(data).price)
+        }}
       />
     </>
   );
