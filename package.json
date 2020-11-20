@@ -9,7 +9,7 @@
     "test": "jest",
     "lint": "eslint .",
     "postinstall": "cd web && npm install; cd ..",
-    "chartiq": "cd web && npm start & ; cd .. && npm run ios"
+    "chartiq": "cd web && npm start & npm run ios"
   },
   "dependencies": {
     "chartiq": "file:chartiq-8.1.0.tgz",
