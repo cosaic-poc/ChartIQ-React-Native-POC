@@ -8,7 +8,6 @@ target 'TestChartiq' do
 
   use_react_native!(:path => config["reactNativePath"])
 
-  pod 'react-native-webview', :path => '../node_modules/react-native-webview'
 
   target 'TestChartiqTests' do
     inherit! :complete
