@@ -8,7 +8,7 @@
     "start": "react-native start",
     "test": "jest",
     "lint": "eslint .",
-    "postinstall": "cd web && npm install;  cd ../ios && pod install &",
+    "postinstall": "cd web && npm install; cd ../ios && pod install",
     "chartiq": "cd web && npm start & npm run ios"
   },
   "dependencies": {
