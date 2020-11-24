@@ -38,8 +38,6 @@ const App: () => React$Node = () => {
         onMessage={event => {
           const { data } = event.nativeEvent
           const parsedData = JSON.parse(data)
-          console.log(parsedData.symbol)
-
           const dataSet = parsedData.dataSet
           setPrice(dataSet[dataSet.length - 1].Close)
           setSymbol(parsedData.symbol)
