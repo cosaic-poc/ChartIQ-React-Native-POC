@@ -360,10 +360,10 @@ CIQ.MobileBridge.getChartProperty = function (property) {
  */
 CIQ.MobileBridge.getEngineProperty = function (property) {
 	var engineProperty = stxx[property];
-	if (this.isAndroid) {
+	// if (this.isAndroid) {
 		return engineProperty;
-	}
-	return JSON.stringify(engineProperty);
+	// }
+	// return JSON.stringify(engineProperty);
 };
 //////////////////////////
 /*** Chart functions ***/

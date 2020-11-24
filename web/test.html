@@ -99,7 +99,7 @@ To use this template, move or copy it to the root folder of your library.
 		// production data.
 		const displayDataDisclaimer = false;
 
-		CIQ.MobileBridge.determineOs();
+		// CIQ.MobileBridge.determineOs();
 		const quoteFeedNativeBridge = {
 			fetch: function (parameters, cb) {
 				function completion(cb) {
@@ -212,11 +212,10 @@ To use this template, move or copy it to the root folder of your library.
 		stxx.loadChart("AAPL");
 
 		CIQ.ChartEngine.prototype.append("draw", () => {
-			const chart = CIQ.MobileBridge.getEngineProperty('chart')
-			const symbol = chart.symbol
-			const dataSet = chart.dataSet
+			console.log('his')
+			const symbol = CIQ.MobileBridge.getEngineProperty('chart')
 
-			window.ReactNativeWebView.postMessage(JSON.stringify({hud: CIQ.MobileBridge.getHudDetails(), symbol, dataSet}))
+			// window.ReactNativeWebView.postMessage(CIQ.MobileBridge.getHudDetails())
 		})
 	</script>
 

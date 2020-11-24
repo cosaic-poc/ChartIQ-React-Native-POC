@@ -9,13 +9,14 @@ import {
   StatusBar,
 } from 'react-native';
 
-const Button: () => React$Node = (props) => {
+const HUD: () => React$Node = (props) => {
 
   return (
     <>
+      <Text>{props.symbol}</Text>
       <Text>{props.value}</Text>
     </>
   )
 }
 
-export default Button
+export default HUD

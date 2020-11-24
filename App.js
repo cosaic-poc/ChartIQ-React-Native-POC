@@ -7,7 +7,7 @@
  */
 
 import React, { useState } from 'react';
-import Button from './SampleComponents/Button';
+import HUD from './SampleComponents/HUD';
 
 import {
   SafeAreaView,
@@ -24,19 +24,25 @@ import {
 } from 'react-native/Libraries/NewAppScreen';
 
 import { WebView } from 'react-native-webview';
-
 // ...
 const App: () => React$Node = () => {
-  const [price, setPrice] = useState(0)
+  const [price, setPrice] = useState(0);
+  const [symbol, setSymbol] = useState(' ');
+
   return (
     <>
       <Header />
-      <Button value={price} />
+      <HUD value={price} symbol={symbol} />
       <WebView
-        source={{uri: 'http://localhost:3000/sample-template-native-sdk.html'}}
+        source={{ uri: 'http://localhost:3000/sample-template-native-sdk.html' }}
         onMessage={event => {
           const { data } = event.nativeEvent
-          setPrice(JSON.parse(data).price)
+          const parsedData = JSON.parse(data)
+          console.log(parsedData.symbol)
+
+          const dataSet = parsedData.dataSet
+          setPrice(dataSet[dataSet.length - 1].Close)
+          setSymbol(parsedData.symbol)
         }}
       />
     </>
