@@ -36,6 +36,7 @@ const App: () => React$Node = () => {
       <WebView
         source={{ uri: 'http://localhost:3000/sample-template-native-sdk.html' }}
         onMessage={event => {
+          console.log('event', event.nativeEvent.data)
           const { data } = event.nativeEvent
           const parsedData = JSON.parse(data)
           const dataSet = parsedData.dataSet

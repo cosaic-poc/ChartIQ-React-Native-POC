@@ -1,10 +1,10 @@
 /**
- *	8.1.0
- *	Generation date: 2020-11-19T23:23:22.994Z
+ *	8.3.0
+ *	Generation date: 2021-06-06T16:48:16.849Z
  *	Client name: sonyl test
  *	Package Type: Technical Analysis
- *	License type: trial
- *	Expiration date: "2020/12/19"
+ *	License type: annual
+ *	Expiration date: "2022/01/31"
  */
 
 /***********************************************************
@@ -1245,6 +1245,7 @@ CIQ.ChartEngine.prototype.appendMasterData = function (
 
 /**
  * <span class="injection">INJECTABLE</span>
+ *
  * **Legacy** function to set the periodicity and interval for the chart.
  *
  * **Replaced by {@link CIQ.ChartEngine#setPeriodicity}, but maintained for backwards comparibility. Uses same function signature.**
@@ -2195,12 +2196,12 @@ if (typeof window != "undefined") {
 
 if (typeof $ === "function" && $.fn) {
 	/**
-	 * **Deprecated since 8.1.0.** Use {@link CIQ.UI.trulyVisible} instead.
+	 * **Deprecated since 8.1.0.** Use {@link CIQ.trulyVisible} instead.
 	 *
 	 * Attaches a `trulyvisible` selector to a jQuery object.
 	 *
 	 * @private
-	 * @deprecated Use {@link CIQ.UI.trulyVisible}.
+	 * @deprecated Use {@link CIQ.trulyVisible}.
 	 * @since 8.1.0 Deprecated.
 	 *
 	 * @example
@@ -2209,7 +2210,7 @@ if (typeof $ === "function" && $.fn) {
 	$.fn.extend($.expr[":"], {
 		trulyvisible: function (node, j, attr) {
 			log(
-				"Use of jQuery has been deprecated. Use CIQ.UI.trulyVisible() to return element visibility instead of custom pseudo-selector :trulyvisible."
+				"Use of jQuery has been deprecated. Use CIQ.trulyVisible() to return element visibility instead of custom pseudo-selector :trulyvisible."
 			);
 			var parents = $(node).parents();
 			parents = parents.add(node);
@@ -2701,6 +2702,30 @@ CIQ.UI.unobserve = function (params) {
 		"CIQ.UI.unobserve has been deprecated.  Use CIQ.UI.unobserveProperty instead."
 	);
 	if (Object.unobserve) Object.unobserve(params.obj, params.handler);
+};
+
+/**
+ * Determines the visibility of a DOM element based on the following CSS properties:
+ * - opacity
+ * - display
+ * - visibility
+ * - width
+ * - height
+ *
+ * @param {HTMLElement} node The node for which visibility is determined.
+ * @return {boolean} Whether the element is visible.
+ *
+ * @memberof CIQ.UI
+ * @deprecated See {@link CIQ.trulyVisible}.
+ * @since
+ * - 8.1.0
+ * - 8.2.0 Deprecated
+ */
+CIQ.UI.trulyVisible = function (node) {
+	log(
+		"CIQ.UI.trulyVisible has been deprecated.  Use CIQ.trulyVisible instead."
+	);
+	return CIQ.trulyVisible(node);
 };
 
 /**

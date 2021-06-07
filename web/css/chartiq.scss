@@ -49,13 +49,14 @@ $touching: "html[#{$INTERACTION-ATTR}='#{$touch}']";
 
 /* Default (Light) Theme */
 
-$DEFAULT-main:				#fff !default;
-$DEFAULT-accent: 			#398dff !default;
-$DEFAULT-bg:				#f8f8f8 !default;
-$DEFAULT-menu-bg:			#fff !default;
+$DEFAULT-main:		#fff !default;
+$DEFAULT-accent: 		#398dff !default;
+$DEFAULT-bg:			#f8f8f8 !default;
+$DEFAULT-menu-bg:		#fff !default;
 $DEFAULT-submenu-bg:		#f3f3f3 !default;
-$DEFAULT-hu-bg:				#ffffff !default;
-$DEFAULT-text:				#000 !default;
+$DEFAULT-menu-highlight-bg:	#efefef !default;
+$DEFAULT-hu-bg:		#ffffff !default;
+$DEFAULT-text:		#000 !default;
 $DEFAULT-text-subtle:		#999 !default;
 $DEFAULT-text-medium:		#666 !default;
 $DEFAULT-text-strong:		#000 !default;
@@ -112,6 +113,8 @@ $DEFAULT-border-strong:		#999 !default;
 @import "ciq-extras";
 /* Drawing palette */
 @import "ciq-drawing-palette";
+/* Message Toaster */
+@import "ciq-message-toaster";
 /* Full Screen Mode */
 @import "ciq-full-screen";
 /* Outlier markers */

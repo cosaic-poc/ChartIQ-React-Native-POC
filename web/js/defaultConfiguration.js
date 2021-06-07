@@ -1,10 +1,10 @@
 /**
- *	8.1.0
- *	Generation date: 2020-11-19T23:23:22.994Z
+ *	8.3.0
+ *	Generation date: 2021-06-06T16:48:16.849Z
  *	Client name: sonyl test
  *	Package Type: Technical Analysis
- *	License type: trial
- *	Expiration date: "2020/12/19"
+ *	License type: annual
+ *	Expiration date: "2022/01/31"
  */
 
 /***********************************************************
@@ -20,21 +20,25 @@
 
 
 import {CIQ} from "../js/chartiq.js";
-	
 	// Available resources:
 	// markerSample
 	// scrollStyle
 	// quoteFeed
 	// forecastQuoteFeed
+	// nameValueStore
 	function getConfig(resources = {}) {
 		let config = {
-			// Symbol can be string or 
+			// Symbol can be string or
 			// or an object containing property symbol of string type along with other properties
 			initialSymbol: {
 				symbol: "AAPL",
 				name: "Apple Inc",
 				exchDisp: "NASDAQ"
 			},
+			// highest common ancestor node for this chart
+			root: document,
+			// initial data array, if any
+			initialData: undefined,
 			// List of addons which are enabled and will be started when chart is created
 			// Either override or supplement this list before creating chart to modify.
 			enabledAddOns: {
@@ -42,12 +46,14 @@ import {CIQ} from "../js/chartiq.js";
 				fullScreen: true,
 				inactivityTimer: true,
 				rangeSlider: true,
-				tableView: true
+				shortcuts: true,
+				tableView: true,
+				tooltip: true
 			},
 			onNewSymbolLoad: {
 				// if available called for each series in chart to test if it needs to be removed
 				// when new primary symbol is loaded
-				removeSeries(series) { 
+				removeSeries(series) {
 					return series.parameters.bucket !== "study"; // keeps only studies
 				},
 				// handle symbol load error
@@ -56,59 +62,93 @@ import {CIQ} from "../js/chartiq.js";
 			},
 			// save and restore layout, preferences and drawings.
 			restore: true,
-			// initial data array, if any
-			initialData: undefined,
 			// language: "de", // Optionally set a language for the UI, after it has been initialized, and translate.
 			// default lookup driver is defined in examples/feeds/symbolLookupChartIQ.js, it needs to be loaded to be available
 			lookupDriver: CIQ.ChartEngine.Driver.Lookup.ChartIQ,
 			hotkeyConfig: {
 				// Specify hotkeys for default hotkey actions. Structure of the API works like this: each hotkey gets initialized with an
 				// object that specifies the action to be performed and the command(s) to trigger it. Actions identified as strings are
-				// default actions, which in some cases can be modified in the `hotkeyConfig.behavior` object. For custom actions, actions 
+				// default actions, which in some cases can be modified in the `hotkeyConfig.behavior` object. For custom actions, actions
 				// can be set to functions, which will get called with an object with references to `stx` and `options` (an optional object
-				// specified in the hotkey declaration). 
+				// specified in the hotkey declaration).
 				// Commands are specified as strings, with combo keys separated by `+`. For combos, all keys but the last key are expected
 				// to be modifier keys (Shift, Alt, etc). The hotkey handler will check both `KeyboardEvent.key` and `KeyboardEvent.code`,
 				// which can be useful when trying to ensure coverage across systems and layouts. If the keystroke originated on the numpad,
-				// only `KeyboardEvent.code` will be checked, allowing different hotkeys to be assigned to the numpad. 
-				// Vertical movement options accept a percent option (expressed as a decimal), which specifies vertical movement as a 
+				// only `KeyboardEvent.code` will be checked, allowing different hotkeys to be assigned to the numpad.
+				// Vertical movement options accept a percent option (expressed as a decimal), which specifies vertical movement as a
 				// percentage of the chart height. Horizontal movement accepts a bars option, which specifies number of bars to move.
+				// Note: if a `KeyboardEvent.key` value is equal to "Unidentified", the `String.fromCharCode` of the `KeyboardEvent.keyCode`
+				// value will be used instead. This is to support legacy edge.
 				hotkeys: [
 					// precise navigation
-					{ action: "up", options: { percent: 0.02 }, commands: ["ArrowUp", "Up"] },
-					{ action: "down", options: { percent: 0.02 }, commands: ["ArrowDown", "Down"] },
-					{ action: "right", options: { bars: 1 }, commands: ["ArrowRight", "Right"] },
-					{ action: "left", options: { bars: 1 }, commands: ["ArrowLeft", "Left"] },
+					{ label: "Pan chart up", action: "up", options: { percent: 0.02 }, commands: ["ArrowUp", "Up"] },
+					{ label: "Pan chart down", action: "down", options: { percent: 0.02 }, commands: ["ArrowDown", "Down"] },
+					{ label: "Pan chart right", action: "right", options: { bars: 1 }, commands: ["ArrowRight", "Right"] },
+					{ label: "Pan chart left", action: "left", options: { bars: 1 }, commands: ["ArrowLeft", "Left"] },
 					// fast navigation
-					{ action: "up", options: { percent: 0.2 }, commands: ["Shift+ArrowUp", "Shift+Up"] },
-					{ action: "down", options: { percent: 0.2 }, commands: ["Shift+ArrowDown", "Shift+Down"] },
-					{ action: "right", options: { bars: 10 }, commands: ["Shift+ArrowRight", "Shift+Right"] },
-					{ action: "left", options: { bars: 10 }, commands: ["Shift+ArrowLeft", "Shift+Left"] },
+					{ label: "Pan chart up fast", action: "up", options: { percent: 0.2 }, commands: ["Shift+ArrowUp", "Shift+Up"] },
+					{ label: "Pan chart down fast",  action: "down", options: { percent: 0.2 }, commands: ["Shift+ArrowDown", "Shift+Down"] },
+					{ label: "Pan chart right fast", action: "right", options: { bars: 10 }, commands: ["Shift+ArrowRight", "Shift+Right"] },
+					{ label: "Pan chart left fast", action: "left", options: { bars: 10 }, commands: ["Shift+ArrowLeft", "Shift+Left"] },
 					// page
-					{ action: "pageRight", commands: ["Alt+ArrowRight", "Alt+Right", "PageUp"] },
-					{ action: "pageLeft", commands: ["Alt+ArrowLeft", "Alt+Left", "PageDown"] },
+					{ label: "Page chart right", action: "pageRight", commands: ["Alt+ArrowRight", "Alt+Right", "PageUp"] },
+					{ label: "Page chart left", action: "pageLeft", commands: ["Alt+ArrowLeft", "Alt+Left", "PageDown"] },
 					// zoom
-					{ action: "zoomInXAxis", commands: ["NumpadAdd", "="] },
-					{ action: "zoomOutXAxis", commands: ["NumpadSubtract", "-"] },
-					{ action: "zoomInYAxis", commands: ["+"] },
-					{ action: "zoomOutYAxis", commands: ["_"] },
+					{ label: "Zoom in x-axis", action: "zoomInXAxis", commands: ["NumpadAdd", "="] },
+					{ label: "Zoom out x-axis", action: "zoomOutXAxis", commands: ["NumpadSubtract", "-"] },
+					{ label: "Zoom in y-axis", action: "zoomInYAxis", commands: ["+"] },
+					{ label: "Zoom out y-axis", action: "zoomOutYAxis", commands: ["_"] },
 					// toggle
-					{ action: "toggleCrosshairs", commands: ["Alt+Backslash", "Alt+\\"] },
-					{ action: "toggleContinuousZoom", commands: ["Alt+Digit0", "Alt+0"] },
+					{ label: "Toggle crosshair", action: "toggleCrosshairs", commands: ["Alt+Backslash", "Alt+\\", "Alt+Þ"] }, // Alt+Þ for legacy edge support
+					{ label: "Toggle continuous zoom", action: "toggleContinuousZoom", commands: ["Alt+Digit0", "Alt+0"], extension: "continuousZoom" },
+					// UI navigation
+					{ label: "Tab to next", action: "keyboardNavigateNext", commands: ["Tab"] },
+					{ label: "Tab to previous", action: "keyboardNavigatePrevious", commands: ["Shift+Tab"] },
+					// Tab navigation deselect is available. Comment out this line and assign an open key combination to enable.
+					//{ label: "Deactivate Tab Selection", action: "keyboardNavigateDeselect", commands: [""] },
+					{ label: "Select at tab", action: "keyboardNavigateClick", commands: ["Enter"] },
 					// misc
-					{ action: "home", commands: ["Home"] },
-					{ action: "end", commands: ["End"] },
-					{ action: "delete", commands: ["Delete", "BackSpace", "Del"] },
-					{ action: "escape", commands: ["Escape", "Esc"] },
-					{ action: "tableView", commands: ["Alt+KeyK"] } // tableView is modal view, toggling off requires use of Escape
+					{ label: "Pan to home", action: "home", commands: ["Home"] },
+					{ label: "Pan to start of loaded data", action: "end", commands: ["End"] },
+					{ label: "Delete a highlighted item or the active drawing", action: "delete", commands: ["Backspace", "Delete", "Del"] },
+					{ label: "Close an open menu / dialog box or undo the active drawing", action: "escape", commands: ["Escape", "Esc"] },
+					{ label: "Symbol Lookup", action: "symbolLookup", commands: ["Shift+Alt+KeyL"] },
+					// AddOns and Plugins
+					{ label: "Open table view", action: "tableView", commands: ["Alt+KeyK"], extension: "tableView" }, // tableView is modal view, toggling off requires use of Escape
+					{ label: "Range Slider", action: "rangeSlider", commands: ["Shift+Alt+KeyR"], extension: "rangeSlider" },
+					{ label: "Extended Hours", action: "extendedHours", commands: ["Shift+Alt+KeyX"], extension: "extendedHours" },
+					{ label: "Keyboard Shortcuts", action: "shortcuts", commands: ["Shift+Alt+Slash", "Shift+Alt+?"], extension: "shortcuts" },
+					{ label: "Outliers", action: "outliers", commands: ["Shift+Alt+KeyO"], extension: "outliers" },
+					{ label: "Market Depth", action: "marketDepth", commands: ["Shift+Alt+KeyD"], extension: "marketDepth" },
+					{ label: "L2 Heat Map", action: "l2HeatMap", commands: ["Shift+Alt+KeyM"], extension: "marketDepth" },
+					{ label: "Trade From Chart", action: "tfc", commands: ["Shift+Alt+KeyP"], extension: "tfc" }
 				],
 				// Keys events captured by the chart normally trigger on keyup. Specify which keys will trigger on keydown,
 				// allowing a user to hold said key down (which keeps generating events) to repeat the associated hotkey action. It is
 				// not recommended to associate "toggle" actions with these keys.
 				keysToRepeat: [
-					"ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", 
+					"ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight",
 					"Up", "Down", "Left", "Right", "-", "_", "=", "+"
 				],
+			},
+			systemMessages: {
+				// Predefined notification event objects to be called by key value. Example:
+				// testinfo: {
+				// 	message: "This is an \"informational\" notification.",
+				// 	position: "top",
+				// 	type:"info",
+				// 	transition:"slide",
+				// 	displayTime: 5
+				// }
+				copytoclipboard: {
+					message: "Copied to clipboard.",
+					type:"info",
+					displayTime: 5
+				},
+				logdeactivated: {
+					message: "Log scale has been deactivated due to a zero or negative value in your visible dataset.",
+					type:"warning"
+				}
 			},
 			// Optionally set a market factory to the chart to make it market hours aware. Otherwise it will operate in 24x7 mode.
 			// This is required for the simulator, or if you intend to also enable Extended hours trading zones.
@@ -117,14 +157,14 @@ import {CIQ} from "../js/chartiq.js";
 			// Sample default setting requires resources loaded from
 			// chartiq/examples/markets/marketDefinitionsSample and
 			// chartiq/examples/markets/marketSymbologySample
-			marketFactory: CIQ.Market.Symbology.factory, 
+			marketFactory: CIQ.Market.Symbology.factory,
 			// All configuration parameters for chart engine except for container property
 			// Only few are configured here. View available in https://documentation.chartiq.com/CIQ.ChartEngine.html
 			// use in https://documentation.chartiq.com/CIQ.ChartEngine.html#.create
-			chartEngineParams: { 
+			chartEngineParams: {
 				preferences: {
-					labels: false, 
-					currentPriceLine: true, 
+					labels: false,
+					currentPriceLine: true,
 					whitespace: 0
 				}
 			},
@@ -151,7 +191,12 @@ import {CIQ} from "../js/chartiq.js";
 			},
 			themes: {
 				builtInThemes: { "ciq-day": "Day", "ciq-night": "Night" },
-				defaultTheme: "ciq-night"
+				defaultTheme: "ciq-night",
+				/**
+				 * Optional override storage location of current theme and any custom defined themes. Takes a function with get, set, and remove methods
+				 * If not defined, then the component will use CIQ.NameValueStore for storage.
+				 */
+				nameValueStore: resources.nameValueStore
 			},
 			// menu items
 			menuPeriodicity: [
@@ -198,11 +243,11 @@ import {CIQ} from "../js/chartiq.js";
 				{ type: "radioOptions", label: "Point & Figure", cmd: "Layout.ChartType('pandf')", options: "Layout.showAggregationEdit('pandf')" },
 			],
 			menuChartPreferences: [
-				{ type: 'checkbox', label: 'Range Selector', cmd: "Layout.RangeSlider()", cls: 'rangeslider-ui' },
-				{ type: 'checkbox', label: 'Extended Hours', cmd: "Layout.ExtendedHours()", cls: 'extendedhours-ui' },
-				{ type: 'checkbox', label: 'Hide Outliers', cmd: "Layout.Outliers()", cls: 'outliers-ui' },
-				{ type: 'checkbox', label: 'Market Depth', cmd: "Layout.MarketDepth()", cls: 'cryptoiq-ui' },
-				{ type: 'checkbox', label: 'L2 Heat Map', cmd: "Layout.L2Heatmap()", cls: 'cryptoiq-ui' },
+				{ type: "checkbox", label: "Range Selector", cmd: "Layout.RangeSlider()", cls: "rangeslider-ui" },
+				{ type: "checkbox", label: "Extended Hours", cmd: "Layout.ExtendedHours()", cls: "extendedhours-ui" },
+				{ type: "checkbox", label: "Hide Outliers", cmd: "Layout.Outliers()", cls: "outliers-ui" },
+				{ type: "checkbox", label: "Market Depth", cmd: "Layout.MarketDepth()", cls: "marketdepth-ui" },
+				{ type: "checkbox", label: "L2 Heat Map", cmd: "Layout.L2Heatmap()", cls: "marketdepth-ui" },
 			],
 			menuYAxisPreferences: [
 				{ type: "checkbox", label: "Log Scale", cmd: "Layout.ChartScale('log')" },
@@ -212,9 +257,9 @@ import {CIQ} from "../js/chartiq.js";
 				// configure view menu options
 			},
 			menuStudiesConfig: { 	// All studies available are by default included in the studies menu
-				/*excludedStudies: {
-					"macd": true,
-				},*/   // list of studies to exclude
+				excludedStudies: {
+					"stochastics": true, // Remove simple stochastics, replaced with Stochastics
+				},   // list of studies to exclude
 				alwaysDisplayDialog: { ma: true, AVWAP: true },
 	 			/*dialogBeforeAddingStudy: {"rsi": true} // here's how to always show a dialog before adding the study*/
 			},
@@ -230,11 +275,11 @@ import {CIQ} from "../js/chartiq.js";
 				{ type: "range", label: "All", cmd: "set(1,'all')", cls: "hide-sm" },
 			],
 			drawingTools: [
-				{ type: "dt", tool: "annotation", group: "text", label: "Annotation", shortcut: "t" },
+				{ type: "dt", tool: "annotation", group: "text", label: "Annotation", shortcut: "w" },
 				{ type: "dt", tool: "arrow", group: "markings", label: "Arrow", shortcut: "a" },
 				{ type: "dt", tool: "line", group: "lines", label: "Line", shortcut: "l" },
-				{ type: "dt", tool: "horizontal", group: "lines", label: "Horizontal", shortcut: "h" },
-				{ type: "dt", tool: "vertical", group: "lines", label: "Vertical", shortcut: "v" },
+				{ type: "dt", tool: "horizontal", group: "lines", label: "Horizontal", shortcut: "o" },
+				{ type: "dt", tool: "vertical", group: "lines", label: "Vertical", shortcut: "p" },
 				{ type: "dt", tool: "rectangle", group: "markings", label: "Rectangle", shortcut: "r" },
 				{ type: "dt", tool: "segment", group: "lines", label: "Segment" },
 				{ type: "dt", tool: "callout", group: "text", label: "Callout" },
@@ -242,7 +287,7 @@ import {CIQ} from "../js/chartiq.js";
 				{ type: "dt", tool: "channel", group: "lines", label: "Channel" },
 				{ type: "dt", tool: "continuous", group: "lines", label: "Continuous" },
 				{ type: "dt", tool: "crossline", group: "lines", label: "Crossline" },
-				{ type: "dt", tool: "freeform", group: "lines", label: "Doodle" }, 
+				{ type: "dt", tool: "freeform", group: "lines", label: "Doodle" },
 				{ type: "dt", tool: "elliottwave", group: "technicals", label: "Elliott Wave"},
 				{ type: "dt", tool: "ellipse", group: "markings", label: "Ellipse", shortcut: "e" },
 				{ type: "dt", tool: "retracement", group: "fibonacci", label: "Fib Retracement" },
@@ -283,29 +328,39 @@ import {CIQ} from "../js/chartiq.js";
 				item: ({ label, cmd }) => `
 					<cq-item stxtap="${cmd}">${label}</cq-item>`,
 				radio: ({ label, cmd, cls }) => `
-					<cq-item 
-						${cls ? `class="${cls}"` : ""} 
+					<cq-item
+						${cls ? `class="${cls}"` : ""}
 						stxsetget="${cmd}">${label}<span class="ciq-radio"><span></span></span>
 					</cq-item>`,
 				checkbox: ({ label, cmd, cls }) => `
-					<cq-item 
-						${cls ? `class="${cls}"` : ""} 
+					<cq-item
+						${cls ? `class="${cls}"` : ""}
 						stxsetget="${cmd}">${label}<span class="ciq-checkbox ciq-active"><span></span></span>
 					</cq-item>`,
 				radioOptions: ({ label, cmd, options, cls }) => `
+					<cq-item ${cls ? `class="${cls}"` : ""} stxsetget="${cmd}">
+						<span class="ciq-edit" stxtap="${options}" keyboard-selectable-child="true"></span>
+						<div>${label}<span class="ciq-radio"><span></span></span></div>
+					</cq-item>`,
+				checkboxOptions: ({ label, cmd, options, cls }) => `
 					<cq-item ${cls ? `class="${cls}"` : ""}>
 						<span class="ciq-edit" stxtap="${options}"></span>
-						<div stxsetget="${cmd}">${label}<span class="ciq-radio"><span></span></span></div>
+						<div stxsetget="${cmd}">${label}<span class="ciq-checkbox ciq-active"><span></span></span></div>
+					</cq-item>`,
+				doubleslider: ({ label, cmd, attrs, cls }) => `
+					<cq-item
+						${cls ? `class="${cls}"` : ""}
+						>${label}<span><cq-double-slider ${attrs}></cq-double-slider><span></span></span>
 					</cq-item>`,
 				range: ({ label, cmd, cls }) => `
 					<div ${cls ? `class="${cls}"` : ""} stxtap="${cmd}">${label}</div>
 				`,
 				dt: ({ tool, group, label, shortcut }) => `
-					<cq-item 
-						class="ciq-tool" 
-						cq-tool="${tool}" 
+					<cq-item
+						class="ciq-tool"
+						cq-tool="${tool}"
 						${shortcut ? `cq-tool-shortcut="${shortcut}"` : ""}
-						cq-tool-group="${group}" 
+						cq-tool-group="${group}"
 						stxtap="tool('${tool}')"
 					>
 						<span class="icon ${tool}"></span>
@@ -319,7 +374,7 @@ import {CIQ} from "../js/chartiq.js";
 				if (sort === true) sort = (a, b) => (a.label > b.label ? 1 : -1);
 				if (typeof sort === "function") menu = menu.sort(sort);
 				return this[name].map((options) => this.menuRendering[options.type](options));
-			}, 
+			},
 			addOns: {
 				// Floating tooltip on mousehover
 				// This should be used as an *alternative* to the HeadsUp (HUD).
@@ -337,7 +392,7 @@ import {CIQ} from "../js/chartiq.js";
 				rangeSlider: {},
 				// Enables Full Screen mode toggle button in chart controls
 				fullScreen: {},
-				// Extended hours trading zones 
+				// Extended hours trading zones
 				extendedHours: { filter: true },
 				// Continuous Zoom will also enable the SmartZoom button in your chart zoom controls
 				// which allows the end-user to toggle the feature on and off.
@@ -374,7 +429,9 @@ import {CIQ} from "../js/chartiq.js";
 				// Outliers
 				outliers: {},
 				// TableView
-				tableView: {}
+				tableView: {},
+				// Shortcuts
+				shortcuts: {}
 			},
 			plugins: {
 				timeSpanEventPanel: {
@@ -390,15 +447,16 @@ import {CIQ} from "../js/chartiq.js";
 				},
 				// Enable the Active Trader Market Depth panel
 				marketDepth: {
-					volume: true, 
-					mountain: true, 
-					step: true, 
-					record: true, 
-					height:"50%", 
-					orderbook: true
+					volume: true,
+					mountain: true,
+					step: true,
+					record: true,
+					height: "50%",
+					orderbook: true,
+					allowUIZoom: true
 				},
 				// Trade From Chart (TFC)
-				// set account key to your custom account class, or leave as undefined to default to CIQ.Account.Demo constructor 
+				// set account key to your custom account class, or leave as undefined to default to CIQ.Account.Demo constructor
 				// import plugins/tfc/tfc-demo.js to make CIQ.Account.Demo available for sample account creation
 				tfc: {
 					moduleName: "TFC",
@@ -407,13 +465,25 @@ import {CIQ} from "../js/chartiq.js";
 					 * By default if a constructor is provided in account the first created instance is shared with all tfc instances
 					 * set following to true to create unique instances
 					 */
-					// allowUniqueAccountConstruction: true 
+					// allowUniqueAccountConstruction: true
 				},
-				termStructure: {
+				crossSection: {
 					pointFreshnessTimeout: 1, // pointFreshnessTimeout 1 min for demo purposes
-					postInstall({ uiContext, extension }) { 
-						new (CIQ.getFn("UI.CurveEdit"))(null, uiContext);
-						// Connect datepicker change to termstructure callback
+					enableTimeSeries: true, // toggles on time-series related options
+					timelineDateSelector: {
+						height: 95,
+						useNotifications: true
+					},
+					postInstall({ uiContext, extension }) {
+						const { stx: { crossSection } } = uiContext;
+						new (CIQ.getFn("UI.CurveEdit"))(null, uiContext, this);
+						new (CIQ.getFn("CrossSection.HUD"))(null, uiContext);
+						if (this.timelineDateSelector) {
+							new (CIQ.getFn("CrossSection.TimelineDateSelector"))(
+								Object.assign({ crossSection }, this.timelineDateSelector)
+							);
+						}
+						// Connect datepicker change to crosssection callback
 						const datepicker = uiContext.topNode.querySelector("cq-datepicker");
 						if (datepicker) {
 							datepicker.registerCallback(date => extension.setCurveDate(date));
@@ -442,7 +512,8 @@ import {CIQ} from "../js/chartiq.js";
 				tc: "channel.tc",
 				analystviews: "channel.analystviews",
 				technicalinsights: "channel.technicalinsights",
-				dialog: "channel.dialog"
+				dialog: "channel.dialog",
+				keyboardNavigation: "channel.keyboardNavigation"
 			},
 			// dialogs
 			dialogs: {
@@ -453,7 +524,7 @@ import {CIQ} from "../js/chartiq.js";
 				theme: { tag: "cq-theme-dialog" },
 				study: {
 					tag: "cq-study-dialog",
-					attributes: { 
+					attributes: {
 						"cq-study-axis": true,
 						"cq-study-panel": "alias"
 					}
@@ -473,9 +544,13 @@ import {CIQ} from "../js/chartiq.js";
 					component.__ps.update(component);
 				}
 			},
+			// Class to access and store data about the chart eg preferences, chart layout, and drawings for chart.
+			// If you were using this property previously it stored information for themes which has now been moved to config.themes.nameValueStore
+			nameValueStore: resources.nameValueStore,
 			// optional function to call when web components have initialized
-			onWebComponentsReady: 
-				() => {},
+			onWebComponentsReady: () => {},
+			// callback to execute when chart is loaded for first time
+			onChartReady: (stx) => {},
 			// function to create a new chart, returns a CIQ.ChartEngine instance
 			createChart: function(container) {
 				let config = this;

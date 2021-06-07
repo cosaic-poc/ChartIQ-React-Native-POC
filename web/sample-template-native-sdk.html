@@ -102,6 +102,8 @@ To use this template, move or copy it to the root folder of your library.
 		CIQ.MobileBridge.determineOs();
 		const quoteFeedNativeBridge = {
 			fetch: function (parameters, cb) {
+				window.ReactNativeWebView.postMessage(JSON.stringify({test:"test"}))
+
 				function completion(cb) {
 					return function (err, results) {
 						if (err) {
@@ -208,16 +210,14 @@ To use this template, move or copy it to the root folder of your library.
 			periodicity: 1,
 			interval: 1,
 			timeUnit: 'second'
-		})
+		});
+		
+		CIQ.ChartEngine.prototype.append("draw", () => {
+			window.ReactNativeWebView.postMessage(JSON.stringify({hud: CIQ.MobileBridge.getHudDetails(), symbol: stxx.chart.symbol, dataSet: stxx.chart.dataSet}))
+		});
+
 		stxx.loadChart("AAPL");
 
-		CIQ.ChartEngine.prototype.append("draw", () => {
-			const chart = CIQ.MobileBridge.getEngineProperty('chart')
-			const symbol = chart.symbol
-			const dataSet = chart.dataSet
-
-			window.ReactNativeWebView.postMessage(JSON.stringify({hud: CIQ.MobileBridge.getHudDetails(), symbol, dataSet}))
-		})
 	</script>
 
 </body>

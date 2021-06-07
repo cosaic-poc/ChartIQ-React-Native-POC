@@ -1,10 +1,10 @@
 /**
- *	8.1.0
- *	Generation date: 2020-11-19T23:23:22.994Z
+ *	8.3.0
+ *	Generation date: 2021-06-06T16:48:16.849Z
  *	Client name: sonyl test
  *	Package Type: Technical Analysis
- *	License type: trial
- *	Expiration date: "2020/12/19"
+ *	License type: annual
+ *	Expiration date: "2022/01/31"
  */
 
 /***********************************************************
@@ -62,11 +62,10 @@ if (!CIQ.Studies) {
 		}
 		const field = sd.inputs.Field || "volume";
 		const contractType = sd.inputs["Contract Type"] || "both";
-		let widthPercentage = sd.parameters.widthPercentage;
-		let displayAmount = sd.parameters.displayAmount;
 		//set defaults
+		let displayQuantity = sd.inputs["Display Quantity"] !== false;
+		let widthPercentage = sd.parameters.widthPercentage;
 		if (!widthPercentage || widthPercentage < 0) widthPercentage = 0.25;
-		if (displayAmount !== false) displayAmount = true;
 		let optionChain, displayDate;
 		for (let dsIndex = quotes.length - 1; dsIndex >= 0; dsIndex--) {
 			const segmentRecord = quotes[dsIndex];
@@ -114,11 +113,15 @@ if (!CIQ.Studies) {
 		stx.canvasFont(fontstyle, context);
 		const txtHeight = stx.getCanvasFontSize(fontstyle);
 		const panel = chart.panel;
-		const chartTop = panel.yAxis.top;
-		const chartBottom = panel.yAxis.bottom;
+		const { top: chartTop, bottom: chartBottom } = panel.yAxis;
+		let { high: priceHigh, low: priceLow } = panel.yAxis;
 		const chartRight = chart.right;
 		const barMaxHeight = chart.width * widthPercentage; // pixels for highest bar
 		const self = stx;
+		if (chart.untransformFunc) {
+			priceHigh = chart.untransformFunc(stx, chart, priceHigh);
+			priceLow = chart.untransformFunc(stx, chart, priceLow);
+		}
 		stx.startClip(panel.name);
 		context.globalAlpha = 0.5;
 		context.fillStyle = self.defaultColor;
@@ -131,6 +134,26 @@ if (!CIQ.Studies) {
 			field == "volume"
 				? "Option volume data for"
 				: "Option open interest data as of";
+		const pricePixels = {};
+		const volByStrikeKeys = Object.keys(volByStrike);
+		let prevPixel;
+		let smallestGap;
+		for (let i = 0; i < volByStrikeKeys.length; i++) {
+			let price = volByStrikeKeys[i];
+			if (price > priceHigh || price < priceLow) continue;
+			let pixel = self.pixelFromPrice(parseFloat(price), panel);
+			pricePixels[price] = pixel;
+			if (prevPixel) {
+				let gap = Math.abs(prevPixel - pixel);
+				if (smallestGap === undefined || gap < smallestGap) smallestGap = gap;
+			}
+			prevPixel = pixel;
+		}
+		const linesPerVolume = contractType === "both" ? 2 : 1.05; // leave tiny gap for stacking same-color bars
+		if (smallestGap < context.lineWidth * linesPerVolume) {
+			context.lineWidth = smallestGap / linesPerVolume;
+			displayQuantity = false;
+		}
 		types.forEach((j) => {
 			context.strokeStyle = CIQ.Studies.determineColor(
 				sd.outputs[j === "call" ? "Calls" : "Puts"]
@@ -138,9 +161,9 @@ if (!CIQ.Studies) {
 			context.beginPath();
 			for (let i in volByStrike) {
 				let volume = volByStrike[i][j];
-				if (volume) {
+				let pixel = pricePixels[i];
+				if (volume && pixel) {
 					let barBottom = Math.round(chartRight) - 0.5; //bottom x coordinate for the bar  -- remember bars are sideways so the bottom is on the x axis
-					let pixel = self.pixelFromPrice(i, panel);
 					if (contractType == "both") {
 						let pixelShift = context.lineWidth / 2;
 						if (j === "call") pixelShift *= -1;
@@ -162,7 +185,7 @@ if (!CIQ.Studies) {
 						if (j === "put") continue;
 						volume += volByStrike[i].put;
 					}
-					if (displayAmount) {
+					if (displayQuantity) {
 						//write the volume on the bar **/
 						const txt = volume; //CIQ.condenseInt(volume);
 						let width;
@@ -203,12 +226,12 @@ if (!CIQ.Studies) {
 			calculateFN: null,
 			inputs: {
 				Field: ["volume", "openinterest"],
-				"Contract Type": ["both", "call", "put", "combined"]
+				"Contract Type": ["both", "call", "put", "combined"],
+				"Display Quantity": true
 			},
 			outputs: { Calls: "#f8ae63", Puts: "#b64a96" },
 			parameters: {
 				init: {
-					displayAmount: true,
 					widthPercentage: 0.25
 				}
 			},

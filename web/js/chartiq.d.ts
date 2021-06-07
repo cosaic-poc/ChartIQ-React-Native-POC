@@ -100,15 +100,548 @@ export namespace CIQ.ChartEngine {
   }
 
   /**
-   * @callback CIQ.ChartEngine~colorFunction
-   * A function describing the color to use for drawing a specific part of the chart.
-   * Should always return a @typedef colorObject, describing how you would like the chart to draw the quote.
-   * @param CIQ.ChartEnine
-   * @param  quote Specific quote to be drawn with returned colorObject
-   * @param parameters Any parameters used by your color function
-   * @return
+   * An object that describes how the renderer should draw a specific part of the chart as
+   * generated and returned by CIQ.ChartEngine~colorFunction.
+   *
    */
-  type colorFunction = (quote: CIQ.ChartEngine.OHLCQuote, parameters: object) => colorObject
+  interface colorObject {
+    /**
+     * Any string value that can be interpreted by the canvas context.
+     */
+    color: string
+    /**
+     * Description of the pattern in an on/off value description.
+     */
+    pattern: any[]
+    /**
+     * Width in pixels in which the pattern should be drawn.
+     */
+    width: number
+  }
+
+  /**
+   * Called by CIQ.ChartEngine#touchDoubleClick when the chart
+   * is quickly tapped twice.
+   *
+   * @param data Data relevant to the "tap" event.
+   * @param data.stx The chart engine instance.
+   * @param data.finger Indicates which finger double-tapped.
+   * @param data.x The crosshairs x-coordinate.
+   * @param data.y The crosshairs y-coordinate.
+   *
+   * @callback CIQ.ChartEngine~doubleTapEventListener
+   * @since 4.0.0
+   *
+   * @see CIQ.ChartEngine#addEventListener
+   */
+  type doubleTapEventListener = (data: {stx: CIQ.ChartEngine,finger: number,x: number,y: number}) => void
+
+  /**
+   * Called by CIQ.ChartEngine#doubleClick when the chart is quickly clicked or
+   * tapped twice.
+   *
+   * @param data Data relevant to the double-click or double-tap event.
+   * @param data.stx The chart engine instance.
+   * @param data.button The button or finger that double-clicked or
+   * 		double-tapped.
+   * @param data.x The double-click or crosshairs x-coordinate.
+   * @param data.y The double-click or crosshairs y-coordinate.
+   *
+   * @callback CIQ.ChartEngine~doubleClickEventListener
+   * @since 8.0.0
+   *
+   * @see CIQ.ChartEngine#addEventListener
+   */
+  type doubleClickEventListener = (data: {stx: CIQ.ChartEngine,button: number,x: number,y: number}) => void
+
+  /**
+   * Called when a drawing is added, removed, or modified.
+   *
+   * Such as calling CIQ.ChartEngine#clearDrawings,
+   * CIQ.ChartEngine#removeDrawing, CIQ.ChartEngine#undoLast, or
+   * CIQ.ChartEngine#drawingClick.
+   *
+   * @param data Data relevant to the "drawing" event.
+   * @param data.stx The chart engine instance.
+   * @param data.symbol The current chart symbol.
+   * @param data.symbolObject The symbol's value and display label
+   * 		(CIQ.ChartEngine.Chart#symbolObject).
+   * @param data.layout The chart's layout object (CIQ.ChartEngine#layout).
+   * @param data.drawings The chart's current drawings (CIQ.Drawing).
+   *
+   * @callback CIQ.ChartEngine~drawingEventListener
+   *
+   * @see CIQ.ChartEngine#addEventListener
+   */
+  type drawingEventListener = (data: {stx: CIQ.ChartEngine,symbol: string,symbolObject: object,layout: object,drawings: any[]}) => void
+
+  /**
+   * A right-click on a highlighted drawing.
+   *
+   * @param data Data relevant to the "drawingEdit" event.
+   * @param data.stx The chart engine instance.
+   * @param data.drawing The highlighted drawing instance.
+   *
+   * @callback CIQ.ChartEngine~drawingEditEventListener
+   *
+   * @see CIQ.ChartEngine#addEventListener
+   */
+  type drawingEditEventListener = (data: {stx: CIQ.ChartEngine,drawing: CIQ.Drawing}) => void
+
+  /**
+   * Called to open a window that can be moved and resized by the user.
+   *
+   * For example, called by CIQ.Shortcuts to display the keyboard shortcuts legend.
+   *
+   * @param data Data relevant to the "floatingWindow" event.
+   * @param data.type The type of floating window to open; for example, "shortcut"
+   * 		for a floating window containing the keyboard shortcuts legend (see
+   * 		CIQ.Shortcuts).
+   * @param data.content The contents of the floating window, typically an HTML
+   * 		string.
+   * @param [data.container] The DOM element that visually contains the floating
+   * 		window. The window is positioned on screen relative to the element (see
+   * 		WebComponents.cq-floating-window.DocWindow#positionRelativeTo). Defaults
+   * 		to `document.body`.
+   * 		<p>**Note:** The markup of the DOM element does not need to lexically contain the
+   * 		markup of the floating window.
+   * @param [data.title] Text that appears in the title bar of the floating window.
+   * @param [data.width] The width of the floating window in pixels.
+   * @param [data.status] The floating window state: true, to open the floating
+   * 		window; false, to close it. If the parameter is not provided, the floating window
+   * 		is toggled (opened if closed, closed if open).
+   * @param [data.tag] A label that identifies the floating window type; for
+   * 		example, "shortcut", which indicates that the floating window contains the keyboard
+   * 		shortcuts legend.
+   * 		<p>**Note:** Use this parameter to manage floating windows in a multi-chart
+   * 		document. Only one instance of a floating window is created for a given tag
+   * 		regardless of how many "floatingWindow" events occur having that tag, in which
+   * 		case a floating window can be shared by multiple charts. If floating windows do
+   * 		not have tags, new floating windows are created for new "floatingWindow" events
+   * 		even though the events may have the same `type` (see above).
+   * @param [data.onClose] A callback to execute when the floating window is
+   * 		closed.
+   *
+   * @callback CIQ.ChartEngine~floatingWindowEventListener
+   * @since 8.2.0
+   *
+   * @see CIQ.ChartEngine#addEventListener
+   */
+  type floatingWindowEventListener = (data: {type: string,content: string,container?: object,title?: string,width?: number,status?: boolean,tag?: string,onClose?: Function}) => void
+
+  /**
+   * Called when a change occurs in the chart layout.
+   *
+   * Layout changes are caused by:
+   * - Calling CIQ.ChartEngine#setChartType,
+   *   CIQ.ChartEngine#setAggregationType, CIQ.ChartEngine#setChartScale, or
+   *   CIQ.ChartEngine#setAdjusted
+   * - Using the WebComponents.cq-toolbar to disable the current active drawing tool
+   *   or toggling the crosshair
+   * - Using the WebComponents.cq-views to activate a serialized layout
+   * - Modifying a series (CIQ.ChartEngine#modifySeries)
+   * - Setting a new periodicity (CIQ.ChartEngine#setPeriodicity)
+   * - Adding or removing a study overlay
+   *   (CIQ.ChartEngine#removeOverlay)
+   * - Adding or removing any new panels (and their corresponding studies)
+   * - Zooming in (CIQ.ChartEngine#zoomIn) or
+   *   zooming out (CIQ.ChartEngine#zoomOut)
+   * - Setting ranges with CIQ.ChartEngine#setSpan or
+   *   CIQ.ChartEngine#setRange
+   * - Nullifying a programmatically set span or range by user panning
+   * - Enabling or disabling [extended hours]CIQ.ExtendedHours
+   * - Toggling the [range slider]CIQ.RangeSlider
+   *
+   * **Note** Scrolling and panning changes are not considered a layout change but rather a
+   * shift of the view window in the same layout. To detect those, register to listen for
+   * ["scroll" events]CIQ.ChartEngine~scrollEventListener.
+   *
+   * @param data Data relevant to the "layout" event.
+   * @param data.stx The chart engine instance.
+   * @param data.symbol The current chart symbol.
+   * @param data.symbolObject The symbol's value and display label
+   * 		(CIQ.ChartEngine.Chart#symbolObject).
+   * @param data.layout The chart's layout object (CIQ.ChartEngine#layout).
+   * @param data.drawings The chart's current drawings (CIQ.Drawing).
+   *
+   * @callback CIQ.ChartEngine~layoutEventListener
+   *
+   * @see CIQ.ChartEngine#addEventListener
+   */
+  type layoutEventListener = (data: {stx: CIQ.ChartEngine,symbol: string,symbolObject: object,layout: object,drawings: any[]}) => void
+
+  /**
+   * Called when the mouse is clicked on the chart and held down.
+   *
+   * @param data Data relevant to the "longhold" event.
+   * @param data.stx The chart engine instance.
+   * @param data.panel The panel being clicked.
+   * @param data.x The crosshair x-coordinate.
+   * @param data.y The crosshair y-coordinate.
+   *
+   * @callback CIQ.ChartEngine~longholdEventListener
+   *
+   * @see CIQ.ChartEngine#addEventListener
+   */
+  type longholdEventListener = (data: {stx: CIQ.ChartEngine,panel: string,x: number,y: number}) => void
+
+  /**
+   * Called when the pointer is moved inside the chart, even on panning or horizontal
+   * swiping.
+   *
+   * @param data Data relevant to the "move" event.
+   * @param data.stx The chart engine instance.
+   * @param data.panel The panel where the mouse is active.
+   * @param data.x The pointer x-coordinate.
+   * @param data.y The pointer y-coordinate.
+   * @param data.grab True if the chart is being dragged.
+   *
+   * @callback CIQ.ChartEngine~moveEventListener
+   *
+   * @see CIQ.ChartEngine#addEventListener
+   */
+  type moveEventListener = (data: {stx: CIQ.ChartEngine,panel: string,x: number,y: number,grab: boolean}) => void
+
+  /**
+   * Called when the [quotefeed interface](quotefeed.html) loads a complete data set as
+   * a result of:
+   * - [symbol changes]CIQ.ChartEngine#loadChart or
+   * - [periodicity]CIQ.ChartEngine#setPeriodicity,
+   * [range]CIQ.ChartEngine#setRange, or [span]CIQ.ChartEngine#setSpan
+   * changes requiring new data.
+   *
+   * @param data Data relevant to the "newChart" event.
+   * @param data.stx The chart engine instance.
+   * @param data.symbol The current chart symbol.
+   * @param data.symbolObject The symbol's value and display label,
+   * 		CIQ.ChartEngine.Chart#symbolObject.
+   * @param data.moreAvailable True if quotefeed~dataCallback reports
+   * 		that more data is available.
+   * @param data.upToDate True if quotefeed~dataCallback reports that
+   * 		no more future data is available.
+   * @param data.quoteDriver The quote feed driver.
+   *
+   * @callback CIQ.ChartEngine~newChartEventListener
+   * @since 8.0.0 Added the `upToDate` parameter.
+   *
+   * @see CIQ.ChartEngine#addEventListener
+   */
+  type newChartEventListener = (data: {stx: CIQ.ChartEngine,symbol: string,symbolObject: object,moreAvailable: boolean,upToDate: boolean,quoteDriver: object}) => void
+
+  /**
+   * Called when a message toaster notification event (a toast) has occurred.
+   *
+   * @param data Either an object containing data relevant to the
+   * 		notification event or a string that identifies a property of the `systemMessages`
+   * 		property of the chart configuration object. The property contained in
+   * 		`systemMessages` is an object literal that specifies data relevant to the
+   * 		notification event (see
+   * 		<a href="tutorial-Chart%20Configuration.html#systemmessages" target="_blank">
+   * 		<code class="codeLink">systemMessages</code></a> in the
+   * 		<a href="tutorial-Chart%20Configuration.html" target="_blank">Chart
+   * 		Configuration</a> tutorial).
+   * @param data.message Text to display in the notification.
+   * @param [data.position="top"] Alignment of the notification: "top" or "bottom".
+   * 		Overrides the `defaultPosition` attribute of the
+   * 		[`<cq-message-toaster>`]WebComponents.cq-message-toaster element.
+   * @param [data.type="info"] Notification style: "info", "error", "warning", or
+   * 		"confirmation".
+   * @param [data.transition] Type of animation used to display and dismiss (remove)
+   * 		the notification: "fade", "slide", "pop" or "drop". The default is no transition.
+   * 		Overrides the `defaultTransition` attribute of the
+   * 		[`<cq-message-toaster>`]WebComponents.cq-message-toaster element.
+   * @param [data.displayTime=10] Number of seconds to display the notification
+   * 		before automatically dismissing it. A value of 0 causes the notification to remain
+   * 		on screen&nbsp;—&nbsp;preventing other notifications from
+   * 		displaying&nbsp;—&nbsp;until the notification is selected by the user and
+   * 		dismissed. Overrides the `defaultDisplayTime` attribute of the
+   * 		[`<cq-message-toaster>`]WebComponents.cq-message-toaster element.
+   * @param [data.priority=0] Priority of the notification relative to others in
+   * 		the notification queue. Higher priority notifications are displayed before
+   * 		notifications with lower priority. For example, a notification with
+   * 		priority&nbsp;=&nbsp;4 is displayed before a notification with
+   * 		priority&nbsp;=&nbsp;1. Notifications with the same priority are displayed
+   * 		in the order they were created; that is, in the order they entered the
+   * 		notification queue.
+   * @param [data.callback] Function to call when the notification is selected
+   * 		(dismissed) by the user. If the notification is dismissed automatically (see
+   * 		`displayTime`), this function is not called.
+   *
+   * @callback CIQ.ChartEngine~notificationEventListener
+   * @since 8.2.0
+   *
+   * @see CIQ.ChartEngine#addEventListener
+   */
+  type notificationEventListener = (data: {message: string,position?: string,type?: string,transition?: string,displayTime?: number,priority?: number,callback?: Function}) => void
+
+  /**
+   * Called when the periodicity is changed, for example, by
+   * CIQ.ChartEngine#setPeriodicity.
+   *
+   * This event listener can be used instead of
+   * [layoutEventListener]CIQ.ChartEngine~layoutEventListener for events that only
+   * need to be triggered when the periodicity changes.
+   *
+   * @param data Data relevant to the "periodicity" event.
+   * @param data.stx Reference to the chart engine.
+   * @param data.differentData Indicates whether the chart needs new data to
+   * 		conform with the new periodicity. Typically, the value for this parameter is
+   * 		obtained from a call to CIQ.ChartEngine#needDifferentData.
+   * @param data.prevPeriodicity The periodicity
+   * 		before the periodicity change event.
+   *
+   * @callback CIQ.ChartEngine~periodicityEventListener
+   * @since 8.1.0
+   *
+   * @see CIQ.ChartEngine#addEventListener
+   */
+  type periodicityEventListener = (data: {stx: CIQ.ChartEngine,differentData: boolean,prevPeriodicity: CIQ.ChartEngine.PeriodicityParameters}) => void
+
+  /**
+   * Called when preferences are changed.
+   *
+   * Such as when calling CIQ.ChartEngine#setTimeZone,
+   * CIQ.ChartEngine#importPreferences, CIQ.Drawing.saveConfig, or
+   * CIQ.Drawing.restoreDefaultConfig or when making language changes using the
+   * WebComponents.cq-language-dialog.
+   *
+   * @param data Data relevant to the "preferences" event.
+   * @param data.stx The chart engine instance.
+   * @param data.symbol The current chart symbol.
+   * @param data.symbolObject The symbol's value and display label
+   * 		(CIQ.ChartEngine.Chart#symbolObject).
+   * @param data.layout The chart's layout object (CIQ.ChartEngine#layout).
+   * @param data.drawingObjects The chart's current drawings
+   * 		(CIQ.ChartEngine#drawingObjects).
+   *
+   * @callback CIQ.ChartEngine~preferencesEventListener
+   *
+   * @see CIQ.ChartEngine#addEventListener
+   */
+  type preferencesEventListener = (data: {stx: CIQ.ChartEngine,symbol: string,symbolObject: object,layout: object,drawingObjects: any[]}) => void
+
+  /**
+   * Called on "mouseup" after the chart is right-clicked.
+   *
+   * **Note:** By default, right-clicks are only captured when mousing over chart objects
+   * such as series and drawings. To enable right-click anywhere on the chart, the
+   * "contextmenu" event listener must be modified as follows:
+   * ```
+   * document.removeEventListener("contextmenu", CIQ.ChartEngine.handleContextMenu);
+   * document.addEventListener(
+   *     "contextmenu",
+   *     function(e) {
+   *         if (!e) e = event;
+   *         if (e.preventDefault) e.preventDefault();
+   *         return false;
+   *     }
+   * );
+   * ```
+   *
+   * @param data Data relevant to the "rightClick" event.
+   * @param data.stx The chart engine instance.
+   * @param panel The panel that was clicked.
+   * @param data.x The click x-coordinate.
+   * @param data.y The click y-coordinate.
+   *
+   * @callback CIQ.ChartEngine~rightClickEventListener
+   *
+   * @see CIQ.ChartEngine#addEventListener
+   * @see CIQ.ChartEngine.handleContextMenu
+   *
+   * @example <caption>Trigger and provide location and details when clicking a series:</caption>
+   * stxx.addEventListener("tap", function(tapObject) {
+   *     if (this.anyHighlighted) {
+   *         for (let n in this.chart.seriesRenderers) {
+   *             const r = this.chart.seriesRenderers[n];
+   *             for(let j = 0; j < r.seriesParams.length; j++) {
+   *                 series = r.seriesParams[j];
+   *                 if (series.highlight) {
+   *                     const bar = this.barFromPixel(tapObject.x);
+   *                     if (this.chart.dataSegment[bar]) {
+   *                         // Replace console.log with your required logic.
+   *                         console.log('Tap event at pixel x: ' + tapObject.x + ' y: '+ tapObject.y);
+   *                         console.log('Price:', this.priceFromPixel(tapObject.y), ' Date: ', this.chart.dataSegment[bar].DT);
+   *                         console.log('Series Details: ',JSON.stringify(series));
+   *                     }
+   *                 }
+   *             }
+   *         }
+   *     }
+   * });
+   */
+  type rightClickEventListener = (data: {stx: CIQ.ChartEngine,x: number,y: number}, panel: string) => void
+
+  /**
+   * Called when the chart is panned and scrolled in any direction or is horizontally swiped.
+   *
+   * @param data Data relevant to the "scroll" event.
+   * @param data.stx The chart engine instance.
+   * @param data.panel The panel where the mouse is active.
+   * @param data.x The mouse x-coordinate.
+   * @param data.y The mouse y-coordinate.
+   *
+   * @callback CIQ.ChartEngine~scrollEventListener
+   * @since 6.3.0
+   *
+   * @see CIQ.ChartEngine#addEventListener
+   */
+  type scrollEventListener = (data: {stx: CIQ.ChartEngine,panel: string,x: number,y: number}) => void
+
+  /**
+   * Called when an overlay-type study is right-clicked.
+   *
+   * @param data Data relevant to the "studyOverlayEdit" event.
+   * @param data.stx The chart engine instance.
+   * @param data.sd The study object study descriptor.
+   * @param data.inputs The inputs from the study descriptor.
+   * @param data.outputs The outputs from the study descriptor.
+   * @param data.parameters The parameters from the study descriptor.
+   *
+   * @callback CIQ.ChartEngine~studyOverlayEditEventListener
+   *
+   * @see CIQ.ChartEngine#addEventListener
+   *
+   * @example
+   * stxx.addEventListener("studyOverlayEdit", function(studyData) {
+   *     CIQ.alert(studyData.sd.name);
+   *     const helper = new CIQ.Studies.DialogHelper({ name: studyData.sd.type, stx: studyData.stx });
+   *     console.log('Inputs:',JSON.stringify(helper.inputs));
+   *     console.log('Outputs:',JSON.stringify(helper.outputs));
+   *     console.log('Parameters:',JSON.stringify(helper.parameters));
+   *     // Call your menu here with the data returned in helper.
+   *     // Modify parameters as needed and call addStudy or replaceStudy.
+   * });
+   */
+  type studyOverlayEditEventListener = (data: {stx: CIQ.ChartEngine,sd: object,inputs: object,outputs: object,parameters: object}) => void
+
+  /**
+   * Called when a panel-type study is edited.
+   *
+   * @param data Data relevant to the "studyPanelEdit" event.
+   * @param data.stx The chart engine instance.
+   * @param data.sd The study object study descriptor.
+   * @param data.inputs The inputs from the study descriptor.
+   * @param data.outputs The outputs from the study descriptor.
+   * @param data.parameters The parameters from the study descriptor.
+   *
+   * @callback CIQ.ChartEngine~studyPanelEditEventListener
+   *
+   * @see CIQ.ChartEngine#addEventListener
+   */
+  type studyPanelEditEventListener = (data: {stx: CIQ.ChartEngine,sd: object,inputs: object,outputs: object,parameters: object}) => void
+
+  /**
+   * Called when the chart's symbols change. Including secondary series and underlying
+   * symbols for studies (e.g., price relative study).
+   *
+   * @param data Data relevant to the "symbolChange" event.
+   * @param data.stx The chart engine instance.
+   * @param data.symbol The new chart symbol.
+   * @param data.symbolObject The symbol's value and display label
+   * 		(CIQ.ChartEngine.Chart#symbolObject).
+   * @param data.action An action type being performed on the symbol. Possible
+   * 		options:
+   * - `add-series` — A series was added
+   * - `master` — The master symbol was changed
+   * - `remove-series` — A series was removed
+   * @callback CIQ.ChartEngine~symbolChangeEventListener
+   *
+   * @see CIQ.ChartEngine#addEventListener
+   */
+  type symbolChangeEventListener = (data: {stx: CIQ.ChartEngine,symbol: string,symbolObject: object,action: string}) => void
+
+  /**
+   * Called when a symbol is imported into the layout, including secondary series and
+   * underlying symbols for studies (e.g., price relative study).
+   *
+   * This listener is not called by other types of symbol changes.
+   *
+   * @param data Data relevant to the "symbolImport" event.
+   * @param data.stx The chart engine instance.
+   * @param data.symbol The new chart symbol.
+   * @param data.symbolObject The symbol's value and display label
+   * 		(CIQ.ChartEngine.Chart#symbolObject).
+   * @param data.action An action type being performed on the symbol. Possible
+   * 		options:
+   * - `add-series` — A series was added
+   * - `master` — The master symbol was changed
+   * - `remove-series` — A series was removed
+   *
+   * @callback CIQ.ChartEngine~symbolImportEventListener
+   *
+   * @see CIQ.ChartEngine#addEventListener
+   * @see CIQ.ChartEngine#importLayout
+   */
+  type symbolImportEventListener = (data: {stx: CIQ.ChartEngine,symbol: string,symbolObject: object,action: string}) => void
+
+  /**
+   * Called on ["mouseup"]CIQ.ChartEngine#touchSingleClick when
+   * the chart is tapped.
+   *
+   * @param data Data relevant to the "tap" event.
+   * @param data.stx The chart engine instance.
+   * @param data.panel The panel being tapped.
+   * @param data.x The tap x-coordinate.
+   * @param data.y The tap y-coordinate.
+   *
+   * @callback CIQ.ChartEngine~tapEventListener
+   *
+   * @see CIQ.ChartEngine#addEventListener
+   */
+  type tapEventListener = (data: {stx: CIQ.ChartEngine,panel: string,x: number,y: number}) => void
+
+  /**
+   * Called when a new theme is activated on the chart, such as by
+   * WebComponents.cq-themes initialization or using the
+   * WebComponents.cq-theme-dialog.
+   *
+   * @param data Data relevant to the "theme" event.
+   * @param data.stx The chart engine instance.
+   * @param data.symbol The current chart symbol.
+   * @param data.symbolObject The symbol's value and display label
+   * 		(CIQ.ChartEngine.Chart#symbolObject).
+   * @param data.layout The chart's layout object (CIQ.ChartEngine#layout).
+   * @param data.drawingObjects The chart's current drawings
+   * 		(CIQ.ChartEngine#drawingObjects).
+   *
+   * @callback CIQ.ChartEngine~themeEventListener
+   *
+   * @see CIQ.ChartEngine#addEventListener
+   */
+  type themeEventListener = (data: {stx: CIQ.ChartEngine,symbol: string,symbolObject: object,layout: object,drawingObjects: any[]}) => void
+
+  /**
+   * Called when an undo stamp is created for drawing events.
+   *
+   * See CIQ.ChartEngine#undoStamp
+   *
+   * @param data Data relevant to the "undoStamp" event.
+   * @param data.stx The chart engine instance.
+   * @param data.before The chart drawing objects before the change.
+   * @param data.after The chart drawings objects after the change.
+   *
+   * @callback CIQ.ChartEngine~undoStampEventListener
+   *
+   * @see CIQ.ChartEngine#addEventListener
+   */
+  type undoStampEventListener = (data: {stx: CIQ.ChartEngine,before: any[],after: any[]}) => void
+
+  /**
+   * A function describing the color to use for drawing a specific part of the chart.
+   *
+   * Should always return a CIQ.ChartEngine~colorObject describing how you would like the
+   * chart to draw the quote.
+   *
+   * @param stx The chart engine.
+   * @param quote Specific quote to be drawn with the returned color
+   * 		object.
+   * @param parameters Any parameters used by your color function.
+   * @return A color object.
+   *
+   * @callback CIQ.ChartEngine~colorFunction
+   */
+  type colorFunction = (stx: CIQ.ChartEngine, quote: CIQ.ChartEngine.OHLCQuote, parameters: object) => CIQ.ChartEngine.colorObject
 
   /**
    * Defines an object used for rendering a chart and is automatically created by the CIQ.ChartEngine.
@@ -149,11 +682,11 @@ export namespace CIQ.ChartEngine {
       symbol: any
     }
     /**
-     * Set this to presnet an alternate name for the symbol on the chart label and comparison legend.
+     * Set this to preset an alternate name for the symbol on the chart label and comparison legend.
      * You can set  `stxx.chart.symbolDisplay='yourName'; ` right before calling `loadChart()`.
      * Alternatively, a good place to set it is in your fetch function, if using quotefeed. See example.
      * @example
-     * // on your inital data fetch call add the following
+     * // on your initial data fetch call add the following
      * params.stx.chart.symbolDisplay='yourName for '+params.symbol;
      */
     public symbolDisplay: string
@@ -335,18 +868,32 @@ export namespace CIQ.ChartEngine {
      */
     public decimalPlaces: number
     /**
-     * If set to `true` the y-axes width will be automatically set based on the length of the displayed prices.
+     * If true, the y-axis width is based on the width of the displayed instrument prices.
      *
-     * In order to prevent constant resizing of the y-axis, dynamicWidth will start at the initial width set ( CIQ.ChartEngine.YAxis#width )
-     * and continue to grow as you zoom and pan to ensure all digits are in view.
-     * It will only shrink back to the initial width when key events happen, such as removing a study or series, changing the instrument, etc.
+     * To prevent constant resizing of the y-axis, the dynamic width setting starts at the
+     * initial axis width (CIQ.ChartEngine.YAxis#width) and increases to ensure all
+     * digits are in view as the user zooms and pans the chart. The dynamic width setting
+     * returns to the initial width only when key events happen, such as removing a study or
+     * series or changing the instrument.
      *
-     * Works on all axis attached to a chart.
+     * Applies to all y-axes attached to a chart.
      *
-     * Also see [resetDynamicYAxis]CIQ.ChartEngine#resetDynamicYAxis
      * @since 5.1.1
+     *
+     * @see CIQ.ChartEngine#resetDynamicYAxis.
      */
     public dynamicYAxis: boolean
+    /**
+     * Used to determine chart display characteristics that are dependent on chart size, such
+     * as the width and font of the y-axis.
+     *
+     * Meant to be used in tandem with CSS responsive design breakpoints. Do not set directly;
+     * instead use CIQ.ChartEngine#notifyBreakpoint, which ensures that the relevant
+     * styles (which have already been calculated) are updated based on the new breakpoint.
+     *
+     * @since 8.2.0
+     */
+    public breakpoint: string
     /**
      * Function used to render the Legend when multiple series are being displayed on the main chart panel.
      * Update your prototype or a specific chart instance, if you want to use a different rendering method for legend.
@@ -913,8 +1460,10 @@ export namespace CIQ.ChartEngine {
    *
    * Example: stxx.panels['Aroon (14)'].yAxis
    *
-   * **Note:** If modifying a y-axis placement setting (widht, margins, position left/right, etc) after the axis has been rendered, you will need to call
-   * CIQ.ChartEngine#calculateYAxisMargins or CIQ.ChartEngine#calculateYAxisPositions followed by CIQ.ChartEngine#draw to activate the change.
+   * **Note:** When modifying a y-axis placement setting (width, margins, position left/right, etc.)
+   * after the axis has been rendered, you must call CIQ.ChartEngine#calculateYAxisMargins or
+   * CIQ.ChartEngine#calculateYAxisPositions (as appropriate) followed by
+   * CIQ.ChartEngine#draw to activate the change.
    *
    * @example
    * // here is an example on how to override the default top and bottom margins after the initial axis has already been rendered
@@ -963,8 +1512,10 @@ export namespace CIQ.ChartEngine {
      *
      * Example: stxx.panels['Aroon (14)'].yAxis
      *
-     * **Note:** If modifying a y-axis placement setting (widht, margins, position left/right, etc) after the axis has been rendered, you will need to call
-     * CIQ.ChartEngine#calculateYAxisMargins or CIQ.ChartEngine#calculateYAxisPositions followed by CIQ.ChartEngine#draw to activate the change.
+     * **Note:** When modifying a y-axis placement setting (width, margins, position left/right, etc.)
+     * after the axis has been rendered, you must call CIQ.ChartEngine#calculateYAxisMargins or
+     * CIQ.ChartEngine#calculateYAxisPositions (as appropriate) followed by
+     * CIQ.ChartEngine#draw to activate the change.
      *
      * @param init Object containing custom values for Y-axis members
      * @example
@@ -1250,21 +1801,22 @@ export namespace CIQ.ChartEngine {
      */
     public topOffset: number
     /**
-     * Set this to automatically compress and offset the y-axis so that this many pixels of white space is above the display.
+     * Set this to automatically compress and offset the y-axis so that this many pixels of white space are above the display.
      * Note that CIQ.ChartEngine#calculateYAxisMargins and CIQ.ChartEngine#draw will need to be called to immediately activate this setting after the axis has already been drawn.
      *
      * Visual Reference:
      * ![yAxis.width](yAxis.initialMarginTop.png "yAxis.initialMarginTop")
+     *
      * @example
-     * // Here is an example on how to override the default top and bottom margins **before** the initial axis has been rendered
+     * // Here is an example on how to override the default top and bottom margins before the initial axis has been rendered.
      * var stxx=new CIQ.ChartEngine({container:document.querySelector(".chartContainer"), layout:{"candleWidth": 16, "crosshair":true}});
-     * stxx.setPeriodicity({period:1, interval:1, timeUnit:"minute"});				// set your default periodicity to match your data. In this case one minute.
-     * stxx.chart.yAxis.initialMarginTop=50;		// set default margins so they do not bump on to the legend
-     * stxx.chart.yAxis.initialMarginBottom=50;
+     * stxx.setPeriodicity({period:1, interval:1, timeUnit:"minute"}); // Set your default periodicity to match your data; in this case, one minute.
+     * stxx.chart.yAxis.initialMarginTop = 50; // Set default margins so they do not bump on to the legend.
+     * stxx.chart.yAxis.initialMarginBottom = 50;
      * stxx.loadChart("SPY", {masterData: yourData});
      *
      * @example
-     * // Here is an example on how to override the default top and bottom margins **after** the initial axis has already been rendered
+     * // Here is an example on how to override the default top and bottom margins after the initial axis has already been rendered.
      * stxx.loadChart(symbol, {masterData: yourData}, function () {
      * 	var yAxis = stxx.chart.yAxis;
      *
@@ -1277,34 +1829,35 @@ export namespace CIQ.ChartEngine {
      * });
      *
      * @example
-     * // Here is an example on how to override the default top and bottom margins for a specific panel **after** the initial axis has already been rendered
-     * // The list of current panels can be found in "stxx.panels".
-     * stxx.panels[panelName].yAxis.initialMarginTop=100;
-     * stxx.panels[panelName].yAxis.initialMarginBottom=100;
-     * stxx.calculateYAxisMargins(stxx.panels[panelName].panel.yAxis); // !!!! must recalculate the margins after they are changed. !!!!
+     * // Here is an example on how to override the default top and bottom margins for a specific panel after the initial axis has already been rendered.
+     * // The list of current panels can be found in stxx.panels.
+     * stxx.panels[panelName].yAxis.initialMarginTop = 100;
+     * stxx.panels[panelName].yAxis.initialMarginBottom = 100;
+     * stxx.calculateYAxisMargins(stxx.panels[panelName].yAxis); // !!!! Must recalculate the margins after they are changed. !!!!
      * stxx.draw();
      */
     public initialMarginTop: number
     /**
-     * set this to automatically compress and offset the y-axis to that this many pixels of white space is below the display
+     * Set this to automatically compress and offset the y-axis so that this many pixels of white space are below the display.
      * Note that CIQ.ChartEngine#calculateYAxisMargins and CIQ.ChartEngine#draw will need to be called to immediately activate this setting after the axis has already been drawn.
      *
      * Visual Reference:
      * ![yAxis.width](yAxis.initialMarginTop.png "yAxis.initialMarginTop")
+     *
      * @example
-     * // here is an example on how to override the default top and bottom margins **before** the initial axis has been rendered
+     * // Here is an example on how to override the default top and bottom margins before the initial axis has been rendered.
      * var stxx=new CIQ.ChartEngine({container:document.querySelector(".chartContainer"), layout:{"candleWidth": 16, "crosshair":true}});
-     * stxx.setPeriodicity({period:1, interval:1, timeUnit:"minute"});				// set your default periodicity to match your data. In this case one minute.
-     * stxx.chart.yAxis.initialMarginTop=50;		// set default margins so they do not bump on to the legend
-     * stxx.chart.yAxis.initialMarginBottom=50;
+     * stxx.setPeriodicity({period:1, interval:1, timeUnit:"minute"}); // Set your default periodicity to match your data; in this case, one minute.
+     * stxx.chart.yAxis.initialMarginTop = 50; // Set default margins so they do not bump on to the legend.
+     * stxx.chart.yAxis.initialMarginBottom = 50;
      * stxx.loadChart("SPY", {masterData: yourData});
      * @example
-     * // here is an example on how to override the default top and bottom margins **after** the initial axis has already been rendered
+     * // Here is an example on how to override the default top and bottom margins after the initial axis has already been rendered.
      * stxx.loadChart(symbol, {masterData: yourData}, function() {
-     * 	// callback - your code to be executed after the chart is loaded
-     * 	stxx.chart.yAxis.initialMarginTop=50;
-     * 	stxx.chart.yAxis.initialMarginBottom=50;
-     * 	stxx.calculateYAxisMargins(stxx.chart.panel.yAxis); // !!!! must recalculate the margins after they are changed. !!!!
+     * 	// Callback -- your code to be executed after the chart is loaded.
+     * 	stxx.chart.yAxis.initialMarginTop = 50;
+     * 	stxx.chart.yAxis.initialMarginBottom = 50;
+     * 	stxx.calculateYAxisMargins(stxx.chart.panel.yAxis); // !!!! Must recalculate the margins after they are changed. !!!!
      * 	stxx.draw();
      * });
      */
@@ -1330,36 +1883,48 @@ export namespace CIQ.ChartEngine {
      */
     public scroll: number
     /**
-     * Set this to a factor to scale the y axis.
+     * Factor that scales the y-axis.
      *
-     * The zoom value will be internality adjusted based on the value of this property as follows:
+     * The zoom value is internally adjusted based on the value of this property as follows:
      * ```
-     * zoom = (1-heightFactor)*height + initial margin settings
+     * zoom = (1 - heightFactor) * height + initial margin settings
      * ```
-     * For example, use this to easily reduce the scale of the axis by 20%, set heightFactor=0.8.
+     * For example, to reduce the scale of the y-axis by 20%, set `heightFactor = 0.8`.
      *
      * @since 7.0.0
      */
     public heightFactor: number
     /**
-     * The width in pixels.
+     * The y-axis width in pixels.
      *
-     * See CIQ.ChartEngine.Chart#dynamicYAxis to set automatically.
-     *
-     * See CIQ.ChartEngine.Chart#yaxisPaddingRight and CIQ.ChartEngine.Chart#yaxisPaddingLeft for details on how to overlap the y-axis onto the chart.
-     *
-     * Visual Reference:
      * ![yAxis.width](yAxis.width.png "yAxis.width")
-     * @example
-     * stxx.chart.yAxis.width=50;
-     * //must call the following 2 lines to activate if the axis is already drawn.
+     *
+     *
+     * @see CIQ.ChartEngine.Chart#dynamicYAxis to set the y-axis width dynamically.
+     * @see CIQ.ChartEngine.Chart#yaxisPaddingRight and
+     * CIQ.ChartEngine.Chart#yaxisPaddingLeft for information on how to overlay the y-axis onto
+     * the chart.
+     *
+     * @example <caption>Set the y-axis width.</caption>
+     * stxx.chart.yAxis.width = stxx.chart.yAxis.smallScreenWidth;
+     * // Must call the following two lines to activate the update if the axis is already drawn.
      * stxx.calculateYAxisPositions();
      * stxx.draw();
-     * @example
-     * // reset width to default
+     *
+     * @example <caption>Reset the y-axis width to the default.</caption>
      * stxx.chart.yAxis.width = CIQ.ChartEngine.YAxis.prototype.width;
+     * stxx.calculateYAxisPositions();
+     * stxx.draw();
      */
     public width: number
+    /**
+     * The y-axis width in pixels if the screen is small (typically, smaller than the break-sm
+     * breakpoint). See the CIQ.ChartEngine.Chart#breakpoint property and
+     * CIQ.UI.Chart#getBreakpoint method for more information on breakpoints.
+     *
+     * @since 8.2.0
+     */
+    public smallScreenWidth: number
     /**
      * Override the default stx_yaxis style for text by setting this to the desired CSS style. This would typically be used to set a secondary axis to a particular color.
      * @since 15-07-01
@@ -1451,6 +2016,15 @@ export namespace CIQ.ChartEngine {
         opacity?: number
       }
     ): void
+    /**
+     * Sets the y-axis width based on the `breakpoint` parameter.
+     *
+     * @param breakpoint The responsive design breakpoint that determines the y-axis width.
+     * 		See the CIQ.UI.Chart#getBreakpoint method for valid values.
+     *
+     * @since 8.2.0
+     */
+    public setBreakpointWidth(breakpoint: string): void
   }
 
   /**
@@ -1518,15 +2092,19 @@ export namespace CIQ.ChartEngine {
   let pluginBasePath: string
 
   /**
-   * Returns true if the internal chart periodicity is based off of a daily interval ("day","week" or "month")
+   * Determines whether the internal chart periodicity is based on a daily interval ("day", "week"
+   * or "month").
    *
-   * **Please note:** This function is intended to be used on the internal periodicity as stored in the CIQ.ChartEngine#layout.
-   * See:
-   *  - <a href="CIQ.ChartEngine.html#layout%5B%60periodicity%60%5D">CIQ.ChartEngine.layout.periodicity</a>.
-   *  - <a href="CIQ.ChartEngine.html#layout%5B%60interval%60%5D">CIQ.ChartEngine.layout.interval</a>.
-   *  - <a href="CIQ.ChartEngine.html#layout%5B%60timeUnit%60%5D">CIQ.ChartEngine.layout.timeUnit</a>.
-   * @param   interval The interval
-   * @return          True if it's a daily interval
+   * **Note:** This function is intended to be used on the internal periodicity as stored in
+   * CIQ.ChartEngine#layout.
+   *
+   * @param interval The internal chart periodicity for which the interval is determined.
+   * @return True if the internal chart periodicity is a daily interval; otherwise, false.
+   *
+   *
+   * @see <a href="CIQ.ChartEngine.html#layout%5B%60periodicity%60%5D">CIQ.ChartEngine.layout.periodicity</a>
+   * @see <a href="CIQ.ChartEngine.html#layout%5B%60interval%60%5D">CIQ.ChartEngine.layout.interval</a>
+   * @see <a href="CIQ.ChartEngine.html#layout%5B%60timeUnit%60%5D">CIQ.ChartEngine.layout.timeUnit</a>
    */
   function isDailyInterval(interval: string): boolean
 }
@@ -1826,6 +2404,10 @@ export namespace CIQ {
      */
     public chart: CIQ.ChartEngine.Chart
     /**
+     * Time in MS to trigger a long hold on the chart.
+     */
+    public longHoldTime: number
+    /**
      * Number of pixels the mouse needs to move in vertical direction to "unlock" vertical panning/scrolling.
      * Setting to a number larger than the pixels on the canvas will also disable vertical scrolling
      * @example
@@ -1906,7 +2488,7 @@ export namespace CIQ {
      * On touch devices, it will bypass CIQ.ChartEngine#touchDoubleClick
      *
      * Also see:
-     * - rightClickEventListener
+     * - [rightClickEventListener]CIQ.ChartEngine~rightClickEventListener
      * - CIQ.ChartEngine#rightClickHighlighted
      *
      * @since
@@ -2022,6 +2604,14 @@ export namespace CIQ {
      * @since m-2016-12-01.4
      */
     public captureMouseWheelEvents: boolean
+    /**
+     * If true (the default), requires a tap on a drawing, plot, y-axis, or other object before
+     * the object is highlighted. If false, allows highlighting of objects when the mouse cursor
+     * moves over the objects.
+     *
+     * @since 8.2.0
+     */
+    public tapForHighlighting: boolean
     /**
      * The maximum number of milliseconds between clicks that trigger a double-click.
      *
@@ -2199,7 +2789,7 @@ export namespace CIQ {
     /**
      * Adjust to increase or decrease the default width of candles (see {@tutorial Understanding Chart Range}).
      */
-    public candleWidthPercent: boolean
+    public candleWidthPercent: number
     /**
      * Set to `true` to color any OHLC type rendering (bar, candles) as well as the volume study,
      * based on difference between open and close, rather than difference between previous close and current close.
@@ -2443,7 +3033,7 @@ export namespace CIQ {
        *  - "histogram"
        *  - "rangechannel"
        *  - "marketdepth" — Requires the [Active Trader]CIQ.MarketDepth plug-in. See CIQ.ChartEngine#updateCurrentMarketData for data requirements.
-       *  - "termstructure" — Requires the [Term Structure]CIQ.TermStructure plug-in.
+       *  - "crosssection" — Requires the [Cross Section]CIQ.CrossSection plug-in.
        *
        * Variations of these types are available by prepending terms to the options as follows:
        *  - "step_" - add to mountain, marketdepth e.g. step_mountain, step_volume_marketdepth
@@ -2466,6 +3056,8 @@ export namespace CIQ {
        * - 4.0.0 Added "colored_step" and "colored_hlc".
        * - 5.1.0 More chart types available using combinations of terms.
        * - 6.1.0 Added "marketdepth".
+       * - 7.3.0 Added "termstructure".
+       * - 8.3.0 Added "crosssection". Removed "termstructure".
        */
       chartType: string,
       /**
@@ -2821,6 +3413,7 @@ export namespace CIQ {
     ): void
     /**
      * INJECTABLE
+     *
      * This method calls CIQ.ChartEngine#updateFloatHRLabel to draw the label that floats along the Y axis with the
      * current price for the crosshair.
      * It also fills the date in the "stxx.controls.floatDate" (Style: `stx-float-date`) div which floats along the X axis.
@@ -2844,6 +3437,7 @@ export namespace CIQ {
     public modalEnd(): void
     /**
      * INJECTABLE
+     *
      * Updates the position of the stxx.controls.floatDate element ( Style: `stx-float-date` ) and calls CIQ.ChartEngine#headsUpHR to display the crosshairs labels on both x and y axis.
      * A timer is used to prevent this operation from being called more frequently than once every 100 milliseconds in order to
      * improve performance during scrolling.
@@ -2935,6 +3529,7 @@ export namespace CIQ {
     public removeNotification(name: string): void
     /**
      * INJECTABLE
+     *
      * Sets the innerHTML value of the `.mMeasure` HTML DOM Node to contain a measurement (price differential and bars/line distance), usually when a user hovers over a drawing.
      * It is also used to display measurement as a drawing is being created or when using the 'Measure' tool.
      *
@@ -3031,6 +3626,124 @@ export namespace CIQ {
      */
     public zoomSet(candleWidth: number, chart: CIQ.ChartEngine.Chart): void
     /**
+     * A reference to the renderer of the baseline whose handle is currently selected.
+     *
+     * The baseline handle can be accessed from CIQ.ChartEngine#baselineHelper.
+     *
+     * @since 8.2.0
+     */
+    public currentBaseline: CIQ.Renderer
+    /**
+     * Baseline helper for the chart engine.
+     *
+     * Maps renderers to value objects that contain data related to the baseline, including the
+     * baseline handle (a reference to the DOM element that functions as the handle).
+     *
+     * @since 8.2.0
+     */
+    public baselineHelper: Map<CIQ.Renderer, object>
+    /**
+     * Adds an entry to CIQ.ChartEngine#baselineHelper with `renderer` as the key and a
+     * dynamically created object as the value. The value object contains data related to the
+     * baseline.
+     *
+     * If the renderer is the renderer of the main series, sets the handle property of the value
+     * object to <code>CIQ.ChartEngine.htmlControls[&#96;baselineHandle&#96;]</code>; otherwise,
+     * creates a baseline handle DOM element and adds a reference to the DOM element to the value
+     * object and to the chart controls object, CIQ.ChartEngine.htmlControls. The handle is
+     * accessed in the chart controls object by a property name that is the concatenation of the
+     * renderer name and "cq-baseline-handle", for example:
+     * ```
+     * stxx.controls[`${renderer.params.name} cq-baseline-handle`];
+     * ```
+     *
+     * @param renderer The renderer to register as the key of the baseline helper.
+     *
+     * @since 8.2.0
+     */
+    public registerBaselineToHelper(renderer: CIQ.Renderer): void
+    /**
+     * Removes a renderer from CIQ.ChartEngine#baselineHelper.
+     *
+     * If the renderer is not the renderer of the main series, removes the baseline handle associated
+     * with the renderer from the chart controls object, CIQ.ChartEngine.htmlControls (see
+     * also CIQ.ChartEngine#registerBaselineToHelper).
+     *
+     * @param renderer The renderer to remove from the baseline helper.
+     *
+     * @since 8.2.0
+     */
+    public removeBaselineFromHelper(renderer: CIQ.Renderer): void
+    /**
+     * Checks an emitted event to determine whether a baseline handle DOM element is the event target
+     * or is in the
+     * <a href="https://developer.mozilla.org/en-US/docs/Web/API/Event/composedPath" target="_blank">
+     * composed path</a> of the event. If so, sets CIQ.ChartEngine#currentBaseline to the
+     * renderer of the baseline positioned by the handle.
+     *
+     * @param e The event that is checked to determine whether a baseline handle is the event
+     * 		target or is in the propagation path of the event.
+     * @param grabStart If true (and a baseline handle is the event target or is in the
+     * 		event path), baseline repositioning is initiated.
+     * @return True if a baseline handle is the event target or is in the path of the event,
+     * 		otherwise false.
+     *
+     * @since 8.2.0
+     */
+    public findBaselineHandle(e: Event, grabStart: boolean): boolean
+    /**
+     * Sets `baseline.actualLevel` for any line renderers that are attached to the chart. (See the
+     * `baseline` parameter of CIQ.Renderer.Lines, which may be type
+     * CIQ.ChartEngine.Chart#baseline.)
+     *
+     * **Note:** Does not set <a href="CIQ.ChartEngine.Chart.html#baseline%5B%60actualLevel%60%5D">
+     * CIQ.ChartEngine.Chart#baseline[&#96;actualLevel&#96;]</a>; that is done in
+     * CIQ.ChartEngine#createDataSegment.
+     *
+     * @param chart Chart for which the renderer baseline levels are set.
+     * @since 8.1.0
+     */
+    public setBaselines(chart: CIQ.ChartEngine.Chart): void
+    /**
+     * Positions a baseline handle within the chart area.
+     *
+     * @param renderer The renderer that renders the baseline.
+     *
+     * @since 8.2.0
+     */
+    public positionBaselineHandle(renderer: CIQ.Renderer): void
+    /**
+     * Gets the baseline renderer associated with a y-axis.
+     *
+     * Since a y-axis can only have one baseline associated with it, this function searches the
+     * renderers property of the axis, checking for the first renderer that matches an entry in
+     * CIQ.ChartEngine#baselineHelper.
+     *
+     * @param yAxis The y-axis whose list of renderers is checked for a
+     * 		baseline renderer.
+     * @return The y-axis renderer that renders a baseline or, if a baseline
+     * 		renderer is not associated with the y-axis, null.
+     *
+     * @since 8.2.0
+     */
+    public getYAxisBaselineRenderer(yAxis: CIQ.ChartEngine.YAxis): CIQ.Renderer|null
+    /**
+     * Gets the baseline object for a y-axis associated with a baseline.
+     *
+     * A y-axis can be associated with only one baseline; and so, can have only one baseline renderer
+     * and one baseline object.
+     *
+     * @param yAxis A y-axis associated with a baseline.
+     * @returns The baseline object of the y-axis baseline renderer if the y-axis has a
+     * 		baseline renderer and the baseline parameter of the renderer is an object; otherwise,
+     * 		the default chart baseline object, CIQ.ChartEngine.Chart#baseline.
+     *
+     * @since 8.2.0
+     *
+     * @see CIQ.ChartEngine#getYAxisBaselineRenderer
+     */
+    public getYAxisBaseline(yAxis: CIQ.ChartEngine.YAxis): object
+    /**
      * Returns the absolute screen position given a Y pixel on the canvas
      * @param  y Y pixel on the canvas
      * @return	  Absolute Y screen position
@@ -3089,10 +3802,14 @@ export namespace CIQ {
       tickSource?: string
     ): number
     /**
-     * Returns the X pixel give the location of a bar (dataSegment) on the chart.
-     * @param  bar The bar (position on the chart which is also the position in the dataSegment)
-     * @param [chart] Which chart to use. Defaults to this.chart.
-     * @return		The X pixel on the chart
+     * Returns the X pixel given the location of a bar (`dataSegment`) on the chart.
+     *
+     * @param bar The bar for which the X pixel is returned (position on the chart, which is
+     * 		also the position in the `dataSegment`).
+     * @param [chart] The chart that contains the bar. Defaults to
+     * 		`this.chart`.
+     * @return The X pixel on the chart.
+     *
      */
     public pixelFromBar(bar: number, chart?: CIQ.ChartEngine.Chart): number
     /**
@@ -3107,21 +3824,29 @@ export namespace CIQ {
      */
     public barFromPixel(x: number, chart?: CIQ.ChartEngine.Chart): number
     /**
-     * Returns the position (array index) of the first **dataSet** element encountered given the X pixel.
+     * Returns the position (array index) of the first data set element (tick) that is plotted at a
+     * pixel's x-coordinate.
      *
-     * See CIQ.ChartEngine#barFromPixel if you wish to locate the dataSegment position.
+     * @param x X-coordinate of the pixel where the tick is represented on the chart.
+     * @param [chart=this.chart] The chart object that contains the data set.
+     * @return The tick (position in the data set) that is plotted at the x-coordinate of
+     * 		the pixel.
      *
-     * @param  x	  X pixel location
-     * @param  [chart] A chart object
-     * @return		  The tick (position in the dataSet)
+     *
+     * @see CIQ.ChartEngine#barFromPixel to locate the data segment position
      */
     public tickFromPixel(x: number, chart?: CIQ.ChartEngine.Chart): number
     /**
-     * Returns an X pixel for the given tick. The X pixel will be the center of the tick location.
-     * Note that the pixel may be off of the visual canvas and that it might overlap the Y axis.
-     * @param  tick  The tick (position in the dataSet array)
-     * @param  [chart] A chart object
-     * @return		  The X position in pixels (may be negative or may be greater than dataSet.length)
+     * Returns the x-coordinate (in pixels) at the location where a given tick is plotted. The
+     * x-coordinate is the center of the tick location.
+     *
+     * **Note:** The pixel x-coordinate can be off the visual canvas, and it can overlap the y-axis.
+     *
+     * @param tick A position in the data set array (tick).
+     * @param [chart=this.chart] The chart object that contains the data set.
+     * @return The x-coordinate in pixels of the plotted tick (can be negative or can be
+     * 		greater than `dataSet.length`).
+     *
      */
     public pixelFromTick(tick: number, chart?: CIQ.ChartEngine.Chart): number
     /**
@@ -3178,6 +3903,23 @@ export namespace CIQ {
      */
     public valueFromPixel(
       y: number,
+      panel?: CIQ.ChartEngine.Panel,
+      yAxis?: CIQ.ChartEngine.YAxis
+    ): number
+    /**
+     * Calculates the value (price) of a field in a dataSegment record based on linear interpolation of its neighboring records. Whether the chart is in linear or logarithmic scale is taken into the equation.
+     * @param bar	The bar position in the dataSegment
+     * @param fieldName	The field to search for in the dataSegment
+     * @param [subField]	The field to search for in a series within the dataSegment. Defaults to chart.defaultPlotField.
+     * @param	[panel]	The panel to look. Defaults to the chart.panel.
+     * @param	[yAxis]	The yAxis to use. Defaults to panel.yAxis.
+     * @return	The value or price;
+     * @since 6.2.5
+     */
+    public valueFromInterpolation(
+      bar: number,
+      fieldName: String,
+      subField?: String,
       panel?: CIQ.ChartEngine.Panel,
       yAxis?: CIQ.ChartEngine.YAxis
     ): number
@@ -3239,42 +3981,72 @@ export namespace CIQ {
     public adjustIfNecessary(panel: CIQ.ChartEngine.Panel, tick: number, value: number): number
     /**
      * INJECTABLE
-     * Positions the crosshairs at the last known mouse/finger pointer position. This ensures
-     * on touch devices that the crosshairs are at a known position. It is called by the DrawingToolbar.
+     *
+     * Positions the crosshairs at the last known mouse/finger pointer position, which ensures that
+     * the crosshairs are at a known position on touch devices.
+     *
+     * Called by the WebComponents.cq-toolbar (drawing toolbar) web component.
+     *
      */
     public positionCrosshairsAtPointer(): void
     /**
      * INJECTABLE
      *
-     * This is an internal method that makes the crosshair visible based on where the user's mouse pointer is located. It should not be called directly.
+     * Internal function that makes the crosshairs visible based on where the user's mouse pointer is
+     * located. This function should not be called directly.
      *
-     * - Crosshairs will only be made visible if enabled, unless a drawing tool is active;
-     * in which case they will be displayed automatically regardless of state.
-     * - When the user moves the mouse out of the chart, or over a modal, the crosshairs are automatically made invisible using CIQ.ChartEngine#undisplayCrosshairs
-     * - To temporarily hide/show an enabled crosshair for other reasons use CIQ.ChartEngine#showCrosshairs and CIQ.ChartEngine#hideCrosshairs
-     * 	 * - If at any point the z-index of the crosshair is higher than the subholder element, then it will register that at the time of the event target and will not register properly.
-     * @since 5.0.0 no longer allows the crosshair to be enabled if mouse pointer is outside the chart.
+     * Crosshairs are visible if enabled, unless a drawing tool is active, in which case they are
+     * displayed automatically regardless of state.
+     *
+     * **Note:** The "no tool" option (
+     * <a href="CIQ.ChartEngine.html#.currentVectorParameters%5B%60vectorType%60%5D">vectorType</a>
+     * `""`) counts as a drawing tool and disables crosshairs. Set
+     * <a href="CIQ.ChartEngine.html#.currentVectorParameters%5B%60vectorType%60%5D">vectorType</a> to
+     * `null` to disable drawing mode and enable default crosshairs behavior.
+     *
+     * When the user's mouse moves out of the chart or over a modal, the crosshairs are
+     * automatically made invisible using
+     * CIQ.ChartEngine#undisplayCrosshairs.
+     *
+     * To temporarily show or hide enabled crosshairs, use CIQ.ChartEngine#showCrosshairs
+     * and CIQ.ChartEngine#hideCrosshairs, respectively.
+     *
+     * **Note:** If the z-index of the crosshairs is set higher than the z-index of the subholder
+     * element, the crosshairs cannot be controlled by the chart engine.
+     *
+     * @since
+     * - 5.0.0 No longer allows the crosshairs to be enabled if the mouse pointer is outside the chart.
+     * - 8.3.0 The
+     * 		<a href="CIQ.ChartEngine.html#.currentVectorParameters%5B%60vectorType%60%5D">vectorType</a>
+     * 		 `""` (no tool) disables crosshairs. To disable drawing mode, set
+     * 		<a href="CIQ.ChartEngine.html#.currentVectorParameters%5B%60vectorType%60%5D">vectorType</a>
+     * 		to `null`.
      */
     public doDisplayCrosshairs(): void
     /**
      * INJECTABLE
      *
-     * This is an internal method that makes the crosshairs invisible when the user mouses out of the chart or over a chart control.
-     * It should not be called drectly.
+     * Internal function that makes the crosshairs invisible when the user mouses out of the chart or
+     * over a chart control. This function should not be called directly.
      *
      * See CIQ.ChartEngine#doDisplayCrosshairs for more details.
      *
      */
     public undisplayCrosshairs(): void
     /**
-     * Use this method to temporarily hide an enabled crosshair.
-     * Usually as part of a custom drawing or overlay to prevent the crosshair to display together with the custom rendering.
+     * Hides enabled crosshairs.
      *
-     * See <a href="CIQ.ChartEngine.html#layout%5B%60crosshair%60%5D">CIQ.ChartEngine.layout.crosshair</a> to enable/disable the crosshair.
+     * Usually called as part of a custom drawing or overlay to prevent the crosshairs from displaying
+     * together with the custom rendering.
+     *
+     * See <a href="CIQ.ChartEngine.html#layout%5B%60crosshair%60%5D">CIQ.ChartEngine.layout[\`crosshair\`]</a>
+     * to enable/disable the crosshairs.
+     *
      */
     public hideCrosshairs(): void
     /**
-     * Re-displays a crosshair temporarily hidden by CIQ.ChartEngine#hideCrosshairs
+     * Re-displays crosshairs hidden by CIQ.ChartEngine#hideCrosshairs.
+     *
      */
     public showCrosshairs(): void
     /**
@@ -3388,6 +4160,7 @@ export namespace CIQ {
     /**
      * INJECTABLE
      * <span class="animation">Animation Loop</span>
+     *
      * Creates the dataSegment. The dataSegment is a copy of the portion of the dataSet that is observable in the
      * current chart. That is, the dataSegment is a "view" into the dataSet. chart.scroll and chart.maxTicks are the
      * primary drivers for this method.
@@ -3521,12 +4294,12 @@ export namespace CIQ {
      * ```
      * These dates will be in the same time zone you sent them in. So they will match your quote feed.
      *
-     * For more details on how time zones work in the chart see the {@tutorial Dates and Timezones} tutorial.
+     * For more details on how time zones work in the chart see the [Dates, Times, and Time Zones]{@tutorial Dates and Time Zones} tutorial.
      *
      * **See CIQ.timeZoneMap to review a list of all chatIQ supported timezones and instructions on how to add more!**
      *
-     * @param dataZone	   A chatIQ supported timezone. This should represent the time zone that the master data comes from, or set to 'null' if your dates are already time zone aware.
-     * @param displayZone A chatIQ supported timezone. This should represent the time zone that the user wishes displayed, or set to null to use the browser time zone.
+     * @param dataZone A ChartIQ supported time zone. This should represent the time zone that the master data comes from, or set to 'null' if your dates are already time zone aware.
+     * @param displayZone A ChartIQ supported time zone. This should represent the time zone that the user wishes displayed, or set to null to use the browser time zone.
      * @since 5.2 Also used to convert daily, weekly and monthly periodicities.
      * @example
      * //The raw data received the chart is in Greenwich Mean Time, but we want to display in Amsterdam time.
@@ -3537,6 +4310,7 @@ export namespace CIQ {
     public setTimeZone(dataZone: string, displayZone: string): void
     /**
      * INJECTABLE
+     *
      * Use this method to add new `OHLC` bars to the end of the chart, insert new bars into the middle of the chart, replace existing bars, delete bars, or stream individual `LAST SALE` data tick by tick as they are received from a streaming feed.
      *
      * **The following rules apply when adding or updating full [`OHLC`]{@tutorial InputDataFormat} bars:**
@@ -3749,6 +4523,7 @@ export namespace CIQ {
     ): void
     /**
      * INJECTABLE
+     *
      * Loads or updates detailed current market information, such as L2 data, into the [chart.currentMarketData]CIQ.ChartEngine.Chart#currentMarketData object
      * or an equally laid out object for a secondary series (symbol), if one provided.
      *
@@ -3831,6 +4606,7 @@ export namespace CIQ {
     ): void
     /**
      * INJECTABLE
+     *
      * Clears the [chart.currentMarketData]CIQ.ChartEngine.Chart#currentMarketData object or the one linked to a secondary series, if one provided.
      * @param  chart The chart to clear. If omitted, will clear all charts.
      * @param symbol Symbol to clear this symbol's secondary series information
@@ -3881,33 +4657,41 @@ export namespace CIQ {
     /**
      * Registers a listener for a chart event in the chart engine instance.
      *
-     * Events are tracked in the `CIQ.ChartEngine.callbackListeners` object; which is READ ONLY, and should never be manually altered.
+     * Events are tracked in the `CIQ.ChartEngine.callbackListeners` object, which is READ ONLY and
+     * should never be manually altered.
      *
-     * Valid listeners:
-     *   - `*`: Passing in this value will register the listener to every event type below.
-     *   - `doubleTap`: doubleTapEventListener
-     *   - `doubleClick`: doubleClickEventListener
-     *   - `drawing`: drawingEventListener
-     *   - `drawingEdit`: drawingEditEventListener
-     *   - `layout`: layoutEventListener
-     *   - `longhold`: longholdEventListener
-     *   - `move`: moveEventListener
-     *   - `newChart`: newChartEventListener
-     *   - `periodicity`: periodicityEventListener
-     *   - `preferences`: preferencesEventListener
-     *   - `rightClick`: rightClickEventListener
-     *   - `scroll`: scrollEventListener
-     *   - `studyOverlayEdit`: studyOverlayEditEventListener
-     *   - `studyPanelEdit`: studyPanelEditEventListener
-     *   - `symbolChange`: symbolChangeEventListener
-     *   - `symbolImport`: symbolImportEventListener
-     *   - `tap`: tapEventListener
-     *   - `theme`: themeEventListener
-     *   - `undoStamp`: undoStampEventListener
-     * @param type The event to listen for.
-     *		(See the description above for valid options.)
-     * @param callback The listener to call when the event is triggered.
-     * @return An object containing the `type` and `cb`. It can be passed to CIQ.ChartEngine#removeEventListener later to remove the event.
+     * Valid event types and listeners:
+     *   - `*`: Passing in this value registers the listener to every event type below.
+     *   - `doubleTap`: [doubleTapEventListener]CIQ.ChartEngine~doubleTapEventListener
+     *   - `doubleClick`: [doubleClickEventListener]CIQ.ChartEngine~doubleClickEventListener
+     *   - `drawing`: [drawingEventListener]CIQ.ChartEngine~drawingEventListener
+     *   - `drawingEdit`: [drawingEditEventListener]CIQ.ChartEngine~drawingEditEventListener
+     *   - `floatingWindow`: [floatingWindowEventListener]CIQ.ChartEngine~floatingWindowEventListener
+     *   - `layout`: [layoutEventListener]CIQ.ChartEngine~layoutEventListener
+     *   - `longhold`: [longholdEventListener]CIQ.ChartEngine~longholdEventListener
+     *   - `move`: [moveEventListener]CIQ.ChartEngine~moveEventListener
+     *   - `newChart`: [newChartEventListener]CIQ.ChartEngine~newChartEventListener
+     *   - `notification`: [notificationEventListener]CIQ.ChartEngine~notificationEventListener
+     *   - `periodicity`: [periodicityEventListener]CIQ.ChartEngine~periodicityEventListener
+     *   - `preferences`: [preferencesEventListener]CIQ.ChartEngine~preferencesEventListener
+     *   - `rightClick`: [rightClickEventListener]CIQ.ChartEngine~rightClickEventListener
+     *   - `scroll`: [scrollEventListener]CIQ.ChartEngine~scrollEventListener
+     *   - `studyOverlayEdit`: [studyOverlayEditEventListener]CIQ.ChartEngine~studyOverlayEditEventListener
+     *   - `studyPanelEdit`: [studyPanelEditEventListener]CIQ.ChartEngine~studyPanelEditEventListener
+     *   - `symbolChange`: [symbolChangeEventListener]CIQ.ChartEngine~symbolChangeEventListener
+     *   - `symbolImport`: [symbolImportEventListener]CIQ.ChartEngine~symbolImportEventListener
+     *   - `tap`: [tapEventListener]CIQ.ChartEngine~tapEventListener
+     *   - `theme`: [themeEventListener]CIQ.ChartEngine~themeEventListener
+     *   - `undoStamp`: [undoStampEventListener]CIQ.ChartEngine~undoStampEventListener
+     *
+     * @param type One or more event types to listen for. See the description above
+     * 		for valid types.
+     * @param callback The listener to call when the event or events specified by `type`
+     * 		are triggered. Accepts an object argument containing properties specified in the event
+     * 		listener definition.
+     * @return An object containing `type` and `callback`. The object can be passed to
+     * 		CIQ.ChartEngine#removeEventListener to remove the listener.
+     *
      * @since
      * - 04-2016-08
      * - 4.0.0 Added "doubleTap".
@@ -3915,42 +4699,52 @@ export namespace CIQ {
      * - 6.3.0 Added "scroll".
      * - 7.0.0 Added "preferences" and "drawingEdit".
      * - 8.1.0 Added "periodicity".
-     * @example
-     * stxx.longHoldTime=... // Optionally override default value of 700ms
-     * stxx.addEventListener("longhold", function(lhObject){
-     * 	CIQ.alert('longhold event at x: ' + lhObject.x + ' y: '+ lhObject.y);
-     * });
-     * @example <caption> Will trigger and provide location and details when clicking on a series:</caption>
-     * stxx.addEventListener("tap", function(tapObject){
-     *     if( this.anyHighlighted ) {
-     * 		for(var n in this.chart.seriesRenderers){
-     * 			var r=this.chart.seriesRenderers[n];
-     * 			for(var j=0;j<r.seriesParams.length;j++){
-     * 				series=r.seriesParams[j];
-     * 				if( series.highlight ) {
-     * 				    var bar = this.barFromPixel(tapObject.x);
-     * 				    if(this.chart.dataSegment[bar]) {
-     * 						// replace console.log with your required logic as needed.
-     * 						console.log('Tap event at pixel x: ' + tapObject.x + ' y: '+ tapObject.y);
-     * 						console.log('Price:', this.priceFromPixel(tapObject.y), ' Date: ', this.chart.dataSegment[bar].DT);
-     * 						console.log('Series Details: ',JSON.stringify(series));
-     * 				    }
-     * 				}
-     * 			}
-     * 		}
-     *     }
+     * - 8.2.0 Added "notification" and "floatingWindow".
+     *
+     * @example <caption>Add a "longhold" event listener.</caption>
+     * stxx.longHoldTime = ... // Optionally override default value of 700ms.
+     * stxx.addEventListener("longhold", function(lhObject) {
+     *     CIQ.alert("longhold event at x: " + lhObject.x + " y: " + lhObject.y);
      * });
      *
+     * @example <caption>Add a "tap" listener that provides location and details when a series is clicked or tapped.</caption>
+     * stxx.addEventListener("tap", function(tapObject){
+     *     if (this.anyHighlighted) {
+     *         for (let n in this.chart.seriesRenderers) {
+     *             let r = this.chart.seriesRenderers[n];
+     *             for (let j = 0; j < r.seriesParams.length; j++) {
+     *                 series = r.seriesParams[j];
+     *                 if (series.highlight) {
+     *                     let bar = this.barFromPixel(tapObject.x);
+     *                     if (this.chart.dataSegment[bar]) {
+     *                         // Replace console.log with your required logic as needed.
+     *                         console.log("Tap event at pixel x: " + tapObject.x + " y: " + tapObject.y);
+     *                         console.log("Price:", this.priceFromPixel(tapObject.y), " Date: ", this.chart.dataSegment[bar].DT);
+     *                         console.log("Series Details: ", JSON.stringify(series));
+     *                     }
+     *                 }
+     *             }
+     *         }
+     *     }
+     * });
      */
     public addEventListener(type: string|string[], callback: Function): object
     /**
-     * Remove a listener for an emitted chart event.
-     * Events are tracked in the CIQ.ChartEngine.callbackListeners object.
-     * @param obj Object from CIQ.ChartEngine#addEventListener
-     * @param obj.type Type of callback to remove. See CIQ.ChartEngine#addEventListener for valid types.
-     * @param obj.cb Callback to be removed.
-     * @param [cb] Callback to be removed.
-     * 		Optional if you pass in as a property of first argument. Parameter is preset to have consistent signature with CIQ.ChartEngine#addEventListener.
+     * Removes a listener for a chart event type.
+     *
+     * If the event type is "*", listeners for all event types are removed. See
+     * CIQ.ChartEngine#addEventListener for valid event types.
+     *
+     * Events are tracked in the `CIQ.ChartEngine.callbackListeners` object.
+     *
+     * @param obj The object returned from adding the listener (see
+     * 		CIQ.ChartEngine#addEventListener) or a string that identifies the type of event.
+     * 		<p>**Note:** If this parameter is a string, the optional `cb` parameter is required.
+     * @param obj.type The type of event.
+     * @param obj.cb The listener to be removed.
+     * @param [cb] The listener to be removed. Required if the `obj` parameter is an
+     * 		string, unused otherwise.
+     *
      * @since 04-2016-08
      */
     public removeEventListener(obj: {type: string, cb: Function}, cb?: Function): void
@@ -4036,6 +4830,19 @@ export namespace CIQ {
      * See {@tutorial Chart Styles and Types} for more details.
      */
     public setChartType(chartType: string): void
+    /**
+     * INJECTABLE
+     * <span class="animation">Animation Loop</span>
+     *
+     * Sets the chart y-axis to linear scale if:
+     * - the y-axis is currently set to log scale and
+     * - the chart data set contains a value less than or equal to zero.
+     *
+     * @return true if log scale has been deactivated; otherwise false.
+     *
+     * @since 8.2.0
+     */
+    public checkLogScale(): boolean
     /**
      * Sets the charts to adjusted values rather than standard values. Adjusted values are calculated outside of the chart engine (and may be splits, dividends or both).
      * When charts are using adjusted values, a computed ratio for each tick is used for price to pixel calculations which keeps drawings accurate
@@ -4224,6 +5031,7 @@ export namespace CIQ {
     /**
      * INJECTABLE
      * <span class="animation">Animation Loop</span>
+     *
      * This method ensures that the chart is not scrolled off of either of the vertical edges.
      * See CIQ.ChartEngine#minimumLeftBars, CIQ.ChartEngine.Chart#allowScrollPast, and CIQ.ChartEngine.Chart#allowScrollFuture for adjustments to defaults.
      * @param  theChart The chart to check
@@ -4290,6 +5098,7 @@ export namespace CIQ {
     public constrainCandleWidth(candleWidth: number): number
     /**
      * INJECTABLE
+     *
      * Resizes the chart and adjusts the panels. The chart is resized to the size of the container div by calling
      * CIQ.ChartEngine#resizeCanvas. This method is called automatically if a screen resize event occurs. The charting
      * engine also attempts to detect size changes whenever the mouse is moved. Ideally, if you know the chart is being
@@ -4337,6 +5146,7 @@ export namespace CIQ {
     public setMaxTicks(ticks: number, params?: {padding: number}): void
     /**
      * INJECTABLE
+     *
      * This method initializes the chart container events, such as window `resize` events,
      * and the [resizeTimer]CIQ.ChartEngine#setResizeTimer to ensure the chart adjusts as its container size changes.
      * It also initializes various internal variables, the canvas and creates the chart panel.
@@ -4493,6 +5303,7 @@ export namespace CIQ {
     ): boolean
     /**
      * INJECTABLE
+     *
      * Closes the panel opened with CIQ.ChartEngine#createPanel.
      * This is called when a chart panel is closed manually or programmatically.
      * For example, after removing a study panel with the CIQ.Studies.removeStudy function, or when a user clicks on the "X" for a panel.
@@ -4532,6 +5343,7 @@ export namespace CIQ {
     public isPanelAboveChart(panel: CIQ.ChartEngine.Panel): boolean
     /**
      * INJECTABLE
+     *
      * Adjusts the positions of all of the panels. Ensures that panel percentages add up to 100%. Sets the panel top and bottom
      * based on the percentages. Also sets the icon template icons appropriately for each panel's position. And adjusts
      * any drawings. Finally it makes some calculations that are used by the y-axis.
@@ -4539,6 +5351,7 @@ export namespace CIQ {
     public adjustPanelPositions(): void
     /**
      * INJECTABLE
+     *
      * Creates a new panel and makes room for it by squeezing all the existing panels.
      * To remove a panel, manually call CIQ.ChartEngine#panelClose.
      *
@@ -4609,6 +5422,7 @@ export namespace CIQ {
     ): string
     /**
      * INJECTABLE
+     *
      * Adds a panel with a prespecified percentage. This should be called iteratively when rebuilding a set
      * of panels from a previous layout. Use CIQ.ChartEngine#createPanel when creating a new panel for an existing chart layout.
      * @param  display	  The display name for the panel
@@ -4628,12 +5442,14 @@ export namespace CIQ {
     /**
      * INJECTABLE
      * <span class="animation">Animation Loop</span>
+     *
      * Draws the panels for the chart and chart studies. CSS style stx_panel_border can be modified to change the color
      * or width of the panel dividers.
      */
     public drawPanels(): void
     /**
      * INJECTABLE
+     *
      * Sets the data granularity (periodicity) and displays the resulting chart.
      *
      * Dispatches a "periodicity" event.
@@ -4720,7 +5536,8 @@ export namespace CIQ {
      * - 3.0.0 Replaces CIQ.ChartEngine#setPeriodicityV2.
      * - 4.0.0 Now uses CIQ.ChartEngine#needDifferentData to determine if new data should be fetched.
      * - 6.3.0 Now only homes chart if new data was fetched.
-     * - 8.1.0 Dispatches a "periodicity" event. See also periodicityEventListener.
+     * - 8.1.0 Dispatches a "periodicity" event. See also
+     * 		[periodicityEventListener]CIQ.ChartEngine~periodicityEventListener.
      */
     public setPeriodicity(
       params: {
@@ -4823,48 +5640,63 @@ export namespace CIQ {
     /**
      * INJECTABLE
      * <span class="animation">Animation Loop</span>
+     *
      * This is the main rendering function in the animation loop. It draws the chart including panels, axis, and drawings.
      * This method is called continually as a user pans or zooms the chart.
      * This would be a typical place to put an injection to add behavior to the chart after a drawing operation is complete.
      */
     public draw(): void
     /**
-     * Adds a series renderer to the chart, or updates it. A series renderer manages a group of series
-     * that are rendered on the chart in the same manner. For instance, several series which are part
-     * of the same stacked histogram.
+     * Adds a series renderer to the chart. A series renderer manages a group of series that are
+     * rendered on the chart in the same manner. For instance, several series which are part of the
+     * same stacked histogram:
      *
-     * <iframe width="100%" height="500" scrolling="no" seamless="seamless" align="top" style="float:top" src="https://jsfiddle.net/chartiq/rb423n71/embedded/result,js,html/" allowfullscreen="allowfullscreen" frameborder="1"></iframe>
+     * <iframe width="100%" height="500" scrolling="no" seamless="seamless" align="top"
+     *     style="float:top"
+     *     src="https://jsfiddle.net/chartiq/rb423n71/embedded/result,js,html/"
+     *     allowfullscreen="allowfullscreen" frameborder="1">
+     * </iframe>
      *
      * You must manage the persistency of a renderer and remove individual series
      * (CIQ.Renderer#removeSeries), remove all series (CIQ.Renderer#removeAllSeries),
      * or even delete the renderer (CIQ.ChartEngine#removeSeriesRenderer) as needed by your
-     * application
+     * application.
      *
-     * **Note:** Once a renderer is set for a chart, it remains loaded with all its series definitions
+     * **Note:** Once a renderer is set for a chart, it remains loaded with its series definitions
      * and y-axis (if one is used) even if a new symbol is loaded. Calling `setSeriesRenderer` again
-     * with the same renderer name, just returns the previously created renderer. **Be careful not to
-     * send a different y-axis object unless you have deleted the previous one by completely removing
-     * all of its associated series (see CIQ.Renderer#removeAllSeries).** Failure to do this
-     * will cause multiple axes to be displayed, causing the original one to become orphaned.
+     * with the same renderer name just returns the previously created renderer. **Be careful not to
+     * send a different y&#8209;axis object unless you have deleted the previous one by completely
+     * removing all of its associated series** (see CIQ.Renderer#removeAllSeries). Failure to
+     * do this will cause multiple axes to be displayed, causing the original one to become orphaned.
      *
-     * See CIQ.Renderer
-     * See CIQ.ChartEngine#removeSeriesRenderer for release functionality.
-     * See CIQ.ChartEngine#addSeries for additional implementation examples.
-     *
-     * @param renderer The renderer to be set.
-     * @returns The renderer set by this method.
+     * @param renderer The series renderer to add to the chart.
+     * @return The renderer added to the chart by this function or, if the chart
+     * 		already has a renderer of the same name, a reference to that renderer.
      *
      * @since 07/01/2015
      *
+     * @see CIQ.Renderer
+     * @see CIQ.ChartEngine#removeSeriesRenderer for release functionality
+     * @see CIQ.ChartEngine#addSeries for additional implementation examples
+     *
      * @example
-     *	// Group the series together and select "line" as the rendering type to display the series.
-     *	var mdataRenderer=stxx.setSeriesRenderer(new CIQ.Renderer.Lines(
-     *          {params:{name:"My Line Series", type:"line", width:4, callback:mdataLegend}}
-     *      .removeAllSeries()
-     *      .attachSeries(symbol1,{color:"red",permanent:true})
-     *      .attachSeries(symbol2,"blue")
-     *      .attachSeries(symbol3,"yellow")
-     *      .ready()
+     * // Group the series together and select "line" as the rendering type to display the series.
+     * const mdataRenderer = stxx
+     *     .setSeriesRenderer(
+     *         new CIQ.Renderer.Lines({
+     *             params: {
+     *                 name: "My Line Series",
+     *                 type: "line",
+     *                 width: 4,
+     *                 callback: mdataLegend
+     *             }
+     *          })
+     *     )
+     *     .removeAllSeries()
+     *     .attachSeries(symbol1, { color: "red", permanent: true })
+     *     .attachSeries(symbol2, "blue")
+     *     .attachSeries(symbol3, "yellow")
+     *     .ready()
      */
     public setSeriesRenderer(renderer: CIQ.Renderer): CIQ.Renderer
     /**
@@ -4906,25 +5738,48 @@ export namespace CIQ {
      */
     public endClip(): void
     /**
-     * Sets the line style for the main chart.  Works for Lines renderer only.
-     * @param  [obj]	Parameter object
-     * @param [obj.color] A color on the canvas palette to use for line plot. Alternatively, obj may be set to the color string directly if no other parameters are needed.  This is ignored for a mountain chart.
-     * @param [obj.pattern] Pattern to use as alternative to solid line for line plot, in array format, e.g. [1,2,3,2] or string format, e.g. "solid", "dashed", "dotted"
-     * @param [obj.width] Width of the line plot
-     * @param  [target=this.chart] Target to attach line style to.  Supported objects are CIQ.ChartEngine.Chart or CIQ.Studies.StudyDescriptor instances
-     * @since 4.0.0
-     * @example
-     *   stxx.setLineStyle({color:"rgb(127,127,127)",pattern:"dashed",width:3});
-     * @example
-     *   stxx.setLineStyle("blue");
+     * Sets the line style for the main chart.
+     *
+     * Applies to the CIQ.Renderer.Lines renderer only.
+     *
+     * @param [obj] Parameters object or color string (see `obj.color`).
+     * @param [obj.color] A color to use for the line plot. Must be an RGB, RGBA, or three-
+     * 		or six&#8209;digit hexadecimal color number or
+     * 		<a href="https://developer.mozilla.org/en-US/docs/Web/CSS/color_value" target="_blank">
+     * 		CSS color keyword</a>; for example, "rgb(0, 255, 0)", "rgba(0, 255, 0, 0.5)",
+     * 		"#0f0", "#00FF00", or "lime". Alternatively, `obj` can be set to a color string directly
+     * 		if no other parameters are needed.
+     * @param [obj.pattern] Pattern to use as an alternative to a solid line for the
+     * 		line plot. Valid string values are "solid", "dotted" and "dashed". Arrays specify the
+     * 		sequence of drawn pixels and blank pixels as alternating elements starting at index 0; for
+     * 		example, [1, 2, 3, 2] specifies a line containing one drawn pixel followed by two blank
+     * 		pixels followed by three drawn pixels followed by two more blank pixels, then the pattern
+     * 		repeats.
+     * @param [obj.width] Width of the line plot.
+     * @param [obj.baseColor] Color to use for the base of a mountain chart. Must be an RGB,
+     * 		RGBA, or three- or six&#8209;digit hexadecimal color number or CSS color keyword (see
+     * 		`obj.color`).
+     * @param [target=this.chart] Target to which
+     * 		the line style is attached.
+     *
+     * @since
+     * - 4.0.0
+     * - 8.2.0 Added `obj.baseColor` parameter.
+     *
+     * @example <caption>Set the line color, pattern, and width.</caption>
+     * stxx.setLineStyle({ color: "rgb(127, 127, 127)", pattern: "dashed", width: 3 });
+     *
+     * @example <caption>Set the line color using a color keyword.</caption>
+     * stxx.setLineStyle("blue");
      */
     public setLineStyle(
       obj?: {
         color?: string,
-        pattern?: any[],
-        width?: number
+        pattern?: number[]|string,
+        width?: number,
+        baseColor?: string
       },
-      target?: object
+      target?: CIQ.ChartEngine.Chart|CIQ.Studies.StudyDescriptor
     ): void
     /**
      * Sets the style for 'gap-filling'.
@@ -4984,6 +5839,7 @@ export namespace CIQ {
     ): void
     /**
      * Animation Loop
+     *
      * Draws a single frame of a line chart.
      *
      * This method should rarely if ever be called directly.
@@ -5043,6 +5899,7 @@ export namespace CIQ {
     ): object
     /**
      * Animation Loop
+     *
      * Draws a channel chart, shading the areas between a high and the close and between a low and the close.
      *
      * The high, low, and close can be redefined to other fields within the parameters.
@@ -5232,6 +6089,7 @@ export namespace CIQ {
     /**
      * INJECTABLE
      * <span class="animation">Animation Loop</span>
+     *
      * Displays the chart by calling the appropriate rendering functions based on the <a href="CIQ.ChartEngine.html#layout%5B%60chartType%60%5D">CIQ.ChartEngine.layout.chartType</a>.
      *
      * @param  chart The chart to render
@@ -5349,6 +6207,7 @@ export namespace CIQ {
     public getCanvasColor(className: string): string
     /**
      * Animation Loop
+     *
      * Determines the default color for lines and studies drawn on the screen. This is black unless
      * the background color of the chart has a "value" greater than 65%.
      * The result is that this.defaultColor contains the default color.
@@ -5357,6 +6216,7 @@ export namespace CIQ {
     /**
      * INJECTABLE
      * <span class="animation">Animation Loop</span>
+     *
      * Call this method to create the X axis (date axis). Uses CIQ.ChartEngine#createTickXAxisWithDates.
      *
      * Use css styles `stx_xaxis` to control colors and fonts for the dates.
@@ -5438,25 +6298,54 @@ export namespace CIQ {
      */
     public flipChart(flip: boolean): void
     /**
-     * Calculates and sets the value of zoom and scroll for y-axis based on yAxis.initialMarginTop and yAxis.initialMarginBottom.
-     * This method will automatically translate those into starting scroll and zoom factors.
-     * If the combined initial values are greater than the y-axis height, then both zoom and scroll will be reset to 0;
-     * @param yAxis The yAxis to reset
-     * @since 7.0.0 Takes into account new field `yAxis.heightFactor`.
+     * Calculates and sets the value of zoom and scroll for a y-axis based on
+     * `yAxis`.[initialMarginTop]CIQ.ChartEngine.YAxis#initialMarginTop
+     * and `yAxis`.[initialMarginBottom]CIQ.ChartEngine.YAxis#initialMarginBottom. This method
+     * automatically translates those values into starting scroll and zoom factors.
+     *
+     * If the combined initial values are greater than the y-axis height, then both zoom and scroll are
+     * reset to 0.
+     *
+     * When modifying a y-axis margin after the axis has been rendered, call this function followed by
+     * CIQ.ChartEngine#draw to activate the change.
+     *
+     * @param yAxis The y-axis to reset.
+     *
+     * @since 7.0.0 Takes into account new field
+     * 		`yAxis`.[heightFactor]CIQ.ChartEngine.YAxis#heightFactor.
      */
     public calculateYAxisMargins(yAxis: CIQ.ChartEngine.YAxis): void
     /**
      * INJECTABLE
-     * Resets the YAxis width to the set default (CIQ.ChartEngine.YAxis#width).
-     * Called internally whenever the YAxis label width might change. It can also be called programmatically at any time if the default behavior needs to be altered.
      *
-     * @param [params]
-     * @param [params.noRecalculate=false] when true CIQ.ChartEngine#calculateYAxisPositions will never be called
-     * @param [params.chartName] only reset dynamic values for YAxis of the given chart.
-     * @see CIQ.ChartEngine.Chart#dynamicYAxis the flag to enable this feature.
+     * Resets the y-axis width to the default, CIQ.ChartEngine.YAxis#width.
+     *
+     * Called internally whenever the y-axis label width might change. This function can also be
+     * called programmatically at any time if the default behavior needs to be altered.
+     *
+     * @param [params] Function parameters.
+     * @param [params.noRecalculate=false] When true,
+     * 		CIQ.ChartEngine#calculateYAxisPositions will never be called.
+     * @param [params.chartName] Identifies the chart for which the y-axis dynamic width is
+     * 		reset.
+     *
+     * @see CIQ.ChartEngine.Chart#dynamicYAxis, the flag that enables this feature.
      * @since 6.0.0
      */
     public resetDynamicYAxis(params?: {noRecalculate?: boolean, chartName?: string}): void
+    /**
+     * Sets the breakpoint on the chart engine. Resets any dynamic y-axis expansion (see
+     * CIQ.ChartEngine.Chart#dynamicYAxis) and returns the y-axis width to
+     * CIQ.ChartEngine.YAxis#width or CIQ.ChartEngine.YAxis#smallScreenWidth,
+     * depending on the breakpoint. Also clears all canvas styles so any CSS-derived values that are
+     * cached for performance are recalculated.
+     *
+     * @param [breakpoint] The breakpoint to set; must be "break-sm", "break-md", or
+     * "break-lg".
+     *
+     * @since 8.2.0
+     */
+    public notifyBreakpoint(breakpoint?: string): void
     /**
      * INJECTABLE
      * <span class="animation">Animation Loop</span>
@@ -5508,6 +6397,40 @@ export namespace CIQ {
       yAxis?: CIQ.ChartEngine.YAxis,
       internationalize?: boolean
     ): number
+    /**
+     * Calculates the range for the y-axis and sets appropriate member variables.
+     *
+     * The default behavior is to stop vertical scrolling when only 1/5 of the chart remains on
+     * screen, so the primary chart never completely scrolls off the screen — unless you start
+     * zooming the y-axis by grabbing it and pulling it down. Once the zoom level goes into the
+     * negative range (meaning that you are shrinking the chart vertically) the vertical panning
+     * limitation goes away.
+     *
+     * This method should seldom if ever be called directly. But you can override this behavior (so
+     * that a chart is always allowed to completely scroll off the screen at any zoom level) with
+     * the following code:
+     * ```
+     * stxx.originalcalculateYAxisRange = stxx.calculateYAxisRange;
+     * CIQ.ChartEngine.prototype.calculateYAxisRange = function(panel, yAxis, low, high) {
+     *     var beforeScroll = this.chart.yAxis.scroll;
+     *     this.originalcalculateYAxisRange(panel, yAxis, low, high);
+     *     this.chart.yAxis.scroll = beforeScroll;
+     * };
+     * ```
+     *
+     * @param panel The panel containing the y-axis.
+     * @param yAxis The y-axis for which the range is calculated.
+     * @param [low] The low value for the axis.
+     * @param [high] The high value for the axis.
+     *
+     * @since 5.2.0 When the y-axis is zoomed in, there is no limitation on vertical panning.
+     */
+    public calculateYAxisRange(
+      panel: CIQ.ChartEngine.Panel,
+      yAxis: CIQ.ChartEngine.YAxis,
+      low?: number,
+      high?: number
+    ): void
     /**
      * INJECTABLE
      * <span class="animation">Animation Loop</span>
@@ -5573,6 +6496,7 @@ export namespace CIQ {
     /**
      * INJECTABLE
      * <span class="animation">Animation Loop</span>
+     *
      * Draws a label for the last price <b>in the main chart panel's y-axis</b> using CIQ.ChartEngine#createYAxisLabel
      *
      * It will also draw a horizontal price line if <a href="CIQ.ChartEngine.html#preferences%5B%60currentPriceLine%60%5D">CIQ.ChartEngine.preferences.currentPriceLine</a> is true.
@@ -5629,10 +6553,12 @@ export namespace CIQ {
       yAxis: CIQ.ChartEngine.YAxis
     ): CIQ.ChartEngine.YAxis
     /**
-     * This method calculates the left and width members of each y-axis.
+     * Calculates the width and left/right position of all y-axes.
      *
-     * When modifying a y-axis placement setting (width, margins, position left/right, etc) after the axis has been rendered, you will need to call
-     * CIQ.ChartEngine#calculateYAxisMargins or this function, followed by CIQ.ChartEngine#draw to activate the change.
+     * When modifying a y-axis width or left/right position setting after the axis has been rendered,
+     * call this function followed by CIQ.ChartEngine#draw to activate the change.
+     *
+     * @since 8.3.0 Adjusts the `candleWidth`, not the `maxTicks`, when the chart width changes.
      */
     public calculateYAxisPositions(): void
     /**
@@ -5664,6 +6590,7 @@ export namespace CIQ {
     public electNewYAxisOwner(yAxis: CIQ.ChartEngine.YAxis): string
     /**
      * INJECTABLE
+     *
      * Consolidates a quote array, aligning to the market iteration times. This is called by CIQ.ChartEngine#createDataSet to roll
      * up intervals (including week and month from daily data).
      * @param  quotes		The quote array to consolidate
@@ -5688,6 +6615,7 @@ export namespace CIQ {
     ): any[]
     /**
      * INJECTABLE
+     *
      * Rolls masterData into a dataSet. A dataSet is rolled according to periodicity. For instance, daily data can be rolled
      * into weekly or monthly data. A 1 minute data array could be rolled into a 7 minute dataSet.
      * This method also calls the calculation functions for all of the enabled studies. The paradigm is that calculations
@@ -5754,6 +6682,7 @@ export namespace CIQ {
     ): void
     /**
      * Animation Loop
+     *
      * Draws a single frame of a bar chart when no custom `colorFunction` is defined.
      *
      * It is highly tuned for performance.
@@ -5786,6 +6715,7 @@ export namespace CIQ {
     ): void
     /**
      * Animation Loop
+     *
      * Draws a line plot on the canvas. This function should not be called directly.
      *
      * This function is used by CIQ.ChartEngine#drawLineChart, CIQ.ChartEngine#drawMountainChart
@@ -5880,6 +6810,7 @@ export namespace CIQ {
     ): object
     /**
      * Animation Loop
+     *
      * Draws a single frame of a mountain chart.
      *
      * This method should rarely if ever be called directly.  Use CIQ.Renderer.Lines or CIQ.ChartEngine#setChartType instead.
@@ -5939,6 +6870,7 @@ export namespace CIQ {
     ): object
     /**
      * Animation Loop
+     *
      * Draws a single frame of a baseline chart.
      *
      * This method should rarely if ever be called directly.  Use CIQ.Renderer.Lines or CIQ.ChartEngine#setChartType instead.
@@ -6019,6 +6951,7 @@ export namespace CIQ {
     /**
      * INJECTABLE
      * <span class="animation">Animation Loop</span>
+     *
      * Draws the series renderers on the chart.
      *
      * The renderers are located in seriesRenderers. Each series in each seriesRenderer should
@@ -6031,6 +6964,7 @@ export namespace CIQ {
     /**
      * INJECTABLE
      * <span class="animation">Animation Loop</span>
+     *
      * Draws each series from the series renderer on the chart.
      *
      * Called by CIQ.ChartEngine#drawSeriesRenderers.
@@ -6054,6 +6988,7 @@ export namespace CIQ {
     /**
      * INJECTABLE
      * <span class="animation">Animation Loop</span>
+     *
      * Draws the x-axis. This assumes that the axisRepresentation has previously been calculated by CIQ.ChartEngine#createXAxis
      *
      * Use css styles `stx_xaxis` to control colors and fonts for the dates.
@@ -6096,6 +7031,7 @@ export namespace CIQ {
     /**
      * INJECTABLE
      * <span class="animation">Animation Loop</span>
+     *
      * Managing Decimal Places
      *
      * Call this method to create the data that will be displayed on the Y axis (price axis). It does not actually render the Y axis; this is done by CIQ.ChartEngine#drawYAxis
@@ -6450,8 +7386,8 @@ export namespace CIQ {
      *
      * Any parameters defined when attaching a series, such as colors, will supersede any defined when a series was created. This allows you to attach the same series to multiple renderers, each rendering displaying the same series data in a different color, for example.
      *
-     * @param  id      The name of the series.
-     * @param  parameters Settings to control color and opacity of <B>each</B> series in the group. See CIQ.ChartEngine#addSeries for implementation examples. <P>Argument format can be:<ul><li> a `string` containing the color</li><li> or a more granular `object` having the following members:</li></ul>
+     * @param  id The name of the series.
+     * @param  parameters Settings to control color and opacity of each series in the group. See CIQ.ChartEngine#addSeries for implementation examples. <P>Argument format can be:<ul><li> a `string` containing the color</li><li> or a more granular `object` having the following members:</li></ul>
      * @param  [parameters.field] The name of the field. Name of the field in the dataSet to use for the series.  If omitted, defaults to id
      * @param  [parameters.fill_color_up] Color to use to fill the part when the Close is higher than the previous (or 'transparent' to not display)
      * @param  [parameters.border_color_up] Color to use to draw the border when the Close is higher than the previous (or 'transparent' to not display)
@@ -6715,6 +7651,7 @@ export namespace CIQ {
 
   /**
    * Animation Loop
+   *
    * Clears the canvas. Uses the fastest known method except on the legacy Android browser which had many problems!
    * @param  canvas A valid HTML canvas object
    * @param  [stx]    A chart object, only necessary for old Android browsers on problematic devices
@@ -6980,23 +7917,51 @@ export namespace CIQ {
   function colorsEqual(color1: string, color2: string): boolean
 
   /**
-   * Converts an rgb or rgba color to a hex color
-   * @param 	color The rgb or rgba color, such as in CSS format
-   * @return	The hex color. If "transparent" or no color is sent in, #000000 will be assumed
+   * Converts an RGB or RGBA color or
+   * <a href="https://developer.mozilla.org/en-US/docs/Web/CSS/color_value" target="_blank"> CSS
+   * color keyword</a> to a six-digit hexadecimal color number.
+   *
+   * @param [color=#000000] The RGB or RGBA color or CSS color keyword.
+   * @return A six-digit hexadecimal color number. If the `color` parameter is not provided
+   * 		or has the value "transparent", "#000000" is returned.
+   *
+   * @since 4.0.0 Converts three-digit hexadecimal color numbers (#FFC) to six-digit numbers
+   * 		(#FFFFCC).
+   *
    * @example
-   * var hexColor=CIQ.colorToHex("rgba (255,255,255,0.3)");
-   * @since 4.0.0 Converts 3 char hex (#FFC) to six characters (#FFFFCC)
+   * console.log(CIQ.colorToHex("rgb(255, 255, 0)")); // #ffff00
+   * console.log(CIQ.colorToHex("rgba(255, 255, 0, 0.3)")); // #ffff00
+   * console.log(CIQ.colorToHex("#ff0")); // #ffff00
+   * console.log(CIQ.colorToHex("yellow")); // #ffff00
    */
-  function colorToHex(color: string): string
+  function colorToHex(color?: string): string
 
   /**
-   * Converts color to rgba. This does not accept literal color names such as "black"
-   * @param  color The hex rgb or rgba color, such as in CSS format
-   * @param  [opacity] The 'alpha' value. Defaults to full opacity (100%)
-   * @return       The rgba color
+   * Converts six-digit hexadecimal color numbers and RGB and RGBA color values to RGBA color values.
+   *
+   * @param color A six-digit hexadecimal color number or RGB or RGBA color value; for
+   * 		example, "#FF00FF", "#ff00ff", "rgb(255,0,255)", or "rgba(255,0,255,0.5)".
+   * 		<p>If the argument is an RGB or RGBA color, the RGB color values remain the same, but the
+   * 		opacity is set to `opacity`. If the `opacity` parameter is not provided, an RGB color is
+   * 		given the default opacity; an RGBA color is returned unchanged. See examples below.
+   * 		<p>**Note:** Three-digit hexadecimal color numbers and
+   * 		<a href="https://developer.mozilla.org/en-US/docs/Web/CSS/color_value" target="_blank">
+   * 		CSS color keywords</a> are not accepted.
+   * @param [opacity=1] The alpha value of the color. Values must be greater than or equal
+   * 		to 0. Values greater than 1 are divided by 100.
+   * @return An RGBA color value.
+   *
+   *
    * @example
-   * var rgba=CIQ.hexToRgba('rgb(0, 115, 186)');
-   * var rgba=CIQ.hexToRgba('#0073BA');
+   * console.log(CIQ.hexToRgba("#FF00FF")); // rgba(255,0,255,1)
+   * console.log(CIQ.hexToRgba("#FF00FF", 0.75)); // rgba(255,0,255,0.75)
+   * console.log(CIQ.hexToRgba("#FF00FF", 2)); // rgba(255,0,255,0.02)
+   * console.log(CIQ.hexToRgba("rgb(255,0,255)")); // rgba(255,0,255,1)
+   * console.log(CIQ.hexToRgba("rgb(255,0,255)", 0.75)); // rgba(255,0,255,0.75)
+   * console.log(CIQ.hexToRgba("rgba(255,0,255,0.5)", 0.75)); // rgba(255,0,255,0.75)
+   * console.log(CIQ.hexToRgba("rgba(255,0,255,0.5)")); // rgba(255,0,255,0.5)
+   * console.log(CIQ.hexToRgba("#F0F")); // CIQ.hexToRgba: invalid hex : F0F
+   * console.log(CIQ.hexToRgba("fuchsia")); // CIQ.hexToRgba: invalid hex : fuchsia
    */
   function hexToRgba(color: string, opacity?: number): string
 
@@ -7210,23 +8175,37 @@ export namespace CIQ {
   function timeAsDisplay(dt: Date, stx?: object, precision?: number): string
 
   /**
-   * Displays a date according to the current chart settings and periodicity. It will format the date according to the following order:
-   * 1. xAxis formatter
-   * 2. Internationalization
-   * 3. default
-   * 		a. Daily: mm-dd-yyyy
-   * 		b. Intraday: mm/dd hh:mm[:ss[:ms]]
+   * Creates a displayable date string according to the current chart settings and periodicity.
    *
-   * This method is used in CIQ.ChartEngine#headsUpHR to format the floating label over the x axis,
-   * and can be overwritten as needed to achieve the desired results.
+   * Formats the date using one of the following formatters or default format (in order of
+   * preference):
    *
-   * @param  stx	  The charting object
-   * @param  chart	The specific chart
-   * @param  dt 	JavaScript date
-   * @return		Formatted date
-   * @since 4.0.0
+   * 1. Chart x-axis formatter
+   * 2. Chart engine internationalizer
+   * 3. Default format
+   *    a. Daily — mm/dd/yyyy
+   *    b. Intraday — mm/dd hh:mm[:ss[:ms]]
+   *
+   * This method is used in CIQ.ChartEngine#headsUpHR to format the
+   * date label that floats over the x-axis. Overwrite this method as needed to achieve the desired
+   * date format.
+   *
+   * @param stx The charting object.
+   * @param chart	The chart to which the date applies.
+   * @param dt The date to format.
+   * @param [includeIntraYear] If true, include the year in the intraday dates.
+   * @return The formatted date.
+   *
+   * @since
+   * - 4.0.0
+   * - 8.2.0 Added the `includeIntraYear` parameter.
    */
-  function displayableDate(stx: CIQ.ChartEngine, chart: CIQ.ChartEngine.Chart, dt: Date): string
+  function displayableDate(
+    stx: CIQ.ChartEngine,
+    chart: CIQ.ChartEngine.Chart,
+    dt: Date,
+    includeIntraYear?: boolean
+  ): string
 
   /**
    * Converts a Date object from one time zone to another using the timezoneJS.Date library
@@ -7524,7 +8503,7 @@ export namespace CIQ {
   /**
    * Returns a guaranteed width and height. For instance, `cq-context` or any other wrapping tag can
    * have a width of zero; if so, we need to go up the ancestry tree parent by parent until a
-   * parent element provides an actual width.
+   * parent element provides an actual width and height.
    *
    * @param element The starting element for which the width and height are obtained.
    * @return Width and height of `element` as properties of the returned object.
@@ -7532,6 +8511,23 @@ export namespace CIQ {
    * @since 8.1.0
    */
   function guaranteedSize(element: Element): object
+
+  /**
+   * Determines the visibility of a DOM element based on the following CSS properties:
+   * - opacity
+   * - display
+   * - visibility
+   * - width
+   * - height
+   *
+   * Replaces CIQ.UI.trulyVisible.
+   *
+   * @param node The node for which visibility is determined.
+   * @return Whether the element is visible.
+   *
+   * @since 8.2.0
+   */
+  function trulyVisible(node: HTMLElement): boolean
 
   /**
    * Measures an element's styled width and height. Assumes all style units are in pixels (px), not
@@ -7616,10 +8612,12 @@ export namespace CIQ {
   let privateBrowsingAlert: boolean
 
   /**
-   * Convenience function for storing a name value pair in local storage. This will detect if private browsing is enabled
-   * because localStorage is inoperable under private browsing
-   * @param  name  Name to store
-   * @param  value Value to store
+   * Convenience function for storing a name/value pair in local storage. Detects whether private
+   * browsing is enabled since local storage is inoperable under private browsing.
+   *
+   * @param name The name for the stored item.
+   * @param value The value for the stored item.
+   *
    */
   function localStorageSetItem(name: string, value: string): void
 
@@ -8355,16 +9353,19 @@ export namespace CIQ {
   ): boolean
 
   /**
-   * Dynamically load UI elements from an external HTML file. This is accomplished by rendering raw HTML in an `iframe`
-   * and then cloning all of the newly created DOM elements into our main document. Repeat requests for the same resource
-   * load data from the existing `iframe`.
+   * Dynamically load UI elements from an external HTML file. This is accomplished by rendering raw
+   * HTML in an `iframe` and then cloning all of the newly created DOM elements into our main
+   * document. Repeated requests for the same resource load data from the existing `iframe`.
    *
-   * The title of the `iframe` is checked. External content should *not* have a title. By convention, 404 or 500 errors
-   * have a title; and so, we use this to determine whether the `iframe` contains valid content or not.
+   * The title of the `iframe` is checked. External content should not have a title. By convention,
+   * 404 and 500 errors have a title. And so, we can determine whether the `iframe` contains valid
+   * content.
    *
-   * @param url The external URL to fetch new UI content.
-   * @param el Element to append the UI content to; the default is `document.body`.
+   * @param url The external URL from which new UI content is fetched.
+   * @param el Element to which the UI content is appended. The default is
+   * 		`document.body`.
    * @param cb A callback function to call when the new UI is available.
+   *
    * @since
    * - 6.1.0 Added the `el` parameter.
    * - 7.2.0 Added caching per application instance by reusing the `iframe` contents.
@@ -8796,395 +9797,6 @@ export namespace CIQ.Studies {
   interface StudyDescriptor {
   }
 }
-/**
- * An object that describes how the renderer should draw a specific part of the chart; as generated and returned by CIQ.ChartEngine~colorFunction
- */
-interface colorObject {
-  /**
-   * Any string value that can be interpreted by the Canvas context
-   */
-  color: string
-  /**
-   * Description of the pattern in an on/off value description of
-   */
-  pattern: any[]
-  /**
-   * Width in pixels that that the pattern should be drawn in.
-   */
-  width: number
-}
-
-/**
- * Called by CIQ.ChartEngine#touchDoubleClick when the chart is quickly tapped twice.
- *
- * See CIQ.ChartEngine#addEventListener
- * @callback doubleTapEventListener
- * @param data Data relevant to the "tap" event
- * @param data.stx The chart engine instance
- * @param data.finger Which finger double tapped
- * @param data.x The crosshair x position
- * @param data.y The crosshair y position
- * @since 4.0.0
- */
-declare type doubleTapEventListener = (data: {stx: CIQ.ChartEngine,finger: number,x: number,y: number}) => void
-
-/**
- * Called by CIQ.ChartEngine#doubleClick when the chart is quickly clicked or
- * tapped twice.
- *
- * See CIQ.ChartEngine#addEventListener.
- *
- * @param data Data relevant to the double-click or double-tap event.
- * @param data.stx The chart engine instance.
- * @param data.button The button or finger that double-clicked or
- * 		double-tapped.
- * @param data.x The double-click or crosshairs x-axis position.
- * @param data.y The double-click or crosshairs y-axis position.
- *
- * @callback doubleClickEventListener
- * @since 8.0.0
- */
-declare type doubleClickEventListener = (data: {stx: CIQ.ChartEngine,button: number,x: number,y: number}) => void
-
-/**
- * Called when a drawing is added, removed or modified.
- *
- * Such as calling CIQ.ChartEngine#clearDrawings, CIQ.ChartEngine#removeDrawing, CIQ.ChartEngine#undoLast, CIQ.ChartEngine#drawingClick
- *
- * See CIQ.ChartEngine#addEventListener
- * @callback drawingEventListener
- * @param data Data relevant to the "drawing" event
- * @param data.stx The chart engine instance
- * @param data.symbol The current chart symbol
- * @param data.symbolObject The symbol's value and display label (CIQ.ChartEngine.chart.symbolObject)
- * @param data.layout The chart's layout object (CIQ.ChartEngine.layout)
- * @param data.drawings The chart's current drawings (CIQ.Drawing)
- */
-declare type drawingEventListener = (data: {stx: CIQ.ChartEngine,symbol: string,symbolObject: object,layout: object,drawings: any[]}) => void
-
-/**
- * A right-click on a highlighted drawing.
- *
- * See CIQ.ChartEngine#addEventListener
- * @callback drawingEditEventListener
- * @param data Data relevant to the "drawingEdit" event
- * @param data.stx The chart engine instance
- * @param data.drawing The highlighted drawing instance
- */
-declare type drawingEditEventListener = (data: {stx: CIQ.ChartEngine,drawing: CIQ.Drawing}) => void
-
-/**
- * Called when a change occurs in the chart layout.
- *
- * Such as calling CIQ.ChartEngine#setChartType, CIQ.ChartEngine#setAggregationType, CIQ.ChartEngine#setChartScale, CIQ.ChartEngine#setAdjusted,
- * WebComponents.cq-toggle, using the WebComponents.cq-toolbar to disable the current active drawing tool or toggling the crosshair,
- * using the WebComponents.cq-views to activate a serialized layout, [modifying a series]CIQ.ChartEngine#modifySeries,
- * setting a new [periodicity]CIQ.ChartEngine#setPeriodicity, adding or removing a [study overlay]CIQ.ChartEngine#removeOverlay,
- * adding or removing any new panels (and they corresponding studies), [zooming in]CIQ.ChartEngine#zoomIn or [zooming out]CIQ.ChartEngine#zoomOut,
- * setting ranges with CIQ.ChartEngine#setSpan or CIQ.ChartEngine#setRange, nullifying a programmatically set Span or Range by user panning,
- * enabling or disabling [Extended Hours]CIQ.ExtendedHours or toggling the [range slider]CIQ.RangeSlider.
- *
- * **Note that scrolling and panning changes are not considered a layout change but rather a shift of the view window in the same layout.
- * To detect those you can register to listen for [`scroll` events]scrollEventListener**
- *
- * See CIQ.ChartEngine#addEventListener
- * @callback layoutEventListener
- * @param data Data relevant to the "layout" event
- * @param data.stx The chart engine instance
- * @param data.symbol The current chart symbol
- * @param data.symbolObject The symbol's value and display label (CIQ.ChartEngine.chart.symbolObject)
- * @param data.layout The chart's layout object (CIQ.ChartEngine.layout)
- * @param data.drawings The chart's current drawings (CIQ.Drawing)
- */
-declare type layoutEventListener = (data: {stx: CIQ.ChartEngine,symbol: string,symbolObject: object,layout: object,drawings: any[]}) => void
-
-/**
- * Called when the mouse is clicked on the chart and held down.
- *
- * See CIQ.ChartEngine#addEventListener
- * @callback longholdEventListener
- * @param data Data relevant to the "longhold" event
- * @param data.stx The chart engine instance
- * @param data.panel The panel being tapped
- * @param data.x The crosshair x position
- * @param data.y The crosshair y position
- */
-declare type longholdEventListener = (data: {stx: CIQ.ChartEngine,panel: string,x: number,y: number}) => void
-
-/**
- * Called when the pointer is moved inside the chart, even on panning or horizontal swiping.
- *
- * See CIQ.ChartEngine#addEventListener
- * @callback moveEventListener
- * @param data Data relevant to the "move" event
- * @param data.stx The chart engine instance
- * @param data.panel The panel where the mouse is active
- * @param data.x The crosshair x position
- * @param data.y The crosshair y position
- * @param data.grab True if the chart is being dragged
- */
-declare type moveEventListener = (data: {stx: CIQ.ChartEngine,panel: string,x: number,y: number,grab: boolean}) => void
-
-/**
- * Called when the [quotefeed interface](quotefeed.html) loads a complete data set as
- * a result of:
- * - [symbol changes]CIQ.ChartEngine#loadChart or
- * - [periodicity]CIQ.ChartEngine#setPeriodicity,
- * [range]CIQ.ChartEngine#setRange, or [span]CIQ.ChartEngine#setSpan
- * changes requiring new data.
- *
- * See CIQ.ChartEngine#addEventListener.
- *
- * @param data Data relevant to the "newChart" event.
- * @param data.stx The chart engine instance.
- * @param data.symbol The current chart symbol.
- * @param data.symbolObject The symbol's value and display label,
- * 		CIQ.ChartEngine.Chart#symbolObject.
- * @param data.moreAvailable True if quotefeed~dataCallback reports
- * 		that more data is available.
- * @param data.upToDate True if quotefeed~dataCallback reports that
- * 		no more future data is available.
- * @param data.quoteDriver The quote feed driver.
- *
- * @callback newChartEventListener
- * @since 8.0.0 Added the `upToDate` parameter.
- */
-declare type newChartEventListener = (data: {stx: CIQ.ChartEngine,symbol: string,symbolObject: object,moreAvailable: boolean,upToDate: boolean,quoteDriver: object}) => void
-
-/**
- * Called when the periodicity is changed, for example, by
- * CIQ.ChartEngine#setPeriodicity.
- *
- * This event listener can be used instead of layoutEventListener for events that
- * only need to be triggered when periodicity changes.
- *
- * See CIQ.ChartEngine#addEventListener.
- *
- * @param data Data relevant to the "periodicity" event.
- * @param data.stx Reference to the chart engine.
- * @param data.differentData Indicates whether the chart needs new data to
- * 		conform with the new periodicity. Typically, the value for this parameter is
- * 		obtained from a call to CIQ.ChartEngine#needDifferentData.
- * @param data.prevPeriodicity The periodicity
- * 		before the periodicity change event.
- *
- * @callback periodicityEventListener
- * @since 8.1.0
- */
-declare type periodicityEventListener = (data: {stx: CIQ.ChartEngine,differentData: boolean,prevPeriodicity: CIQ.ChartEngine.PeriodicityParameters}) => void
-
-/**
- * Called when preferences are changed.
- *
- * Such as CIQ.ChartEngine#setTimeZone, CIQ.ChartEngine#importPreferences,
- * CIQ.Drawing.saveConfig, CIQ.Drawing.restoreDefaultConfig or language changes using the WebComponents.cq-language-dialog.
- *
- * See CIQ.ChartEngine#addEventListener
- * @callback preferencesEventListener
- * @param data Data relevant to the "preferences" event
- * @param data.stx The chart engine instance
- * @param data.symbol The current chart symbol
- * @param data.symbolObject The symbol's value and display label (CIQ.ChartEngine.chart.symbolObject)
- * @param data.layout The chart's layout object (CIQ.ChartEngine.layout)
- * @param data.drawingObjects The chart's current drawings (CIQ.ChartEngine.drawingObjects)
- */
-declare type preferencesEventListener = (data: {stx: CIQ.ChartEngine,symbol: string,symbolObject: object,layout: object,drawingObjects: any[]}) => void
-
-/**
- * Called on "mouseup" after the chart is right-clicked.
- *
- * Note that by default right clicks are only captured when mousing over chart objects such as series and drawings.
- * To enable right-click anywhere on the chart, the "contextmenu" event listener must be modified as follows:
- * ```
- * document.removeEventListener("contextmenu", CIQ.ChartEngine.handleContextMenu);
- * document.addEventListener("contextmenu", function(e){if(!e) e=event; if(e.preventDefault) e.preventDefault();return false});
- * ```
- *
- * See CIQ.ChartEngine#addEventListener and CIQ.ChartEngine.handleContextMenu
- * @callback rightClickEventListener
- * @param data Data relevant to the "rightClick" event
- * @param data.stx The chart engine instance
- * @param panel The panel that was clicked on
- * @param data.x The crosshair x position
- * @param data.y The crosshair y position
- * @example <caption> Will trigger and provide location and details when clicking on a series:</caption>
- * stxx.addEventListener("tap", function(tapObject){
- *     if( this.anyHighlighted ) {
- * 		for(var n in this.chart.seriesRenderers){
- * 			var r=this.chart.seriesRenderers[n];
- * 			for(var j=0;j<r.seriesParams.length;j++){
- * 				series=r.seriesParams[j];
- * 				if( series.highlight ) {
- * 				    var bar = this.barFromPixel(tapObject.x);
- * 				    if(this.chart.dataSegment[bar]) {
- * 						// replace console.log with your required logic as needed.
- * 						console.log('Tap event at pixel x: ' + tapObject.x + ' y: '+ tapObject.y);
- * 						console.log('Price:', this.priceFromPixel(tapObject.y), ' Date: ', this.chart.dataSegment[bar].DT);
- * 						console.log('Series Details: ',JSON.stringify(series));
- * 				    }
- * 				}
- * 			}
- * 		}
- *     }
- * });
- *
- */
-declare type rightClickEventListener = (data: {stx: CIQ.ChartEngine,x: number,y: number}, panel: string) => void
-
-/**
- * Called when the chart is panned and scrolled in any direction or is horizontally swiped.
- *
- * See CIQ.ChartEngine#addEventListener
- * @callback scrollEventListener
- * @param data Data relevant to the "scroll" event
- * @param data.stx The chart engine instance
- * @param data.panel The panel where the mouse is active
- * @param data.x The crosshair x position
- * @param data.y The crosshair y position
- * @since 6.3.0
- */
-declare type scrollEventListener = (data: {stx: CIQ.ChartEngine,panel: string,x: number,y: number}) => void
-
-/**
- * Called when an overlay-type study is right-clicked.
- *
- * See CIQ.ChartEngine#addEventListener
- * @callback studyOverlayEditEventListener
- * @param data Data relevant to the "studyOverlayEdit" event
- * @param data.stx The chart engine instance
- * @param data.sd The study object studyDescriptor
- * @param data.inputs The inputs from the study descriptor
- * @param data.outputs The outputs from the study descriptor
- * @param data.parameters The parameters from the study descriptor
- * @example
- * stxx.addEventListener("studyOverlayEdit", function(studyData){
- *	  CIQ.alert(studyData.sd.name);
- *	  var helper=new CIQ.Studies.DialogHelper({name:studyData.sd.type,stx:studyData.stx});
- *	  console.log('Inputs:',JSON.stringify(helper.inputs));
- *	  console.log('Outputs:',JSON.stringify(helper.outputs));
- *	  console.log('Parameters:',JSON.stringify(helper.parameters));
- *	  // call your menu here with the  data returned in helper
- *	  // modify parameters as needed and call addStudy or replaceStudy
- * });
- */
-declare type studyOverlayEditEventListener = (data: {stx: CIQ.ChartEngine,sd: object,inputs: object,outputs: object,parameters: object}) => void
-
-/**
- * Called when a panel-type study is edited.
- *
- * See CIQ.ChartEngine#addEventListener
- * @callback studyPanelEditEventListener
- * @param data Data relevant to the "studyPanelEdit" event
- * @param data.stx The chart engine instance
- * @param data.sd The study object studyDescriptor
- * @param data.inputs The inputs from the study descriptor
- * @param data.outputs The outputs from the study descriptor
- * @param data.parameters The parameters from the study descriptor
- */
-declare type studyPanelEditEventListener = (data: {stx: CIQ.ChartEngine,sd: object,inputs: object,outputs: object,parameters: object}) => void
-
-/**
- * Called when the chart's symbols change. Including secondary series and underlying symbols for studies ( ie. price relative study)
- *
- * See CIQ.ChartEngine#addEventListener
- * @callback symbolChangeEventListener
- * @param data Data relevant to the "symbolChange" event
- * @param data.stx The chart engine instance
- * @param data.symbol The new chart symbol
- * @param data.symbolObject The symbol's value and display label (CIQ.ChartEngine.chart.symbolObject)
- * @param data.action An action type being performed on the symbol. Possible options:
- *	- `add-series` - A series was added
- *	- `master` - The master symbol was changed
- *	- `remove-series` - A series was removed
- */
-declare type symbolChangeEventListener = (data: {stx: CIQ.ChartEngine,symbol: string,symbolObject: object,action: string}) => void
-
-/**
- * Called when a symbol is imported into the layout. Including secondary series and underlying symbols for studies ( ie. price relative study)
- * It is not called by other types of symbol changes.
- *
- * See CIQ.ChartEngine#importLayout
- *
- * See CIQ.ChartEngine#addEventListener
- * @callback symbolImportEventListener
- * @param data Data relevant to the "symbolImport" event
- * @param data.stx The chart engine instance
- * @param data.symbol The new chart symbol
- * @param data.symbolObject The symbol's value and display label (CIQ.ChartEngine.chart.symbolObject)
- * @param data.action An action type being performed on the symbol. Possible options:
- *   - `add-series` - A series was added
- *   - `master` - The master symbol was changed
- *   - `remove-series` - A series was removed
- */
-declare type symbolImportEventListener = (data: {stx: CIQ.ChartEngine,symbol: string,symbolObject: object,action: string}) => void
-
-/**
- * Called on ["mouseup"]CIQ.ChartEngine#touchSingleClick when the chart is tapped.
- *
- * See CIQ.ChartEngine#addEventListener
- * @callback tapEventListener
- * @param data Data relevant to the "tap" event
- * @param data.stx The chart engine instance
- * @param data.panel The panel being tapped
- * @param data.x The crosshair x position
- * @param data.y The crosshair y position
- */
-declare type tapEventListener = (data: {stx: CIQ.ChartEngine,panel: string,x: number,y: number}) => void
-
-/**
- * Called when a new theme is activated on the chart.
- *
- * Such as theme changes using the WebComponents.cq-theme-dialog or WebComponents.cq-themes initialization.
- *
- * See CIQ.ChartEngine#addEventListener
- * @callback themeEventListener
- * @param data Data relevant to the "theme" event
- * @param data.stx The chart engine instance
- * @param data.symbol The current chart symbol
- * @param data.symbolObject The symbol's value and display label (CIQ.ChartEngine.chart.symbolObject)
- * @param data.layout The chart's layout object (CIQ.ChartEngine.layout)
- * @param data.drawingObjects The chart's current drawings (CIQ.ChartEngine.drawingObjects)
- */
-declare type themeEventListener = (data: {stx: CIQ.ChartEngine,symbol: string,symbolObject: object,layout: object,drawingObjects: any[]}) => void
-
-/**
- * Called when an undo stamp is created for drawing events.
- *
- * See CIQ.ChartEngine#undoStamp
- *
- * See CIQ.ChartEngine#addEventListener
- * @callback undoStampEventListener
- * @param data Data relevant to the "undoStamp" event
- * @param data.stx The chart engine instance
- * @param data.before The chart's array of drawingObjects before the change
- * @param data.after The chart's array of drawingsObjects after the change
- */
-declare type undoStampEventListener = (data: {stx: CIQ.ChartEngine,before: any[],after: any[]}) => void
-
-/**
- * Base namespace for CIQ library
- *
- * Previously `STX`
- */
-export class CIQ {
-
-}
-/**
- * Shorthand for getElementById(). Equivalent to prototype style $() which is faster but less powerful than jquery style $()
- * @function
- */
-export class $$ {
-
-}
-/**
- * Functional equivalent of querySelector(). Functionally equivalent to jquery $().
- * This uses querySelectorAll in order to maintain compatibility with IE 9.
- * Note that if multiple objects match the selector then only the first will be returned.
- * @function
- */
-export class $$$ {
-
-}
 export namespace CIQ.postAjax {
   /**
    * @callback CIQ.postAjax~requestCallback
@@ -9217,15 +9829,15 @@ export namespace CIQ.Renderer {
   /**
    * Creates a lines renderer.
    *
-   * This renderer draws lines of various color, thickness and pattern on a chart.
+   * This renderer draws lines of various color, thickness, and pattern on a chart.
    *
-   * The `Lines` renderer is used to create the following drawing types: line, mountain, baseline,
-   * wave, step chart, and colored versions of these.
+   * The `Lines` renderer is used to create the following chart types (including colored versions):
+   * line, mountain, baseline, wave, and step chart.
    *
    * **Note:** By default, the renderer displays lines as underlays. As such, they appear below any
    * other studies or drawings.
    *
-   * See CIQ.Renderer#construct for parameters required by all renderers
+   * See CIQ.Renderer#construct for parameters required by all renderers.
    *
    * 		["wave"]CIQ.ChartEngine#drawWaveChart.
    * 		legend renderer. See CIQ.ChartEngine.Chart#legendRenderer;
@@ -9238,25 +9850,27 @@ export namespace CIQ.Renderer {
    * 		color of bar. May be an actual function or a string name of the registered function (see
    * 		CIQ.Renderer.registerColorFunction).
    *
-   * Common valid parameters for use by CIQ.Renderer#attachSeries. See also
-   * CIQ.ChartEngine#plotLine.
-   * - `color` — Specify the color for the line in rgba, hex or by name.
-   * - `pattern` — Specify the pattern as an array. For instance [5, 5] would be five pixels
-   * and then five empty pixels.
+   * Common valid parameters for use by CIQ.Renderer#attachSeries (see also
+   * CIQ.ChartEngine#plotLine):
+   * - `color` — Specify the color for the line by name or in RGBA or hexadecimal format.
+   * - `pattern` — Specify the pattern as an array. For instance, [5, 5] would be five pixels
+   *    and then five empty pixels.
    * - `width` — Specify the width of the line.
    * - `baseColor` — Specify the color of the base of a mountain.
-   * - `fillStyle` — Specify an alternate color to fill a mountain (other than `color`).
+   * - `fillStyle` — Specify the color to fill a mountain (other than `color`).
    *
    * @since
    * - 4.0.0 New `config.params.useChartLegend` added.
-   * - 5.1.0 Removed subtype parameter, this will be determined internally from `config.params.step=true`.
-   * - 5.1.0 Added `highlightable`, `overChart`, `step`, `baseline`, `vertex`, `style`, `colored`, and `colorFunction` parameters.
+   * - 5.1.0 Removed subtype parameter, this will be determined internally from
+   * 		`config.params.step=true`.
+   * - 5.1.0 Added `highlightable`, `overChart`, `step`, `baseline`, `vertex`, `style`, `colored`,
+   * 		and `colorFunction` parameters.
    * - 8.1.0 Added CIQ.ChartEngine.Chart#baseline type to `baseline` parameter. The new type
-   * 		contains a `defaultLevel` property, which can be set to the desired baseline value. See
+   * 		contains a `defaultLevel` property which can be set to the desired baseline value. See
    * 		example below.
    *
    * @example <caption>Create a renderer and set a custom baseline.</caption>
-   * let baseLineRenderer = new CIQ.Renderer.Lines({
+   * const baseLineRenderer = new CIQ.Renderer.Lines({
    *     params: {
    *         baseline: {defaultLevel: 45},
    *         yAxis: true
@@ -9271,28 +9885,36 @@ export namespace CIQ.Renderer {
    * stxx.addSeries("GOOG", {baseline: {defaultLevel: 105}, color: "purple"});
    *
    * @example <caption>Add multiple series and attach to a custom y-axis on the left.</caption>
-   *	// See this example working here: https://jsfiddle.net/chartiq/b6pkzrad.
+   * // See this example working here: https://jsfiddle.net/chartiq/b6pkzrad.
    *
-   *	// Note how the addSeries callback is used to ensure the data is present before the series is displayed.
+   * // Note how the addSeries callback is used to ensure the data is present before the series is displayed.
    *
-   *	// Create the custom axis.
-   *	let axis = new CIQ.ChartEngine.YAxis();
-   *	axis.position = "left";
-   *	axis.textStyle = "#FFBE00";
-   *	axis.decimalPlaces = 0;  // No decimal places on the axis labels.
-   *	axis.maxDecimalPlaces = 0;  // No decimal places on the last price pointer.
+   * // Create the custom axis.
+   * const axis = new CIQ.ChartEngine.YAxis();
+   * axis.position = "left";
+   * axis.textStyle = "#FFBE00";
+   * axis.decimalPlaces = 0;  // No decimal places on the axis labels.
+   * axis.maxDecimalPlaces = 0;  // No decimal places on the last price pointer.
    *
-   *	// Create the renderer.
-   *	let renderer = stxx.setSeriesRenderer(new CIQ.Renderer.Lines({params: {name: "my-renderer", type: "mountain", yAxis: axis}}));
+   * // Create the renderer.
+   * const renderer = stxx.setSeriesRenderer(
+   *     new CIQ.Renderer.Lines({
+   *         params: {
+   *             name: "my-renderer",
+   *             type: "mountain",
+   *             yAxis: axis
+   *         }
+   *     })
+   * );
    *
-   *	// Create your series and attach them to the chart when the data is loaded.
-   *	stxx.addSeries("NOK", {display: "NOK", width: 4}, function() {
-   *		renderer.attachSeries("NOK", "#FFBE00").ready();
-   *	});
+   * // Create your series and attach them to the chart when the data is loaded.
+   * stxx.addSeries("NOK", {display: "NOK", width: 4}, function() {
+   *     renderer.attachSeries("NOK", "#FFBE00").ready();
+   * });
    *
-   *	stxx.addSeries("SNE", {display: "Sony", width: 4}, function() {
-   *		renderer.attachSeries("SNE", "#FF9300").ready();
-   *	});
+   * stxx.addSeries("SNE", {display: "Sony", width: 4}, function() {
+   *     renderer.attachSeries("SNE", "#FF9300").ready();
+   * });
    *
    * @example <caption>Remove a renderer and all associated data.</caption>
    * // This should only be necessary if you are also removing the chart itself.
@@ -9307,21 +9929,33 @@ export namespace CIQ.Renderer {
    * renderer=null;
    *
    * @example <caption>Create a colored step baseline mountain with vertices.</caption>
-   * var renderer=stxx.setSeriesRenderer(new CIQ.Renderer.Lines({params: {name: "my-renderer", type: "mountain", baseline: true, step: true, colored: true, vertex: true, yAxis: axis}}));
+   * const renderer = stxx.setSeriesRenderer(
+   *     new CIQ.Renderer.Lines({
+   *         params: {
+   *             name: "my-renderer",
+   *             type: "mountain",
+   *             baseline: true,
+   *             step: true,
+   *             colored: true,
+   *             vertex: true,
+   *             yAxis: axis
+   *         }
+   *     })
+   * );
    */
   class Lines {
     /**
      * Creates a lines renderer.
      *
-     * This renderer draws lines of various color, thickness and pattern on a chart.
+     * This renderer draws lines of various color, thickness, and pattern on a chart.
      *
-     * The `Lines` renderer is used to create the following drawing types: line, mountain, baseline,
-     * wave, step chart, and colored versions of these.
+     * The `Lines` renderer is used to create the following chart types (including colored versions):
+     * line, mountain, baseline, wave, and step chart.
      *
      * **Note:** By default, the renderer displays lines as underlays. As such, they appear below any
      * other studies or drawings.
      *
-     * See CIQ.Renderer#construct for parameters required by all renderers
+     * See CIQ.Renderer#construct for parameters required by all renderers.
      *
      * @param config Configuration object for the renderer.
      * @param [config.params] Parameters to control the renderer itself.
@@ -9347,25 +9981,27 @@ export namespace CIQ.Renderer {
      * 		color of bar. May be an actual function or a string name of the registered function (see
      * 		CIQ.Renderer.registerColorFunction).
      *
-     * Common valid parameters for use by CIQ.Renderer#attachSeries. See also
-     * CIQ.ChartEngine#plotLine.
-     * - `color` — Specify the color for the line in rgba, hex or by name.
-     * - `pattern` — Specify the pattern as an array. For instance [5, 5] would be five pixels
-     * and then five empty pixels.
+     * Common valid parameters for use by CIQ.Renderer#attachSeries (see also
+     * CIQ.ChartEngine#plotLine):
+     * - `color` — Specify the color for the line by name or in RGBA or hexadecimal format.
+     * - `pattern` — Specify the pattern as an array. For instance, [5, 5] would be five pixels
+     *    and then five empty pixels.
      * - `width` — Specify the width of the line.
      * - `baseColor` — Specify the color of the base of a mountain.
-     * - `fillStyle` — Specify an alternate color to fill a mountain (other than `color`).
+     * - `fillStyle` — Specify the color to fill a mountain (other than `color`).
      *
      * @since
      * - 4.0.0 New `config.params.useChartLegend` added.
-     * - 5.1.0 Removed subtype parameter, this will be determined internally from `config.params.step=true`.
-     * - 5.1.0 Added `highlightable`, `overChart`, `step`, `baseline`, `vertex`, `style`, `colored`, and `colorFunction` parameters.
+     * - 5.1.0 Removed subtype parameter, this will be determined internally from
+     * 		`config.params.step=true`.
+     * - 5.1.0 Added `highlightable`, `overChart`, `step`, `baseline`, `vertex`, `style`, `colored`,
+     * 		and `colorFunction` parameters.
      * - 8.1.0 Added CIQ.ChartEngine.Chart#baseline type to `baseline` parameter. The new type
-     * 		contains a `defaultLevel` property, which can be set to the desired baseline value. See
+     * 		contains a `defaultLevel` property which can be set to the desired baseline value. See
      * 		example below.
      *
      * @example <caption>Create a renderer and set a custom baseline.</caption>
-     * let baseLineRenderer = new CIQ.Renderer.Lines({
+     * const baseLineRenderer = new CIQ.Renderer.Lines({
      *     params: {
      *         baseline: {defaultLevel: 45},
      *         yAxis: true
@@ -9380,28 +10016,36 @@ export namespace CIQ.Renderer {
      * stxx.addSeries("GOOG", {baseline: {defaultLevel: 105}, color: "purple"});
      *
      * @example <caption>Add multiple series and attach to a custom y-axis on the left.</caption>
-     *	// See this example working here: https://jsfiddle.net/chartiq/b6pkzrad.
+     * // See this example working here: https://jsfiddle.net/chartiq/b6pkzrad.
      *
-     *	// Note how the addSeries callback is used to ensure the data is present before the series is displayed.
+     * // Note how the addSeries callback is used to ensure the data is present before the series is displayed.
      *
-     *	// Create the custom axis.
-     *	let axis = new CIQ.ChartEngine.YAxis();
-     *	axis.position = "left";
-     *	axis.textStyle = "#FFBE00";
-     *	axis.decimalPlaces = 0;  // No decimal places on the axis labels.
-     *	axis.maxDecimalPlaces = 0;  // No decimal places on the last price pointer.
+     * // Create the custom axis.
+     * const axis = new CIQ.ChartEngine.YAxis();
+     * axis.position = "left";
+     * axis.textStyle = "#FFBE00";
+     * axis.decimalPlaces = 0;  // No decimal places on the axis labels.
+     * axis.maxDecimalPlaces = 0;  // No decimal places on the last price pointer.
      *
-     *	// Create the renderer.
-     *	let renderer = stxx.setSeriesRenderer(new CIQ.Renderer.Lines({params: {name: "my-renderer", type: "mountain", yAxis: axis}}));
+     * // Create the renderer.
+     * const renderer = stxx.setSeriesRenderer(
+     *     new CIQ.Renderer.Lines({
+     *         params: {
+     *             name: "my-renderer",
+     *             type: "mountain",
+     *             yAxis: axis
+     *         }
+     *     })
+     * );
      *
-     *	// Create your series and attach them to the chart when the data is loaded.
-     *	stxx.addSeries("NOK", {display: "NOK", width: 4}, function() {
-     *		renderer.attachSeries("NOK", "#FFBE00").ready();
-     *	});
+     * // Create your series and attach them to the chart when the data is loaded.
+     * stxx.addSeries("NOK", {display: "NOK", width: 4}, function() {
+     *     renderer.attachSeries("NOK", "#FFBE00").ready();
+     * });
      *
-     *	stxx.addSeries("SNE", {display: "Sony", width: 4}, function() {
-     *		renderer.attachSeries("SNE", "#FF9300").ready();
-     *	});
+     * stxx.addSeries("SNE", {display: "Sony", width: 4}, function() {
+     *     renderer.attachSeries("SNE", "#FF9300").ready();
+     * });
      *
      * @example <caption>Remove a renderer and all associated data.</caption>
      * // This should only be necessary if you are also removing the chart itself.
@@ -9416,7 +10060,19 @@ export namespace CIQ.Renderer {
      * renderer=null;
      *
      * @example <caption>Create a colored step baseline mountain with vertices.</caption>
-     * var renderer=stxx.setSeriesRenderer(new CIQ.Renderer.Lines({params: {name: "my-renderer", type: "mountain", baseline: true, step: true, colored: true, vertex: true, yAxis: axis}}));
+     * const renderer = stxx.setSeriesRenderer(
+     *     new CIQ.Renderer.Lines({
+     *         params: {
+     *             name: "my-renderer",
+     *             type: "mountain",
+     *             baseline: true,
+     *             step: true,
+     *             colored: true,
+     *             vertex: true,
+     *             yAxis: axis
+     *         }
+     *     })
+     * );
      */
     constructor(
       config: {
@@ -9659,17 +10315,52 @@ export namespace CIQ.Renderer {
   function unregisterColorFunction(name: string): void
 }
 /**
+ * Base namespace for CIQ library
+ *
+ * Previously `STX`
+ */
+export class CIQ {
+
+}
+/**
+ * Shorthand for `getElementById()`.
+ *
+ * Equivalent to prototype style `$()`, which is faster but less powerful than jQuery style `$()`.
+ *
+ * 		document is searched.
+ *
+ * @function
+ */
+export class $$ {
+
+}
+/**
+ * Functional equivalent of `querySelector()`.
+ *
+ * Functionally equivalent to jQuery `$()`. Uses `querySelectorAll` to maintain compatibility with
+ * Internet Explorer 9.
+ *
+ * **Note:** If multiple elements match the selector, only the first is returned.
+ *
+ * 		searched.
+ *
+ * @function
+ */
+export class $$$ {
+
+}
+/**
  * Creates a lines renderer.
  *
- * This renderer draws lines of various color, thickness and pattern on a chart.
+ * This renderer draws lines of various color, thickness, and pattern on a chart.
  *
- * The `Lines` renderer is used to create the following drawing types: line, mountain, baseline,
- * wave, step chart, and colored versions of these.
+ * The `Lines` renderer is used to create the following chart types (including colored versions):
+ * line, mountain, baseline, wave, and step chart.
  *
  * **Note:** By default, the renderer displays lines as underlays. As such, they appear below any
  * other studies or drawings.
  *
- * See CIQ.Renderer#construct for parameters required by all renderers
+ * See CIQ.Renderer#construct for parameters required by all renderers.
  *
  * 		["wave"]CIQ.ChartEngine#drawWaveChart.
  * 		legend renderer. See CIQ.ChartEngine.Chart#legendRenderer;
@@ -9682,25 +10373,27 @@ export namespace CIQ.Renderer {
  * 		color of bar. May be an actual function or a string name of the registered function (see
  * 		CIQ.Renderer.registerColorFunction).
  *
- * Common valid parameters for use by CIQ.Renderer#attachSeries. See also
- * CIQ.ChartEngine#plotLine.
- * - `color` — Specify the color for the line in rgba, hex or by name.
- * - `pattern` — Specify the pattern as an array. For instance [5, 5] would be five pixels
- * and then five empty pixels.
+ * Common valid parameters for use by CIQ.Renderer#attachSeries (see also
+ * CIQ.ChartEngine#plotLine):
+ * - `color` — Specify the color for the line by name or in RGBA or hexadecimal format.
+ * - `pattern` — Specify the pattern as an array. For instance, [5, 5] would be five pixels
+ *    and then five empty pixels.
  * - `width` — Specify the width of the line.
  * - `baseColor` — Specify the color of the base of a mountain.
- * - `fillStyle` — Specify an alternate color to fill a mountain (other than `color`).
+ * - `fillStyle` — Specify the color to fill a mountain (other than `color`).
  *
  * @since
  * - 4.0.0 New `config.params.useChartLegend` added.
- * - 5.1.0 Removed subtype parameter, this will be determined internally from `config.params.step=true`.
- * - 5.1.0 Added `highlightable`, `overChart`, `step`, `baseline`, `vertex`, `style`, `colored`, and `colorFunction` parameters.
+ * - 5.1.0 Removed subtype parameter, this will be determined internally from
+ * 		`config.params.step=true`.
+ * - 5.1.0 Added `highlightable`, `overChart`, `step`, `baseline`, `vertex`, `style`, `colored`,
+ * 		and `colorFunction` parameters.
  * - 8.1.0 Added CIQ.ChartEngine.Chart#baseline type to `baseline` parameter. The new type
- * 		contains a `defaultLevel` property, which can be set to the desired baseline value. See
+ * 		contains a `defaultLevel` property which can be set to the desired baseline value. See
  * 		example below.
  *
  * @example <caption>Create a renderer and set a custom baseline.</caption>
- * let baseLineRenderer = new CIQ.Renderer.Lines({
+ * const baseLineRenderer = new CIQ.Renderer.Lines({
  *     params: {
  *         baseline: {defaultLevel: 45},
  *         yAxis: true
@@ -9715,28 +10408,36 @@ export namespace CIQ.Renderer {
  * stxx.addSeries("GOOG", {baseline: {defaultLevel: 105}, color: "purple"});
  *
  * @example <caption>Add multiple series and attach to a custom y-axis on the left.</caption>
- *	// See this example working here: https://jsfiddle.net/chartiq/b6pkzrad.
+ * // See this example working here: https://jsfiddle.net/chartiq/b6pkzrad.
  *
- *	// Note how the addSeries callback is used to ensure the data is present before the series is displayed.
+ * // Note how the addSeries callback is used to ensure the data is present before the series is displayed.
  *
- *	// Create the custom axis.
- *	let axis = new CIQ.ChartEngine.YAxis();
- *	axis.position = "left";
- *	axis.textStyle = "#FFBE00";
- *	axis.decimalPlaces = 0;  // No decimal places on the axis labels.
- *	axis.maxDecimalPlaces = 0;  // No decimal places on the last price pointer.
+ * // Create the custom axis.
+ * const axis = new CIQ.ChartEngine.YAxis();
+ * axis.position = "left";
+ * axis.textStyle = "#FFBE00";
+ * axis.decimalPlaces = 0;  // No decimal places on the axis labels.
+ * axis.maxDecimalPlaces = 0;  // No decimal places on the last price pointer.
  *
- *	// Create the renderer.
- *	let renderer = stxx.setSeriesRenderer(new CIQ.Renderer.Lines({params: {name: "my-renderer", type: "mountain", yAxis: axis}}));
+ * // Create the renderer.
+ * const renderer = stxx.setSeriesRenderer(
+ *     new CIQ.Renderer.Lines({
+ *         params: {
+ *             name: "my-renderer",
+ *             type: "mountain",
+ *             yAxis: axis
+ *         }
+ *     })
+ * );
  *
- *	// Create your series and attach them to the chart when the data is loaded.
- *	stxx.addSeries("NOK", {display: "NOK", width: 4}, function() {
- *		renderer.attachSeries("NOK", "#FFBE00").ready();
- *	});
+ * // Create your series and attach them to the chart when the data is loaded.
+ * stxx.addSeries("NOK", {display: "NOK", width: 4}, function() {
+ *     renderer.attachSeries("NOK", "#FFBE00").ready();
+ * });
  *
- *	stxx.addSeries("SNE", {display: "Sony", width: 4}, function() {
- *		renderer.attachSeries("SNE", "#FF9300").ready();
- *	});
+ * stxx.addSeries("SNE", {display: "Sony", width: 4}, function() {
+ *     renderer.attachSeries("SNE", "#FF9300").ready();
+ * });
  *
  * @example <caption>Remove a renderer and all associated data.</caption>
  * // This should only be necessary if you are also removing the chart itself.
@@ -9751,7 +10452,19 @@ export namespace CIQ.Renderer {
  * renderer=null;
  *
  * @example <caption>Create a colored step baseline mountain with vertices.</caption>
- * var renderer=stxx.setSeriesRenderer(new CIQ.Renderer.Lines({params: {name: "my-renderer", type: "mountain", baseline: true, step: true, colored: true, vertex: true, yAxis: axis}}));
+ * const renderer = stxx.setSeriesRenderer(
+ *     new CIQ.Renderer.Lines({
+ *         params: {
+ *             name: "my-renderer",
+ *             type: "mountain",
+ *             baseline: true,
+ *             step: true,
+ *             colored: true,
+ *             vertex: true,
+ *             yAxis: axis
+ *         }
+ *     })
+ * );
  */
 export namespace CIQ.Renderer.Lines {
   /**
@@ -9826,8 +10539,10 @@ export namespace CIQ.Renderer.OHLC {
  *
  * Example: stxx.panels['Aroon (14)'].yAxis
  *
- * **Note:** If modifying a y-axis placement setting (widht, margins, position left/right, etc) after the axis has been rendered, you will need to call
- * CIQ.ChartEngine#calculateYAxisMargins or CIQ.ChartEngine#calculateYAxisPositions followed by CIQ.ChartEngine#draw to activate the change.
+ * **Note:** When modifying a y-axis placement setting (width, margins, position left/right, etc.)
+ * after the axis has been rendered, you must call CIQ.ChartEngine#calculateYAxisMargins or
+ * CIQ.ChartEngine#calculateYAxisPositions (as appropriate) followed by
+ * CIQ.ChartEngine#draw to activate the change.
  *
  * @example
  * // here is an example on how to override the default top and bottom margins after the initial axis has already been rendered

@@ -1,10 +1,10 @@
 /**
- *	8.1.0
- *	Generation date: 2020-11-19T23:23:22.994Z
+ *	8.3.0
+ *	Generation date: 2021-06-06T16:48:16.849Z
  *	Client name: sonyl test
  *	Package Type: Technical Analysis
- *	License type: trial
- *	Expiration date: "2020/12/19"
+ *	License type: annual
+ *	Expiration date: "2022/01/31"
  */
 
 /***********************************************************
@@ -52,11 +52,8 @@ var claims = [];
  */
 function WebComponents() {}
 /**
- * Namespace for UI helper objects.
- *
- * Designed to be used as helper methods for the included {@link WebComponents}. A full
- * tutorial on how to work with and customize the web components can be found here:
- * {@tutorial Web Component Interface}.
+ * Namespace for UI helper objects designed to be used with the library
+ * [web components]{@link WebComponents}.
  *
  * @namespace
  * @name CIQ.UI
@@ -84,34 +81,6 @@ CIQ.UI.stxtap = function (element, listener, selector) {
 		element = element.querySelector(selector);
 	}
 	if (element) element.addEventListener("stxtap", listener);
-};
-/**
- * Determines the visibility of a DOM element based on the following CSS properties:
- * - opacity
- * - display
- * - visibility
- * - width
- * - height
- *
- * @param {HTMLElement} node The node for which visibility is determined.
- * @return {boolean} Whether the element is visible.
- *
- * @memberof CIQ.UI
- * @since 8.1.0
- */
-CIQ.UI.trulyVisible = function (node) {
-	if (!node) return true;
-	const computedStyle = getComputedStyle(node);
-	if (computedStyle.opacity === "0") return false;
-	if (computedStyle.display === "none") return false;
-	if (computedStyle.visibility === "hidden") return false;
-	if (parseInt(computedStyle.width, 10) === 0) return false;
-	if (
-		parseInt(computedStyle.height, 10) === 0 &&
-		computedStyle.overflowY == "hidden"
-	)
-		return false;
-	return CIQ.UI.trulyVisible(node.parentElement);
 };
 /**
  * Attaches a callback to listen for resize events on the DOM.
@@ -154,10 +123,10 @@ CIQ.UI.removeResizeListener = function (element) {
  * tutorial on how to work with and customize the web components can be found here:
  * {@tutorial Web Component Interface}.
  *
- * @param {Object} self A reference to a web component. The function is called on a parent of
+ * @param {object} self A reference to a web component. The function is called on a parent of
  * 		the component.
- * @param {String} fn The name of the function to execute.
- * @param {Array} args Arguments array (a "spread" is also supported).
+ * @param {string} fn The name of the function to execute.
+ * @param {array} args Arguments array (a "spread" is also supported).
  *
  * @memberof CIQ.UI
  */
@@ -506,6 +475,41 @@ CIQ.UI.begin = function (cb) {
 	}, 0); // release the bindings
 };
 /**
+ * Activates the user interface of a plug-in or add-on.
+ *
+ * To ensure the graceful loading of plug-ins and add-ons, UI components are not displayed until
+ * the plug-in or add-on class has loaded.
+ *
+ * This function adds a custom boolean attribute (see
+ * https://developer.mozilla.org/en-US/docs/Web/HTML/Attributes#boolean_attributes) to the top
+ * DOM node of the chart UI context to indicate that a plug-in or add-on is active. The attribute
+ * is the concatenation of `pluginName` (all lowercase) and "-active"; for example,
+ * "tableview-active".
+ *
+ * CSS rule-sets use the attribute in compound selectors to display the relevant UI components,
+ * for example:
+ * ```
+ * body *[tableview-active] .tableview-ui {
+ *     display: inherit;
+ * }
+ * ```
+ *
+ * See the *chartiq.css* file in the *css* folder of the library.
+ *
+ * @param {CIQ.ChartEngine} stx A reference to the chart engine.
+ * @param {string} pluginName The case-insensitive name of the plug-in or add-on to activate; for
+ * 		example, "scriptiq" for the ScriptIQ plug-in or "TableView" for the TableView add-on.
+ *
+ * @memberof CIQ.UI
+ * @private
+ * @since 8.2.0
+ */
+CIQ.UI.activatePluginUI = function (stx, pluginName) {
+	const { uiContext = {}, container } = stx;
+	const topNode = uiContext.topNode || container.closest("cq-context");
+	if (topNode) topNode.setAttribute(pluginName.toLowerCase() + "-active", "");
+};
+/**
  * Adds a web component definition to the list of web components.
  *
  * The component is ultimately registered as a custom element by
@@ -549,16 +553,18 @@ CIQ.UI.addComponentDefinition = function (customTagName, classDefinition) {
  */
 CIQ.UI.registerComponents = function ({ except = [] } = {}) {
 	if (!CIQ.UI._webcomponents) return;
+	const { exceptions = {} } = CIQ.UI._webcomponents;
+	except.forEach((name) => (exceptions[name] = true));
+	CIQ.UI._webcomponents.exceptions = exceptions;
 	const { list } = CIQ.UI._webcomponents;
 	const tags = Object.keys(list).filter((tag) => !except.includes[tag]);
 	tags.forEach((tag) => {
 		const component = list[tag];
-		if (component && !component.registered) {
+		if (component && !component.registered && !exceptions[tag]) {
 			customElements.define(tag, component.classDefinition);
 			component.registered = true;
 		}
 	});
-	CIQ.UI._webcomponents.registered = true;
 };
 /**
  * Ensures that all web components in the web component list (see
@@ -570,16 +576,14 @@ CIQ.UI.registerComponents = function ({ except = [] } = {}) {
  * @see {@link CIQ.UI.registerComponents}
  */
 CIQ.UI.ensureComponentsRegistered = function () {
-	if (CIQ.UI._webcomponents && !CIQ.UI._webcomponents.registered) {
-		CIQ.UI.registerComponents();
-	}
+	if (CIQ.UI._webcomponents) CIQ.UI.registerComponents();
 };
 /**
  * Gets an array of components from the list of registered components.
  *
  * @param {string|function} identifier Tag, class name, or class definition used to identify
  * 		registered components.
- * @return {Array} An array of components identified by `identifier`. The array elements
+ * @return {array} An array of components identified by `identifier`. The array elements
  * 		contain the tag, name, registration status, and markup of the matched components.
  * 		If an identifier is not provided, data for all registered components is returned.
  *
@@ -777,12 +781,10 @@ CIQ.UI.supportedInputType = function (type) {
  * tutorial on how to work with and customize the web components can be found here:
  * {@tutorial Web Component Interface}.
  *
- * Construct with an {@link CIQ.ChartEngine} object.
- *
- * @param {CIQ.ChartEngine} stx The chart object to associate this UI.
- * @param {HTMLElement} topNode The top node of the DOM tree for this context. That node
- * 		should contain all of the UI elements associated with the CIQ.ChartEngine.
- * @param {Object} [params] Optional parameters.
+ * @param {CIQ.ChartEngine} stx The chart object to associate with this UI context.
+ * @param {HTMLElement} topNode The top node of the DOM tree for this context. The top node should
+ * 		contain all of the UI elements associated with the chart engine.
+ * @param {object} [params] Context parameters.
  *
  * @name CIQ.UI.Context
  * @constructor
@@ -839,39 +841,48 @@ Context.assembleContext = function (contextElement) {
 	return contextElement.CIQ.UI;
 };
 /**
- * Abstract method that should be overridden. See example.
+ * Executes a symbol change request on the UI context.
  *
- * Designed to be used as a helper method for the included {@link WebComponents}. A full tutorial on how to work with and customize the web components can be found here: {@tutorial Web Component Interface}
+ * You must create an implementation of this abstract method (see example below).
  *
- * @param  {Object} data A symbol data object acceptable for {@link CIQ.ChartEngine#loadChart}
- * @memberof CIQ.UI.Context
+ * @param {object} data A symbol data object acceptable by {@link CIQ.ChartEngine#loadChart}.
+ * @param {string} data.symbol A financial instrument symbol.
+ * @param {function} [cb] A callback function to execute when the symbol change is complete.
+ *
+ * @abstract
+ * @memberof CIQ.UI.Context.prototype
  * @alias changeSymbol
- * @example
-UIContext.changeSymbol=function(data){
-	var stx=this.stx;
-	if(this.loader) this.loader.show();
-	if(data.symbol==data.symbol.toLowerCase())
-		data.symbol=data.symbol.toUpperCase(); // set a pretty display version
-
-	// reset comparisons - remove this loop to transfer from symbol to symbol.
-	for(var field in stx.chart.series) {
-		// keep studies
-		if (stxx.chart.series[field].parameters.bucket != "study" ) stx.removeSeries(field);
-	}
-	var self=this;
-	stx.loadChart(data, function(err) {
-		if(err){
-			// add 'symbol not found error' here if one needed.
-			if(self.loader) self.loader.hide();
-			return;
-		}
-		if(self.loader) self.loader.hide();
-		CIQ.ChartEngine.restoreDrawings(stx, stx.chart.symbol);
-	});
-};
+ * @since 8.2.0 Added the `cb` parameter.
+ *
+ * @example <caption>Method Implementation</caption>
+ * uiContext.changeSymbol = function (data, cb) {
+ *     const { stx, loader } = uiContext;
+ *     if (loader) loader.show();
+ *
+ *     if (data.symbol == data.symbol.toLowerCase())
+ *         data.symbol = data.symbol.toUpperCase(); // Set a pretty display version.
+ *
+ *     // Reset comparisons -- remove this loop to transfer from symbol to symbol.
+ *     for (let field in stx.chart.series) {
+ *         // Keep studies.
+ *         if (stxx.chart.series[field].parameters.bucket != "study" ) stx.removeSeries(field);
+ *     }
+ *
+ *     stx.loadChart(data, function(err) {
+ *         if (err) {
+ *             // Add 'symbol not found error' here if one needed.
+ *             if (loader) loader.hide();
+ *             return;
+ *         }
+ *         if (loader) loader.hide();
+ *         CIQ.ChartEngine.restoreDrawings(stx, stx.chart.symbol);
+ *     });
+ *
+ *     if (cb) cb(stx);
+ * };
  *
  */
-Context.prototype.changeSymbol = function (data) {
+Context.prototype.changeSymbol = function (data, cb) {
 	console.log("Please implement CIQ.UI.Context.prototype.changeSymbol");
 };
 /**
@@ -879,23 +890,31 @@ Context.prototype.changeSymbol = function (data) {
  * @tsinterface {object} CIQ.ChartEngine.Driver~Lookup
  */
 /**
- * Sets the [lookup driver]{@link CIQ.ChartEngine.Driver.Lookup} to be used with the [cq-lookup web component]{@link WebComponents.cq-lookup}.
+ * Sets the [lookup driver]{@link CIQ.ChartEngine.Driver.Lookup} used by the
+ * [cq-lookup]{@link WebComponents.cq-lookup} web component.
  *
- * Designed to be used as a helper method for the included {@link WebComponents}. A full tutorial on how to work with and customize the web components can be found here: {@tutorial Web Component Interface}
+ * The lookup driver searches for matching symbols as text is entered in the
+ * [cq-lookup]{@link WebComponents.cq-lookup} web component's input field.
  *
- * The lookup driver will be called to search for matching symbols as data is typed into the set `UIContext.UISymbolLookup` field.
+ * @param {CIQ.ChartEngine.Driver.Lookup} driver Lookup driver for the
+ * 		[cq-lookup]{@link WebComponents.cq-lookup} web component.
  *
- * See `function startUI()` in sample-template-advanced.html for complete sample implementation.
- *
- * @param {CIQ.ChartEngine.Driver.Lookup} driver Lookup driver for cq-lookup component
- * @memberof CIQ.UI.Context
+ * @memberof CIQ.UI.Context.prototype
  * @alias setLookupDriver
+ *
  * @example
- * UIContext=new CIQ.UI.Context(stxx, document.querySelector("cq-context,[cq-context]"));
+ * // Create a context object.
+ * UIContext = new CIQ.UI.Context(stxx, document.querySelector("cq-context,[cq-context]"));
+ *
+ * // Add a lookup driver to the context. The cq-lookup web component accesses the driver from the context.
  * UIContext.setLookupDriver(new CIQ.ChartEngine.Driver.Lookup.ChartIQ());
- * UIContext.UISymbolLookup=document.querySelector(".ciq-search cq-lookup");
- * UIContext.UISymbolLookup.setCallback(function(context, data){
- *	context.changeSymbol(data);
+ *
+ * // Get a reference to the cq-lookup web component.
+ * UIContext.UISymbolLookup = document.querySelector(".ciq-search cq-lookup");
+ *
+ * // Set a callback on the cq-lookup web component.
+ * UIContext.UISymbolLookup.setCallback(function(context, data) {
+ *     context.changeSymbol(data);
  * });
  */
 Context.prototype.setLookupDriver = function (driver) {
@@ -963,11 +982,36 @@ Context.prototype.isModal = function () {
 	return this.stx.openDialog !== "";
 };
 /**
+ * Checks the chart for a study legend that is active and has keyboard navigation control.
+ *
+ * @return {boolean} true if a [cq-study-legend]{@link WebComponents.cq-study-legend} component is
+ * 		both active and has keyboard navigation control; otherwise, false.
+ *
+ * @memberof CIQ.UI.Context#
+ * @alias isLegendKeyboardActive
+ * @since 8.3.0
+ */
+Context.prototype.isLegendKeyboardActive = function () {
+	const legends = document.querySelectorAll("cq-study-legend");
+	if (legends.length) {
+		for (let i = 0; i < legends.length; i++) {
+			// Verify the legend is active and has keyboard control
+			if (
+				legends[i].classList.contains("ciq-active") &&
+				legends[i].keyboardNavigation
+			)
+				return true;
+		}
+	}
+	return false;
+};
+/**
  * Abstract class for {@link WebComponents} using this framework.
  *
  * Provides a base set of functionality for web components.
  *
  * @name CIQ.UI.BaseComponent
+ * @class
  * @extends HTMLElement
  *
  * @see {@link WebComponents}
@@ -1039,6 +1083,7 @@ class BaseComponent extends HTMLElement {
 					"total=" + BaseComponent.createMarkupTime
 				);
 			}
+			if (CIQ.I18N && CIQ.I18N.localized) CIQ.I18N.translateUI(null, node);
 		}
 	}
 	/**
@@ -1249,11 +1294,22 @@ class BaseComponent extends HTMLElement {
 				context = node.context;
 			}
 			if (!context) {
-				console.log(
-					"No context attached to " +
+				const contextElement = node.closest("cq-context, [cq-context]");
+				if (!contextElement) {
+					console.log(
 						node.tagName +
-						". A context is required when binding to a helper."
-				);
+							" is not inside cq-context element" +
+							". A context element is required when binding to a helper."
+					);
+					return null;
+				}
+				if (contextElement.bindingInitiated) {
+					console.log(
+						"No context attached to " +
+							node.tagName +
+							". A context is required when binding to a helper."
+					);
+				}
 				return null;
 			}
 			helper = context.getAdvertised(helperName);
@@ -1343,36 +1399,39 @@ class BaseComponent extends HTMLElement {
 	}
 	/**
 	 * Set bindings for a node that has been created dynamically. The attribute can be either
-	 * "stxbind", "stxtap" or "stxsetget".
+	 * "stxbind", "stxtap", or "stxsetget".
 	 *
 	 * Designed to be used as a helper method for the included {@link WebComponents}. A full
 	 * tutorial on how to work with and customize the WebComponents can be found here:
 	 * {@tutorial Web Component Interface}.
 	 *
-	 * In the case of stxsetget, a "set" and "get" will be prepended to the bound method.
-	 * <Helper>.getXxxxx() will be called once during this initialization. That method should
-	 * set up a binding.
+	 * In the case of "stxsetget", a "set" and "get" will be prepended to the bound method.
+	 * \<Helper\>.getXxxxx() is called once during this initialization. That method should set up
+	 * a binding.
 	 *
-	 * When tapping (or changing value in the case of an input field) <Helper>.setXxxx() will
-	 * be called.
+	 * When tapping (or changing a value in the case of an input field), \<Helper\>.setXxxx() is
+	 * called.
 	 *
-	 * Bindings in web components will search for the nearest parent component that contains
-	 * the expected function (see the examples).
+	 * Bindings in web components search for the nearest parent component that contains the
+	 * expected function (see the examples).
 	 *
 	 * @param {HTMLElement} node The node to bind.
-	 * @param {Object} [params] Parameters passed as the final argument.
+	 * @param {object} [params] Parameters passed as the final argument.
+	 * @return {boolean} true if binding succeeded; false if binding failed.
 	 *
 	 * @alias CIQ.UI.BaseComponent.bindNode
 	 * @memberof CIQ.UI.BaseComponent
-	 * @since 7.0.0 Previously {@link CIQ.UI.BaseComponent.bind}.
+	 * @since
+	 * - 7.0.0 Previously {@link CIQ.UI.BaseComponent.bind}.
+	 * - 8.2.0 Added return boolean.
 	 *
 	 * @example
 	 * <caption>Look for the next parent with method <code>tool()</code>.</caption>
-	 * stxtap="tool('gartley')"
+	 * stxtap = "tool('gartley')"
 	 *
 	 * @example
 	 * <caption>To explicitly target a web component, use a prefix.</caption>
-	 * stxtap="DrawingToolbar.tool('gartley')"
+	 * stxtap = "DrawingToolbar.tool('gartley')"
 	 */
 	static bindNode(node, params) {
 		var helper;
@@ -1391,6 +1450,7 @@ class BaseComponent extends HTMLElement {
 		}
 		if (binding && binding !== "") {
 			helper = BaseComponent.getHelper(node, binding, "stxbind");
+			if (!helper) return false;
 			bindHelper(helper);
 		}
 		// "tap" binding
@@ -1434,8 +1494,10 @@ class BaseComponent extends HTMLElement {
 		}
 		if (setget) {
 			helper = BaseComponent.getHelper(node, setget, "stxsetget");
+			if (!helper) return false;
 			setGetHelper(helper);
 		}
+		return true;
 	}
 	/**
 	 * Schedules a node to be processed for binding. The binding occurs in the next tick, in
@@ -1565,8 +1627,9 @@ class BaseComponent extends HTMLElement {
 		for (var i = scheduledBindings.length - 1; i >= 0; i--) {
 			var binding = scheduledBindings[i];
 			if (binding.node.ciqAlreadyBound) continue; // a node can only be bound once in it's lifetime
-			BaseComponent.bindNode(binding.node, { parent: binding.parentTag });
-			binding.node.ciqAlreadyBound = true;
+			binding.node.ciqAlreadyBound = BaseComponent.bindNode(binding.node, {
+				parent: binding.parentTag
+			});
 		}
 	}
 	/**
@@ -1661,6 +1724,172 @@ class BaseComponent extends HTMLElement {
 		const { obj, prop } = BaseComponent.toPropAndObject(path, stx || self.stx);
 		return { obj, prop };
 	}
+	/**
+	 * Finds the elements in `items` that have a `cq-focused` attribute.
+	 *
+	 * @param {NodeList} items A list of elements that are selectable via keyboard navigation.
+	 * @return {array} The elements in `items` that have a `cq-focused` attribute, or an empty
+	 * 		array if no elements are found.
+	 *
+	 * @memberof CIQ.UI.BaseComponent#
+	 * @alias findFocused
+	 * @since 8.3.0
+	 */
+	findFocused(items) {
+		return Array.from(items || []).filter((item) =>
+			item.matches("[cq-focused]")
+		);
+	}
+	/**
+	 * Focuses the next item in the tab order.
+	 *
+	 * Locates the first element in `items` that has a `cq-focused` attribute. If an element is
+	 * found, the attribute is removed from all elements in `items`, and `cq-focused` is applied
+	 * to the element that follows (in the tab order) the element that was found.
+	 *
+	 * If no elements are found with the `cq-focused` attribute, the attribute is applied to the
+	 * first element in `items` (last element if `reverse` is true). If the last element in `items`
+	 * (first element if `reverse` is true) is found to have the `cq-focused` attribute, focus
+	 * remains on that element.
+	 *
+	 * @param {NodeList} items A list of elements that are selectable via keyboard navigation.
+	 * @param {boolean} [reverse] If true, the operation is performed in reverse order; that is,
+	 * 		from the last element in `items` to the first.
+	 * @return {boolean} true if a `cq-focused` attribute has changed, false if nothing has changed.
+	 *
+	 * @memberof CIQ.UI.BaseComponent#
+	 * @alias focusNextItem
+	 * @since 8.3.0
+	 *
+	 * @see [focusItem]{@link CIQ.UI.BaseComponent#focusItem}
+	 */
+	focusNextItem(items, reverse) {
+		const focused = this.findFocused(items);
+		let i = -1;
+		if (focused.length) {
+			// find our location in the list of items
+			for (i = 0; i < items.length; i++) if (items[i] === focused[0]) break;
+		}
+		if (reverse) {
+			// Find the previous available item
+			do {
+				i--;
+				if (i < 0) break;
+			} while (!CIQ.trulyVisible(items[i]));
+		} else {
+			// Find the next available item
+			do {
+				i++;
+				if (i >= items.length) break;
+			} while (!CIQ.trulyVisible(items[i]));
+		}
+		if (i > -1 && i < items.length && items[i] !== focused[0]) {
+			this.removeFocused(items);
+			this.focusItem(items[i]);
+			return true;
+		}
+		return false;
+	}
+	/**
+	 * Adds a `cq-focused` attribute to `item` and highlights `item`.
+	 *
+	 * @param {HTMLElement} item Element that receives keyboard focus and is highlighted.
+	 *
+	 * @memberof CIQ.UI.BaseComponent#
+	 * @alias focusItem
+	 * @since 8.3.0
+	 */
+	focusItem(item) {
+		item.setAttribute("cq-focused", "true");
+		this.highlightItem(item);
+	}
+	/**
+	 * Removes the `cq-focused` attribute from all elements in `items`.
+	 *
+	 * @param {NodeList} items A list of elements that are selectable via keyboard navigation.
+	 *
+	 * @memberof CIQ.UI.BaseComponent#
+	 * @alias removeFocused
+	 * @since 8.3.0
+	 */
+	removeFocused(items) {
+		items.forEach((item) => item.removeAttribute("cq-focused"));
+	}
+	/**
+	 * Sets the navigation highlight DOM element to the size and position of the provided element
+	 * if the `keyboardNavigation` property has been set in this component via the keystrokeHub.
+	 *
+	 * @param {HTMLElement} item Element to highlight.
+	 *
+	 * @memberof CIQ.UI.BaseComponent#
+	 * @alias highlightItem
+	 * @private
+	 * @since 8.3.0
+	 */
+	highlightItem(item) {
+		if (
+			!item ||
+			!this.keyboardNavigation ||
+			!this.keyboardNavigation.highlightPosition
+		)
+			return;
+		const { x, y, width, height } = item.getBoundingClientRect();
+		this.keyboardNavigation.highlightPosition({
+			element: item,
+			position: { x, y, width, height }
+		});
+	}
+	/**
+	 * Highlights the first element in the provided node list that has a `cq-focused` attribute.
+	 *
+	 * @param {NodeList} items A list of elements that are selectable via keyboard navigation.
+	 *
+	 * @memberof CIQ.UI.BaseComponent#
+	 * @alias highlightFocusedItem
+	 * @private
+	 * @since 8.3.0
+	 */
+	highlightFocusedItem(items) {
+		let focused = this.findFocused(items);
+		if (focused.length) this.highlightItem(focused[0]);
+	}
+	/**
+	 * Simulates a mouse click on the provided element as the result of a keystroke.
+	 *
+	 * @param {HTMLElement} item Element to click.
+	 * @param {Event} e The keystroke event.
+	 * @return {boolean} true if the element received the simulated clicked; otherwise, false.
+	 *
+	 * @memberof CIQ.UI.BaseComponent#
+	 * @alias clickItem
+	 * @private
+	 * @since 8.3.0
+	 */
+	clickItem(item, e) {
+		if (!item) return;
+		if (item.selectFC) {
+			item.selectFC.call(item, e);
+		} else {
+			// Simulate a click
+			item.dispatchEvent(new Event("pointerdown"));
+			item.dispatchEvent(new Event("pointerup"));
+		}
+		return true;
+	}
+	/**
+	 * Selects (clicks) the first element in `items` that has a `cq-focused` attribute.
+	 *
+	 * @param {NodeList} items A list of elements that are selectable via keyboard navigation.
+	 * @param {Event} e The keystroke event.
+	 *
+	 * @memberof CIQ.UI.BaseComponent#
+	 * @alias clickFocusedItem
+	 * @since 8.3.0
+	 */
+	clickFocusedItem(items, e) {
+		let focused = this.findFocused(items);
+		if (focused.length) this.clickItem(focused[0], e);
+	}
 }
 BaseComponent.scheduledBindings = [];
 CIQ.UI.BaseComponent = BaseComponent;
@@ -1669,6 +1898,7 @@ CIQ.UI.BaseComponent = BaseComponent;
  * instance of the chart engine.
  *
  * @name CIQ.UI.ContextTag
+ * @class
  * @extends CIQ.UI.BaseComponent
  *
  * @see {@link WebComponents}
@@ -1811,8 +2041,8 @@ CIQ.UI.ContextTag = ContextTag;
  * A tag that is modally aware of the chart.
  *
  * @name CIQ.UI.ModalTag
+ * @class
  * @extends CIQ.UI.ContextTag}
- * @private
  */
 class ModalTag extends ContextTag {
 	constructor() {
@@ -1862,7 +2092,8 @@ CIQ.UI.ModalTag = ModalTag;
  * {@tutorial Web Component Interface}.
  *
  * @name CIQ.UI.DialogContentTag
- * @extends CIQ.UI.BaseComponent}
+ * @class
+ * @extends CIQ.UI.BaseComponent
  */
 class DialogContentTag extends BaseComponent {
 	constructor() {
@@ -2061,7 +2292,7 @@ CIQ.UI.HeadsUp.prototype.begin = function () {
 					return;
 				}
 				// show the hud if on, except if the crosshair is on or a drawing tool is selected
-				if (stx.layout.crosshair || stx.currentVectorParameters.vectorType) {
+				if (stx.currentVectorParameters.vectorType) {
 					nodeClass.remove(params.showClass);
 					return;
 				}
@@ -2175,10 +2406,6 @@ CIQ.UI.HeadsUp.prototype.begin = function () {
 		CIQ.extend(params, this.params); // Override default marker setup by passing marker parameters into CIQ.UI.HaedsUp
 		this.marker = new CIQ.Marker(params);
 	}
-	// enable the crosshairs for touch devices
-	if (CIQ.isMobile) {
-		this.context.stx.layout.crosshair = true;
-	}
 	this.calculateMaxVolume();
 	this.addInjection(
 		"prepend",
@@ -2214,9 +2441,6 @@ CIQ.UI.HeadsUp.prototype.begin = function () {
  * @private
  */
 CIQ.UI.HeadsUp.prototype.end = function () {
-	if (CIQ.isMobile) {
-		this.context.stx.layout.crosshair = false;
-	}
 	if (this.marker) this.marker.remove();
 	this.destroy();
 	this.marker = null;
@@ -2293,11 +2517,11 @@ CIQ.UI.HeadsUp.prototype.position = function () {
 					quote.High = Math.max(quote.Open, quote.Close);
 				if (quote.Low === undefined)
 					quote.Low = Math.min(quote.Open, quote.Close);
-				$node.find("cq-hu-open").text(valOrNA(formatPrice(quote.Open)));
-				$node.find("cq-hu-price").text(valOrNA(formatPrice(quote[plotField])));
-				$node.find("cq-hu-close").text(valOrNA(formatPrice(quote.Close)));
-				$node.find("cq-hu-high").text(valOrNA(formatPrice(quote.High)));
-				$node.find("cq-hu-low").text(valOrNA(formatPrice(quote.Low)));
+				$node.find("cq-hu-open").text(formatPrice(valOrNA(quote.Open)));
+				$node.find("cq-hu-price").text(formatPrice(valOrNA(quote[plotField])));
+				$node.find("cq-hu-close").text(formatPrice(valOrNA(quote.Close)));
+				$node.find("cq-hu-high").text(formatPrice(valOrNA(quote.High)));
+				$node.find("cq-hu-low").text(formatPrice(valOrNA(quote.Low)));
 				var volume = CIQ.condenseInt(quote.Volume);
 				var rollup = volume.charAt(volume.length - 1);
 				if (rollup > "9") {
@@ -2412,7 +2636,7 @@ function DrawingEdit(node, context) {
 	stx.addEventListener("drawing", onDrawingEndEdit(this));
 	stx.addEventListener("drawingEdit", onDrawingEditShowContext(this));
 	$node.find("cq-toolbar .ciq-drawing-edit-only").each(function (i, el) {
-		if (el.has(".ciq-btn")) {
+		if (el.querySelector(".ciq-btn")) {
 			["mouseenter", "mouseleave"].forEach(function (ev) {
 				el.addEventListener(ev, onButtonHoverHighlightDrawing(stx, self));
 			});
@@ -2555,6 +2779,7 @@ DrawingEdit.prototype.showToolbar = function (drawing) {
 		self.cvpController.each(function () {
 			this.sync(drawing);
 		});
+		this.dirty(false);
 		// tool called the drawing initializeParameters method, so we now need to override the defaults
 		if (isFib) {
 			this.context.stx.currentVectorParameters.fibonacci = CIQ.clone(
@@ -2623,7 +2848,7 @@ DrawingEdit.prototype.beginEdit = function (drawing) {
  * <div class="ciq-drawing-edit-only" cq-section>
  * 	<div class="ciq-btn" stxtap="DrawingEdit.endEdit('close')">Done Editing</div>
  * </div>
- *
+ * @private
  * @since 6.2.0
  */
 DrawingEdit.prototype.endEdit = function (activator, action) {
@@ -2655,12 +2880,15 @@ DrawingEdit.prototype.endEdit = function (activator, action) {
 	this.editing = null;
 	this.beforeEdit = null;
 	this.toolbar.attr("cq-drawing-edit", "none");
-	// display the saved parameters if they exist in localstorage
-	if (toolName && action === "close") {
-		activator = this.getToolActivator(toolName);
-		this.toolbar.each(function () {
-			this.tool(activator, toolName);
-		});
+	if (action === "close") {
+		// display the saved parameters if they exist in localStorage
+		if (toolName) {
+			activator = this.getToolActivator(toolName);
+			this.toolbar.each(function () {
+				this.tool(activator, toolName);
+			});
+		}
+		stx.changeVectorType(toolName);
 	}
 	if (endEvent) {
 		/**
@@ -2711,7 +2939,11 @@ DrawingEdit.prototype.edit = function () {
 		self.showToolbar(drawing, contextLocation);
 		self.beginEdit(drawing);
 		// Check for the settings palette here because this method may be called by the legacy toolbar
-		if (settingsPalette) {
+		// Also do not detach the palette when at the small screen breakpoints
+		if (
+			settingsPalette &&
+			!/break.*sm\b/.test(self.context.topNode.className)
+		) {
 			settingsPalette.detach(contextLocation.left, contextLocation.top);
 		}
 	}
@@ -2768,6 +3000,7 @@ DrawingEdit.prototype.clone = function () {
  *
  * @param {Object} activator
  * @param {String} layer the action to apply to the current drawing. May be "up", "down", "top", or "bottom"
+ * @memberof CIQ.UI.DrawingEdit
  * @since 6.2.0
  */
 DrawingEdit.prototype.reorderLayer = function (activator, layer) {
@@ -2841,10 +3074,10 @@ DrawingEdit.prototype.remove = function () {
  *
  * Requires the [cq-study-dialog]{@link WebComponents.cq-study-dialog} web component.
  *
- * Sets up a [studyOverlayEdit]{@link studyOverlayEditEventListener} event listener to display
- * a context menu for editing or deleting overlays and a
- * [studyPanelEdit]{@link studyPanelEditEventListener} event listener to display a dialog for
- * editing study parameters.
+ * Sets up a [studyOverlayEditEventListener]{@link CIQ.ChartEngine~studyOverlayEditEventListener}
+ * to display a context menu for editing or deleting overlays and a
+ * [studyPanelEditEventListener]{@link CIQ.ChartEngine~studyPanelEditEventListener} to display a
+ * dialog for editing study parameters.
  *
  * @param {HTMLElement} [node=context.topNode] Automatically attaches to the top node of the
  * 		context.
@@ -2903,20 +3136,18 @@ CIQ.UI.StudyEdit.prototype.edit = function () {
  *
  * @memberof CIQ.UI.StudyEdit
  * @param {object} params Parameters from the
- * 		[studyPanelEdit]{@link studyPanelEditEventListener} event listener.
+ * 		[studyPanelEditEventListener]{@link CIQ.ChartEngine~studyPanelEditEventListener}.
  */
 CIQ.UI.StudyEdit.prototype.editPanel = function (params) {
+	const { stx, config } = this.context;
 	params.context = this.context;
 	// Make sure we don't open the dialog in the context menu position
 	params.x = null;
 	params.y = null;
 	const { channelWrite } = CIQ.UI.BaseComponent.prototype;
-	if (this.context.config) {
-		channelWrite(
-			this.context.config.channels.dialog,
-			{ type: "study", params },
-			this.context.stx
-		);
+	if (config) {
+		const channel = (config.channels || {}).dialog || "channel.dialog";
+		channelWrite(channel, { type: "study", params }, stx);
 	} else {
 		document.querySelector("cq-study-dialog").open(params);
 	}
@@ -2931,7 +3162,7 @@ CIQ.UI.StudyEdit.prototype.editPanel = function (params) {
  *
  * @memberof CIQ.UI.StudyEdit
  * @param {object} params Parameters from the
- * 		[studyOverlayEdit]{@link studyOverlayEditEventListener} event listener.
+ * 		[studyOverlayEditEventListener]{@link CIQ.ChartEngine~studyOverlayEditEventListener}.
  */
 CIQ.UI.StudyEdit.prototype.editOverlay = function (params) {
 	this.params = params;
@@ -3247,7 +3478,9 @@ CIQ.UI.Layout.prototype.setRangeSlider = function (node) {
  *
  * @memberof CIQ.UI.Layout
  * @private
- * @since 7.5.0
+ * @since
+ * - 7.5.0
+ * - 8.0.0 Changed access to private.
  */
 CIQ.UI.Layout.prototype.getOutliers = function (node) {
 	var stx = this.context.stx,
@@ -3404,8 +3637,9 @@ CIQ.UI.Layout.prototype.showAggregationEdit = function (node, aggregationType) {
 	const { context } = this;
 	if (context.config) {
 		const { channelWrite } = CIQ.UI.BaseComponent.prototype;
+		const channel = (context.config.channels || {}).dialog || "channel.dialog";
 		channelWrite(
-			context.config.channels.dialog,
+			channel,
 			{ type: "aggregation", params: { context, aggregationType } },
 			context.stx
 		);
@@ -3472,6 +3706,7 @@ CIQ.UI.Layout.prototype.setPeriodicity = function (
  * @param  {CIQ.ChartEngine} stx    The chart object to examine for periodicity
  * @param  {Object} params Parameters
  * @param {HTMLElement} params.selector The selector to update
+ * @memberof CIQ.UI.Layout
  */
 CIQ.UI.Layout.prototype.showPeriodicity = function (stx, params) {
 	var text = "";
@@ -3519,7 +3754,9 @@ CIQ.UI.Layout.prototype.setLanguage = function () {
 	const { config, stx } = this.context;
 	if (config) {
 		const { channelWrite } = CIQ.UI.BaseComponent.prototype;
-		channelWrite(config.channels.dialog, { type: "language" }, stx);
+		const channel = (config.channels || {}).dialog || "channel.dialog";
+		const params = { context: stx.uiContext };
+		channelWrite(channel, { type: "language", params }, stx);
 	} else {
 		// config is not available revert to direct component access
 		document.querySelector("cq-language-dialog").open();
@@ -3573,36 +3810,56 @@ CIQ.UI.Markers = function (context, params) {
 };
 CIQ.inheritsFrom(CIQ.UI.Markers, CIQ.UI.Helper);
 /**
- * Displays the markers of the type indicated or removes them all.
- * Updates display state of menu items
+ * Displays the markers specified by the `type` parameter. If `type` is not provided, all
+ * currently displayed markers are removed. Must be called from a menu item.
  *
- * 	Must be called from a menu item.
+ * To use this function:
  *
- * To use, first create the methods for managing the markers:
- * ```
- * var markerImplementation=new MarkersSample(stxx);
- * ```
+ * 1. Create an implementation that provides the methods for managing markers.
  *
- * Inside the `startUI` function add this line ( See sample-template-advanced.html for exact placement ):
- * ```
- * var UIMarkers=new CIQ.UI.Markers(UIContext, {menuItemSelector:".stx-markers cq-item", implementation:markerImplementation});
- * ```
+ *    The marker implementation must include a `showMarkers` function that accepts the following
+ *    parameters:
+ *    - `type` &mdash; Categorizes the marker as a circle, square, or specialized type such as
+ *      trade or video.
+ *    - `renderType` &mdash; Specifies the marker class, either [Simple]{@link CIQ.Marker.Simple} or
+ *      [Performance]{@link CIQ.Marker.Performance}.
  *
- * markerImplementation should include showMarkers function which should accept the following parameters:
- * - type 			: primary type of marker, such as: circle, square or of a specialized type such as: trade, video etc.
- * 								if type parameter is not provided all currently displayed markers are removed
- * - renderType : a secondary marker type
+ *    See the `MarkersSample` class in the *markersSample.js* file in the *examples/markers*
+ *    folder of your library for a complete example implementation.
  *
- * A full implementation of the `MarkersSample` class can be found in the `examples/markers` directory.
+ * 2. Assign the implementation to the `eventMarkersImplementation` property of the chart
+ *    configuration object.
+ *
+ *    For example, from the *sample-template-advanced.html* template (in the *examples/templates*
+ *    folder of your library):
+ *    ```
+ *    import marker from "./examples/markers/markersSample.js";
+ *
+ *    const config = getDefaultConfig({
+ *        markerSample: marker.MarkersSample,
+ *        .
+ *        .
+ *        .
+ *    });
+ *    ```
+ *
+ *    The `markerSample` parameter is assigned to the `eventMarkersImplementation` property of the
+ *    chart configuration object.
+ *
+ *    See the <a href="tutorial-Chart%20Configuration.html" target="_blank">Chart Configuration</a>
+ *    tutorial for more information.
+ *
  * @param {HTMLElement} node
- * @param {String} type marker type (Circle, Square, Callout)
- * @param {String} markerType Class of marker to draw (Simple or Performance)
- * @example
- * 	<cq-item stxtap="Markers.showMarkers('square')">
- * 	Simple Square<span class="ciq-radio"><span></span></span>
- * </cq-item>
+ * @param {string} type Marker type: "circle", "square", or "callout".
+ * @param {string} markerType Class of marker to draw: "Simple" or "Performance".
+ *
  * @memberof CIQ.UI.Markers
- * @since 7.1.0 Adds `markerType`.
+ * @since 7.1.0 Added `markerType`.
+ *
+ * @example
+ * <cq-item stxtap="Markers.showMarkers('square')">
+ *     Simple Square<span class="ciq-radio"><span></span></span>
+ * </cq-item>
  */
 CIQ.UI.Markers.prototype.showMarkers = function (node, type, markerType) {
 	var activeClassName = this.activeClassName;
@@ -3670,7 +3927,6 @@ CIQ.UI.Keystroke.prototype.androidWorkaroundKeyup = function (e) {
 	var key;
 	if (newValue.length > this.downValue.length) {
 		key = newValue.charAt(newValue.length - 1);
-		e.which = key.charCodeAt(0);
 	} else {
 		key = "Delete";
 	}
@@ -3782,6 +4038,8 @@ CIQ.UI.Keystroke.prototype.keydown = function (e) {
 	if (isCommandKey) {
 		this.commandKeys[code] = { command: mappedKey, pressed: true };
 	}
+	// Prevent default tab key behavior
+	if (key == "Tab") e.preventDefault();
 	this.key = key;
 	if (isCommandKey) {
 		this[mappedKey] = true;
@@ -3865,6 +4123,62 @@ CIQ.UI.KeystrokeHub = function (node, context, params) {
 	this.keystroke = new CIQ.UI.Keystroke(handler(), {
 		keysToRepeat: this.hotkeyConfig.keysToRepeat
 	});
+	// Array of element references for keyboard navigation. No element placed at index 0. This
+	// allows tabIndex to represent either a positive (selected) and negative (deselected) value
+	// for the selected element.
+	this.tabOrder = [null];
+	// Index of selected element for keyboard navigation.
+	this.tabIndex = 0;
+	// Get the value of 5% of the total context element height. Used to normalize y coordinates when sorting elements by position
+	this.yNormalizationThreshold =
+		this.context.topNode.getBoundingClientRect().height / 25;
+	// Queryselectors for elements that will be added to the tabOrder array
+	this.tabElementSelectors = [
+		"cq-lookup",
+		"cq-comparison[cq-marker]",
+		"cq-study-legend[cq-panel-only]",
+		"cq-menu.ciq-menu",
+		".ciq-toggles cq-toggle",
+		"cq-chartcontrol-group cq-toggle",
+		".chartControls .chartSize span",
+		"cq-show-range div",
+		"[keyboard-navigation='true']"
+	];
+	// The element that the highlight will position over, as well as its position. An object of the following type is expected:
+	// {element: HTMLElement, {x: number, y: number, width: number, height: number}}
+	// This can be set by keyboard navigable components so the element isn't necessarily in the tabOrder array.
+	this.tabActiveElement = null;
+	// A reference to a component that has been handed control for internal navigation by setting its keyboardNavigation
+	// property equal to a reference to this object.
+	this.keyControlElement = null;
+	// A reference to the highlight rectangle element
+	this.highlightElement = null;
+	// Halt keyboard navigation if the mouse button is used anywhere else.
+	this.context.topNode.addEventListener("pointerdown", () =>
+		this.tabOrderDeselect()
+	);
+	// Reenable the mouse pointer when the mouse is moved
+	this.context.topNode.addEventListener("pointermove", () =>
+		this.context.topNode.classList.remove("disable-mouse-pointer")
+	);
+	// Update the highlight position on resize
+	this.context.stx.append("resizeChart", () => {
+		this.highlightAlign();
+	});
+	// Subscribe to the keyboardNavigation channel and listen for calls to register elements
+	const { channelSubscribe } = CIQ.UI.BaseComponent.prototype;
+	const channel =
+		(this.context.config.channels || {}).keyboardNavigation ||
+		"channel.keyboardNavigation";
+	channelSubscribe(
+		channel,
+		(value) => {
+			if (value && value.action === "registerElements") {
+				this.setTabOrderElements();
+			}
+		},
+		this.context.stx
+	);
 };
 CIQ.inheritsFrom(CIQ.UI.KeystrokeHub, CIQ.UI.Helper);
 /**
@@ -3881,9 +4195,11 @@ CIQ.UI.KeystrokeHub.defaultHotKeys = function (key, hub, e = {}) {
 	const { hotkeyConfig = {}, keystroke, context } = hub;
 	const { hotkeys = [] } = hotkeyConfig;
 	const { stx } = context;
-	const { code } = e || {};
+	const { code, keyCode } = e || {};
 	const numpadCode = code && code.includes("Numpad");
+	if (key === "Unidentified") key = String.fromCharCode(keyCode); // legacy edge support
 	return hotkeys
+		.slice()
 		.reverse() // process in reverse order to allow dev/user to override existing functionality
 		.reduce(function flattenCommands(acc, { action, commands, options }) {
 			return acc.concat(
@@ -3932,6 +4248,29 @@ CIQ.UI.KeystrokeHub.defaultHotKeys = function (key, hub, e = {}) {
 		});
 };
 /**
+ * Global method to add a hot key handler. Hot keys are defined in `hotkeyConfig.hotkeys` in *js/defaultConfiguration.js*).
+ * @memberof CIQ.UI.KeystrokeHub
+ * @param  {string} identifier Name identifying the keystroke handler
+ * @param  {function} handler Function to call when the hot key combination is pressed.
+ * @param {CIQ.ChartEngine} stx A reference to the chart engine.
+ */
+CIQ.UI.KeystrokeHub.addHotKeyHandler = function (identifier, handler, stx) {
+	CIQ.UI.observeProperty("uiContext", stx, ({ value: uiContext }) => {
+		if (!uiContext) return;
+		setTimeout(() => {
+			// Updated hotkey alias if available to action
+			const configKeyEntry = CIQ.getFromNS(
+				uiContext.config,
+				"hotkeyConfig.hotkeys",
+				[]
+			).find(({ action }) => action === identifier);
+			if (configKeyEntry) {
+				configKeyEntry.action = handler;
+			}
+		});
+	});
+};
+/**
  * Default hotkey execution. Called from {@link CIQ.UI.KeystrokeHub.defaultHotKeys}.
  *
  * @memberof CIQ.UI.KeystrokeHub
@@ -3950,6 +4289,8 @@ CIQ.UI.KeystrokeHub.executeHotkeyCommand = function ({
 	const { left, right, panel } = stx.chart;
 	const height = stx.height - stx.xaxisHeight;
 	const { percent = 0, bars = 0 } = options;
+	const keystrokeHub = document.body.keystrokeHub;
+	const { topNode } = stx.uiContext;
 	const positionCrosshairs = ({ axis, direction = 1 } = {}) => {
 		const { cx, cy } = stx;
 		let change = 0; // default case: initial positioning, no adjustment
@@ -4028,12 +4369,19 @@ CIQ.UI.KeystrokeHub.executeHotkeyCommand = function ({
 			zoomYAxis();
 			break;
 		case "toggleCrosshairs":
-			stx.layout.crosshair = !stx.layout.crosshair;
-			stx.layout.headsUp = stx.layout.crosshair ? "static" : null;
+			const toggle = topNode.querySelector('cq-toggle[cq-member="crosshair"]');
+			if (toggle) toggle.dispatchEvent(new Event("stxtap"));
+			else stx.layout.crosshair = !stx.layout.crosshair;
 			positionCrosshairs();
 			break;
 		case "toggleContinuousZoom":
 			if (stx.continuousZoom) stx.continuousZoom.smartZoomToggle();
+			break;
+		case "symbolLookup":
+			let lookupNode = topNode.querySelector(
+				".ciq-search cq-lookup cq-lookup-input input"
+			);
+			if (lookupNode) lookupNode.focus();
 			break;
 		case "home":
 			stx.home();
@@ -4054,6 +4402,10 @@ CIQ.UI.KeystrokeHub.executeHotkeyCommand = function ({
 			}
 			break;
 		case "escape":
+			// Uncomment the following line if you wish to use the escape key to exit keyboard navigation.
+			// Do not use this if you enable the full screen feature as the escape key is reserved by the browser for exiting full screen mode.
+			// Check for modal state first because we don't want to deselect when escaping out of a menu
+			// if (!stx.uiContext.isModal()) keystrokeHub.tabOrderDeselect();
 			if (CIQ.ChartEngine.drawingLine) {
 				stx.undo();
 			} else {
@@ -4061,10 +4413,387 @@ CIQ.UI.KeystrokeHub.executeHotkeyCommand = function ({
 				if (uiManager) uiManager.closeMenu();
 			}
 			break;
+		case "keyboardNavigateDeselect":
+			keystrokeHub.tabOrderDeselect();
+			break;
+		case "keyboardNavigateNext":
+			keystrokeHub.tabIndexNext();
+			break;
+		case "keyboardNavigatePrevious":
+			keystrokeHub.tabIndexNext(true);
+			break;
+		case "keyboardNavigateClick":
+			keystrokeHub.tabOrderClickSelected();
+			break;
 		default:
 			return false; // not captured
 	}
 	return true;
+};
+/**
+ * Queries elements assigned for keyboard navigation and adds references to an internal tab order
+ * array.
+ *
+ * This function is called automatically when `{ action: "registerElements" }` is written to the
+ * `keyboardNavigation` UI channel, which is done both when the component UI loads and the chart
+ * HTML UI loads.
+ *
+ * Elements can be added manually to the tab order by assigning the attribute
+ * `keyboard-navigation="true"`.
+ *
+ * @memberof CIQ.UI.KeystrokeHub
+ * @private
+ * @since 8.2.0
+ */
+CIQ.UI.KeystrokeHub.prototype.setTabOrderElements = function () {
+	// Check for an existing selected element
+	let selectedElement = null;
+	if (this.tabIndex !== 0) {
+		// An item is selected. Hold on to it in case its position in the array changes.
+		selectedElement = this.tabOrder[Math.abs(this.tabIndex)].element;
+	}
+	// No element placed at index 0. This allows tabIndex to represent either a positive (selected)
+	// and negative (deselected) value for the selected element.
+	this.tabOrder = [null];
+	for (let idx = 0; idx < this.tabElementSelectors.length; idx++) {
+		const elements = this.context.topNode.querySelectorAll(
+			this.tabElementSelectors[idx]
+		);
+		for (let idx = 0; idx < elements.length; idx++) {
+			const element = elements[idx];
+			if (element.getAttribute("keyboard-navigation") === "false") continue;
+			// Add a stxtap listener to the element to move the index to this element if click/tapped
+			element.addEventListener(
+				"stxtap",
+				function (element) {
+					// Find the tabOrder index of the element
+					let targetIndex = this.tabOrder.findIndex(
+						(item) => item && item.element === element
+					);
+					if (targetIndex != this.tabIndex) {
+						// Something else received an interaction, likely with the mouse. Shift keyboard focus to this element.
+						this.tabOrderDeselect();
+						this.tabIndex = -targetIndex;
+					}
+					return true;
+				}.bind(this, element)
+			);
+			this.tabOrder.push({
+				element: element
+			});
+		}
+	}
+	this.sortTabOrderElements(selectedElement);
+};
+/**
+ * Sorts elements in the tabOrder array based on their screen position; first from left to right,
+ * then from top to bottom.
+ *
+ * If `elementToSelect` is not provided, and the local tabIndex property points to an element,
+ * tabIndex is updated to point to the same element at its new position in the array.
+ *
+ * @param {HTMLElement} [elementToSelect] The element to reference by tabIndex after the array has
+ * 		been sorted.
+ *
+ * @memberof CIQ.UI.KeystrokeHub#
+ * @alias sortTabOrderElements
+ * @private
+ * @since 8.3.0
+ */
+CIQ.UI.KeystrokeHub.prototype.sortTabOrderElements = function (
+	elementToSelect
+) {
+	const isNeg = this.tabIndex < 0;
+	// If elementToSelect is not set, check for an existing selected element
+	if (!elementToSelect && this.tabIndex !== 0) {
+		// An item is selected. Hold on to it in case its position in the array changes.
+		if (this.tabOrder[Math.abs(this.tabIndex)])
+			elementToSelect = this.tabOrder[Math.abs(this.tabIndex)].element;
+	}
+	// Update each element position
+	this.tabOrder.forEach((tabItem) => {
+		if (!tabItem) return;
+		const { x, y, width, height } = tabItem.element.getBoundingClientRect();
+		tabItem.position = { x, y, width, height };
+	});
+	// Sort elements based on their position
+	this.tabOrder.sort((a, b) => {
+		if (a === null || b === null) return;
+		return (
+			Math.floor(a.position.y / this.yNormalizationThreshold) -
+				Math.floor(b.position.y / this.yNormalizationThreshold) ||
+			a.position.x - b.position.x
+		);
+	});
+	// Update the tabIndex to match the previously selected element
+	if (elementToSelect)
+		this.tabOrder.forEach((tabItem, idx) => {
+			if (!tabItem) return;
+			if (tabItem.element == elementToSelect) {
+				this.tabIndex = isNeg ? -idx : idx;
+			}
+		});
+};
+/**
+ * Sets an element as the active keyboard control element.
+ *
+ * Disables internal keyboard navigation in the element that currently has control.
+ *
+ * Gives `element` control by assigning the keystroke hub object to the element's
+ * `keyboardNavigation` property. The element's `onKeyboardSelection` method, if available, is
+ * then called.
+ *
+ * @param {HTMLElement} [element] Element to give access to the keystroke hub for internal
+ * 		navigation. If this parameter is not provided, the function still disables keyboard
+ * 		navigation in the element that currently has control.
+ * @param {boolean} [skipDeselectionCallback] If true, prevents the `onKeyboardDeselection`
+ * 		callback function of the element that currently has control from being called when that
+ * 		element is disabled.
+ *
+ * @memberof CIQ.UI.KeystrokeHub
+ * @private
+ * @since 8.2.0
+ */
+CIQ.UI.KeystrokeHub.prototype.setKeyControlElement = function (
+	element,
+	skipDeselectionCallback
+) {
+	// If there's no current element to disable and no new element to enable, give up.
+	if (!this.keyControlElement && !element) return;
+	// Disable the element that has keyboard control
+	this.disableKeyControlElement(
+		this.keyControlElement,
+		skipDeselectionCallback
+	);
+	if (element) {
+		// If provided, hand keyboard control to the new element
+		this.keyControlElement = element;
+		// Pass a reference to the keystroke hub to the active element
+		this.keyControlElement.keyboardNavigation = this;
+		// Call onKeyBoardNavigation in the element if available. This is used to
+		// signal the component to take over with its internal keyboard navigation.
+		if (typeof this.keyControlElement.onKeyboardSelection === "function")
+			this.keyControlElement.onKeyboardSelection();
+	}
+};
+/**
+ * Disables internal keyboard navigation in `element` by setting its internal `keyboardNavigation`
+ * property to null. Calls the element's `onKeyboardDeselection` method if available.
+ *
+ * @param {HTMLElement} element Element for which keyboard navigation is disabled.
+ * @param {boolean} [skipDeselectionCallback] If true, prevents the `onKeyboardDeselection`
+ * 		callback function of the disabled element from being called.
+ *
+ * @memberof CIQ.UI.KeystrokeHub
+ * @private
+ * @since 8.2.0
+ */
+CIQ.UI.KeystrokeHub.prototype.disableKeyControlElement = function (
+	element,
+	skipDeselectionCallback
+) {
+	if (!element) return;
+	// Remove keyboard navigation from the current element
+	if (
+		!skipDeselectionCallback &&
+		typeof element.onKeyboardDeselection === "function"
+	)
+		element.onKeyboardDeselection();
+	// Remove the component reference to the keystroke hub
+	element.keyboardNavigation = null;
+};
+/**
+ * Sets the currently selected element in the tab order to a deselected state and, if `eventsOnly`
+ * is false, removes the selected element highlighting.
+ *
+ * Before deselecting the element, calls the element's `onKeyboardDeselection` callback function
+ * if that function is available.
+ *
+ * @param {boolean} [eventsOnly] If true, sets the element's internal deselected state without
+ * 		changing the keystroke hub's tab index or the element's highlighting.
+ *
+ * @memberof CIQ.UI.KeystrokeHub
+ * @private
+ * @since 8.2.0
+ */
+CIQ.UI.KeystrokeHub.prototype.tabOrderDeselect = function (eventsOnly) {
+	const { tabOrder, tabIndex } = this;
+	if (tabIndex <= 0) return;
+	if (tabOrder[tabIndex])
+		this.disableKeyControlElement(tabOrder[tabIndex].element);
+	if (!eventsOnly) {
+		this.tabActiveElement = null;
+		this.tabIndex = -this.tabIndex;
+		this.highlightHide();
+		// Restore the mouse pointer
+		this.context.topNode.classList.remove("disable-mouse-pointer");
+	}
+};
+/**
+ * Highlights the selected element in the tab order.
+ *
+ * @memberof CIQ.UI.KeystrokeHub
+ * @private
+ * @since 8.2.0
+ */
+CIQ.UI.KeystrokeHub.prototype.tabOrderSelect = function () {
+	const { tabOrder, tabIndex } = this;
+	if (tabIndex <= 0) return;
+	this.highlightPosition(tabOrder[tabIndex]);
+};
+/**
+ * Simulates a mouse click on the selected element in the tab order.
+ *
+ * @memberof CIQ.UI.KeystrokeHub
+ * @private
+ * @since 8.2.0
+ */
+CIQ.UI.KeystrokeHub.prototype.tabOrderClickSelected = function () {
+	const { tabOrder, tabIndex } = this;
+	if (tabOrder.length <= 1) return;
+	if (tabIndex <= 0) return;
+	// Give key control to the selected element
+	this.setKeyControlElement(tabOrder[tabIndex].element);
+	// Simulate a click
+	tabOrder[tabIndex].element.dispatchEvent(new Event("pointerdown"));
+	tabOrder[tabIndex].element.dispatchEvent(new Event("pointerup"));
+};
+/**
+ * Sets the keystroke hub tab index to the next available element. Elements that are not visible
+ * are skipped. If the last element in the tab order is bypassed, indexing loops back to the
+ * beginning of the tab order. If tabbing in reverse and the first element of the tab order is
+ * bypassed, indexing loops around to the end of the tabbing order.
+ *
+ * @param {boolean} reverse Set to `true` to set the index to the previous element, rather than
+ * 		the next.
+ *
+ * @memberof CIQ.UI.KeystrokeHub
+ * @private
+ * @since 8.2.0
+ */
+CIQ.UI.KeystrokeHub.prototype.tabIndexNext = function (reverse) {
+	if (this.tabOrder.length <= 1) return;
+	let setNextElement = function (self, reverse) {
+		// Change the tabIndex
+		if (reverse === true) {
+			self.tabIndex--;
+		} else {
+			self.tabIndex++;
+		}
+		// Loop back when out of the array bounds
+		if (self.tabIndex >= self.tabOrder.length) self.tabIndex = 1;
+		if (self.tabIndex < 1) self.tabIndex = self.tabOrder.length - 1;
+	};
+	// Sort the elements based on screen position.
+	this.sortTabOrderElements();
+	// A negative index represents a deselected state of that index
+	// invert it to select the current index rather than change it
+	// This allows the user to re-select a previously deselected item
+	if (this.tabIndex < 0) {
+		this.tabIndex = Math.abs(this.tabIndex);
+	} else {
+		// If the tabIndex is already positive, deselect the current element but keep the index unchanged.
+		this.tabOrderDeselect(true);
+		setNextElement(this, reverse);
+	}
+	// If the current selected element isn't visible, find the next in line that is
+	while (!CIQ.trulyVisible(this.tabOrder[this.tabIndex].element)) {
+		setNextElement(this, reverse);
+	}
+	this.tabOrderSelect();
+};
+/**
+ * Sets the size and position of the highlight DOM element to match the bounding box of the
+ * active keyboard navigation element specified by `targetInfo.element`. If a highlight DOM
+ * element does not exist, one is created.
+ *
+ * If `targetInfo` is not provided, the active keyboard navigation element is set to the last
+ * element selected by the tabIndexNext function.
+ *
+ * @param {object} [targetInfo] Contains data that identifies and describes the active keyboard
+ * 		navigation element.
+ * @param {HTMLElement} targetInfo.element The active keyboard navigation element, which the
+ * 		highlight DOM element is positioned over.
+ * @param {object} targetInfo.position The screen coordinates and dimensions of the active
+ * 		keyboard navigation element. Usually retrieved from Element.getBoundingClientRect().
+ *
+ * @memberof CIQ.UI.KeystrokeHub
+ * @private
+ * @since 8.2.0
+ */
+CIQ.UI.KeystrokeHub.prototype.highlightPosition = function (targetInfo) {
+	if (!targetInfo || !targetInfo.element || !targetInfo.position) {
+		const { tabOrder, tabIndex } = this;
+		// Give up if nothing was passed and tabIndex is pointing to nothing
+		if (tabIndex <= 0) return;
+		targetInfo = tabOrder[tabIndex];
+	}
+	this.tabActiveElement = targetInfo;
+	this.highlightAlign();
+};
+/**
+ * Positions the highlight DOM element using the coordinates and dimensions of the bounding
+ * rectangle of the active keyboard navigation element.
+ *
+ * Use the highlightPosition function to set the active keyboard navigaton element before calling
+ * this function.
+ *
+ * @memberof CIQ.UI.KeystrokeHub
+ * @private
+ * @since 8.2.0
+ */
+CIQ.UI.KeystrokeHub.prototype.highlightAlign = function () {
+	if (this.tabActiveElement) {
+		// The element position can change over time, during a window resize for example. getBoundingClientRect
+		// is called every time to ensire the highlight is aligned with the current position of the element.
+		const selectedElementRect = this.tabActiveElement.element.getBoundingClientRect();
+		// Remove the highlight if the element has no dimension
+		if (selectedElementRect.width <= 0 || selectedElementRect.height <= 0) {
+			this.highlightHide();
+			return;
+		}
+		this.highlightCreate();
+		Object.assign(this.highlightElement.style, {
+			top: selectedElementRect.top + "px",
+			left: selectedElementRect.left + "px",
+			width: selectedElementRect.width + "px",
+			height: selectedElementRect.height + "px"
+		});
+	}
+};
+/**
+ * Creates a `cq-keyboard-selected-highlight` element if one does not already exist, and attaches
+ * it to the top node of the chart UI context. If a `cq-keyboard-selected-highlight` element
+ * already exists, returns the element.
+ *
+ * @return {HTMLElement} The `cq-keyboard-selected-highlight` element.
+ *
+ * @memberof CIQ.UI.KeystrokeHub
+ * @private
+ * @since 8.2.0
+ */
+CIQ.UI.KeystrokeHub.prototype.highlightCreate = function () {
+	if (!this.highlightElement) {
+		this.highlightElement = document.createElement(
+			"cq-keyboard-selected-highlight"
+		);
+		this.context.topNode.appendChild(this.highlightElement);
+	} else {
+		this.highlightElement.classList.remove("disabled");
+	}
+	// Hide the mouse pointer
+	this.context.topNode.classList.add("disable-mouse-pointer");
+	return this.highlightElement;
+};
+/**
+ * Removes the `cq-keyboard-selected-highlight` element from the display.
+ *
+ * @memberof CIQ.UI.KeystrokeHub
+ * @private
+ * @since 8.2.0
+ */
+CIQ.UI.KeystrokeHub.prototype.highlightHide = function () {
+	if (this.highlightElement) this.highlightElement.classList.add("disabled");
 };
 /**
  * Change the active context for the hub, for instance when dealing with multiple charts.
@@ -4133,12 +4862,15 @@ CIQ.UI.KeystrokeHub.prototype.handler = function (obj) {
 		default:
 			break;
 	}
+	let escTabPress = e.key === "Escape" || e.key === "Esc" || e.key === "Tab";
 	// process default claims before added claims
 	if (
 		this.params.cb &&
-		targetTagName !== "INPUT" &&
+		// Allow an escape or tab press on an input field.
+		((targetTagName === "INPUT" && escTabPress) || targetTagName !== "INPUT") &&
 		targetTagName !== "TEXTAREA" &&
-		!(this.context.isModal() && !(e.key === "Escape" || e.key === "Esc"))
+		!this.context.isLegendKeyboardActive() &&
+		!(this.context.isModal() && !escTabPress)
 	) {
 		if (this.params.cb(key, this, e)) return e.preventDefault();
 	}
@@ -4147,24 +4879,33 @@ CIQ.UI.KeystrokeHub.prototype.handler = function (obj) {
 	}
 };
 /**
- * Self registering global web component that manages the overall UI on the attached div tag.
+ * Self-registering global web component that manages the overall UI on the attached `div` tag.
  *
- * Designed to be used as a helper method for the included {@link WebComponents}. A full tutorial on how to work with and customize the web components can be found here: {@tutorial Web Component Interface}
+ * Designed to be used as a helper method for the included {@link WebComponents}. A full tutorial
+ * on how to work with and customize the web components can be found here:
+ * {@tutorial Web Component Interface}.
  *
- * This component keeps track of open menus and dialogs and attaches click and tap (onclick or ontouch) events in order to close them.
+ * This component keeps track of open menus and dialogs and attaches click and tap (onclick or
+ * ontouch) events to close them.
  *
- * By default it is attached to the **"body"**, but it can be changed to a different div tag if this behavior is too broad for your particular implementation.
+ * By default, this web component is attached to the `body` element, but it can be attached to a
+ * `div` tag if this behavior is too broad for your particular implementation.
+ *
  * @namespace WebComponents.cq-ui-manager
- * @name CIQ.UI.UIManager
+ * @see CIQ.UI.UIManager
  */
 class UIManager extends HTMLElement {
 	/**
-	 * Prevents underlay clicks and handles tap events and callbacks.
+	 * Handles tap events and callbacks and prevents underlay clicks.
 	 *
-	 * Designed to be used as a helper method for the included {@link WebComponents}. A full tutorial on how to work with and customize the WebComponents can be found here: {@tutorial Web Component Interface}
+	 * Designed to be used as a helper method for the included {@link WebComponents}. A full
+	 * tutorial on how to work with and customize the web components can be found here:
+	 * {@tutorial Web Component Interface}.
 	 *
-	 * Creates an array of the active Menus to keep track of which component is currently active.
-	 * @memberof CIQ.UI.UIManager
+	 * Creates an array of the active menus (the active menu stack) to keep track of which menu
+	 * component is currently active.
+	 *
+	 * @name CIQ.UI.UIManager
 	 * @constructor
 	 */
 	constructor() {
@@ -4180,9 +4921,11 @@ class UIManager extends HTMLElement {
 		document.body.addEventListener("stxtap", handleTap);
 	}
 	/**
-	 * Attach a callback to an individual component as part of the context.
+	 * Attaches a "resize" event listener to an individual component as part of the context.
 	 *
-	 * Designed to be used as a helper method for the included {@link WebComponents}. A full tutorial on how to work with and customize the WebComponents can be found here: {@tutorial Web Component Interface}
+	 * Designed to be used as a helper method for the included {@link WebComponents}. A full
+	 * tutorial on how to work with and customize the web components can be found here:
+	 * {@tutorial Web Component Interface}.
 	 *
 	 * @memberof CIQ.UI.UIManager
 	 * @alias attachedCallback
@@ -4203,7 +4946,7 @@ class UIManager extends HTMLElement {
 		}
 	}
 	/**
-	 * Removes a callback from a component.
+	 * Removes a "resize" event listener from a component.
 	 *
 	 * Designed to be used as a helper method for the included {@link WebComponents}. A full
 	 * tutorial on how to work with and customize the WebComponents can be found here:
@@ -4216,13 +4959,17 @@ class UIManager extends HTMLElement {
 		window.removeEventListener("resize", this.resize);
 	}
 	/**
-	 * Closes the current active menu and resets the activeMenuStack.
+	 * Closes the current active menu and resets the active menu stack.
 	 *
-	 * Designed to be used as a helper method for the included {@link WebComponents}. A full tutorial on how to work with and customize the WebComponents can be found here: {@tutorial Web Component Interface}
+	 * Designed to be used as a helper method for the included {@link WebComponents}. A full
+	 * tutorial on how to work with and customize the web components can be found here:
+	 * {@tutorial Web Component Interface}.
+	 *
+	 * @param {HTMLElement} [menu] The menu to be closed. If a menu is not specified, all active
+	 * 		menus are closed.
 	 *
 	 * @memberof CIQ.UI.UIManager
 	 * @alias closeMenu
-	 * @param {HTMLElement} menu
 	 */
 	closeMenu(menu) {
 		var activeMenuStack = this.activeMenuStack;
@@ -4251,21 +4998,24 @@ class UIManager extends HTMLElement {
 		this.ifAllClosed();
 	}
 	/**
+	 * Closes the menu that is at the top of the active menu stack.
+	 *
 	 * @memberof CIQ.UI.UIManager
 	 * @alias closeTopMenu
+	 * @since 6.2.0 Added `cq-close-top` menu attribute to optionally close parent menus.
+	 *
 	 * @example
 	 * <cq-dialog>
-	 * 	<cq-drawing-context>
-	 * 		<cq-menu cq-close-top="cq-dialog[cq-drawing-context]">
-	 * 			<div>This is a sub-menu</div>
-	 * 			<cq-menu-dropdown>
-	 * 				<cq-item>A stxtap event that bubbles to body will call UIManager#closeTopMenu</cq-item>
-	 * 				<cq-item>With the cq-close-top attribute above, the dialog will be closed as well</cq-item>
-	 * 			</cq-menu-dropdown>
-	 * 		</cq-menu>
-	 * 	</cq-drawing-context>
+	 *     <cq-drawing-context>
+	 *         <cq-menu cq-close-top="cq-dialog[cq-drawing-context]">
+	 *             <div>This is a sub-menu</div>
+	 *             <cq-menu-dropdown>
+	 *                 <cq-item>A stxtap event that bubbles to body will call UIManager#closeTopMenu</cq-item>
+	 *                 <cq-item>With the cq-close-top attribute above, the dialog will be closed as well</cq-item>
+	 *             </cq-menu-dropdown>
+	 *         </cq-menu>
+	 *     </cq-drawing-context>
 	 * </cq-dialog>
-	 * @since 6.2.0 Added `cq-close-top` menu attribute to optionally close parent menus.
 	 */
 	closeTopMenu() {
 		var activeMenuStack = this.activeMenuStack;
@@ -4289,14 +5039,16 @@ class UIManager extends HTMLElement {
 		}
 	}
 	/**
-	 * Find all `cq-lift` elements for the specified menu, but not lifts that are within nested
+	 * Finds all `cq-lift` elements for the specified menu, but not lifts that are within nested
 	 * menus.
 	 *
 	 * @param {HTMLElement} menu The menu to search for `cq-lift` elements.
-	 * @return {object} Any found lifts as a jQuery object, if available, or an Faquery object.
+	 * @return {object} Any found lifts as a jQuery object, if available, or an {@link Faquery}
+	 * 		object.
 	 *
-	 * @memberof WebComponents.cq-ui-manager
+	 * @memberof CIQ.UI.UIManager
 	 * @alias findLifts
+	 * @since 8.1.0
 	 */
 	findLifts(menu) {
 		return CIQ.UI.$(
@@ -4308,6 +5060,8 @@ class UIManager extends HTMLElement {
 		);
 	}
 	/**
+	 * Ends modal mode if there are no active menus. See also {@link CIQ.ChartEngine#modalEnd}.
+	 *
 	 * @memberof CIQ.UI.UIManager
 	 * @alias ifAllClosed
 	 */
@@ -4327,17 +5081,19 @@ class UIManager extends HTMLElement {
 		}
 	}
 	/**
-	 * Lifts a menu to an absolute position on the body, so that it can rise above any
-	 * overflow: hidden, scroll or iscroll situations.
+	 * Lifts a menu to an absolute position on the `body` element, so that it can rise above any
+	 * `hidden` or `scroll` overflow situations.
 	 *
-	 * Designed to be used as a helper method for the included {@link WebComponents}. A full tutorial on how to work with and customize the WebComponents can be found here: {@tutorial Web Component Interface}
+	 * Designed to be used as a helper method for the included {@link WebComponents}. A full
+	 * tutorial on how to work with and customize the web components can be found here:
+	 * {@tutorial Web Component Interface}.
 	 *
-	 * Use cq-lift attribute to indicate that the menu should be lifted when opened
-	 *
-	 * context.lifts is an array that contains all of the current lifts so that they can be restored when the menu is closed
+	 * Use the `cq-lift` attribute to indicate that the menu should be lifted when opened.
 	 *
 	 * @param {HTMLElement} element DOM node to be lifted.
+	 *
 	 * @memberof CIQ.UI.UIManager
+	 * @alias lift
 	 */
 	lift(element) {
 		var n = element;
@@ -4373,14 +5129,17 @@ class UIManager extends HTMLElement {
 		});
 	}
 	/**
-	 * Opens a menu item within the UI.Context.
+	 * Opens a menu item within the chart {@link CIQ.UI.Context}.
 	 *
-	 * Designed to be used as a helper method for the included {@link WebComponents}. A full tutorial on how to work with and customize the WebComponents can be found here: {@tutorial Web Component Interface}
+	 * Designed to be used as a helper method for the included {@link WebComponents}. A full
+	 * tutorial on how to work with and customize the web components can be found here:
+	 * {@tutorial Web Component Interface}.
+	 *
+	 * @param {HTMLElement} menu The menu to be opened.
+	 * @param {object} params Configuration parameters for the opened menu.
 	 *
 	 * @memberof CIQ.UI.UIManager
 	 * @alias openMenu
-	 * @param {HTMLElement} menu
-	 * @param {Object} params
 	 */
 	openMenu(menu, params) {
 		// Find the first input box, if any, and give focus
@@ -4403,20 +5162,28 @@ class UIManager extends HTMLElement {
 		);
 	}
 	/**
+	 * Registers a resize event listener for `element`.
+	 *
+	 * @param {HTMLElement} element The element for which the resize event listener is registered.
+	 * 		The element must define a function with the signature `resize()`. The function is
+	 * 		called in response to a resize event.
 	 *
 	 * @memberof CIQ.UI.UIManager
 	 * @alias registerForResize
-	 * @param {HTMLElement} element
 	 * @private
 	 */
 	registerForResize(element) {
 		this.registeredForResize.push(element);
 	}
 	/**
+	 * Restores `element` to its position in the DOM tree before the element was lifted. Also
+	 * restores the element's CSS settings to the settings that existed before the element was
+	 * lifted.
+	 *
+	 * @param {HTMLElement} element The DOM node to be restored.
 	 *
 	 * @memberof CIQ.UI.UIManager
 	 * @alias restoreLift
-	 * @param {HTMLElement} element
 	 */
 	restoreLift(element) {
 		if (!element) return;
@@ -4426,13 +5193,16 @@ class UIManager extends HTMLElement {
 		remember.parentNode.appendChild(element);
 	}
 	/**
-	 * Sets the top level menu in the activeMenuStack.
+	 * Gets the topmost menu in the active menu stack.
 	 *
-	 * Designed to be used as a helper method for the included {@link WebComponents}. A full tutorial on how to work with and customize the WebComponents can be found here: {@tutorial Web Component Interface}
+	 * Designed to be used as a helper method for the included {@link WebComponents}. A full
+	 * tutorial on how to work with and customize the web components can be found here:
+	 * {@tutorial Web Component Interface}.
+	 *
+	 * @return {HTMLElement} The topmost active menu.
 	 *
 	 * @memberof CIQ.UI.UIManager
 	 * @alias topMenu
-	 * @return activeMenuStack
 	 */
 	topMenu() {
 		var activeMenuStack = this.activeMenuStack;
@@ -4440,9 +5210,12 @@ class UIManager extends HTMLElement {
 		return activeMenuStack[activeMenuStack.length - 1];
 	}
 	/**
+	 * Unregisters the resize event listener for `element`.
+	 *
+	 * @param {HTMLElement} element The element for which the resize event listener is removed.
+	 *
 	 * @memberof CIQ.UI.UIManager
 	 * @alias unregisterForResize
-	 * @param {HTMLElement} element
 	 * @private
 	 */
 	unregisterForResize(element) {
@@ -4496,21 +5269,22 @@ const {
  * configuration object and the availabilty of resources loaded in the {@link CIQ} namespace.
  *
  * @name CIQ.UI.Chart
+ * @class
  * @since 7.5.0
  */
 class Chart {
 	/**
 	 * Creates the chart engine and user interface, including the UI context.
 	 *
-	 * @param {Object} [params] function parameters
-	 * @param {HTMLElement} [params.container] The HTML element that hosts the user interface elements
-	 * 		of the chart. The element is a `cq-context` element, or it contains a `cq-context`
-	 * 		element or element with a `cq-context` attribute. The context element, in turn,
-	 * 		contains a chart container element; that is, an element with class
+	 * @param {object} [params] Function parameters.
+	 * @param {HTMLElement} [params.container] The HTML element that hosts the user interface
+	 * 		elements of the chart. The element is a `cq-context` element, or it contains a
+	 * 		`cq-context` element or element with a `cq-context` attribute. The context element,
+	 * 		in turn, contains a chart container element; that is, an element with class
 	 * 		`chartContainer`.
-	 * @param {Object} [params.config] Configuration for the chart engine, UI elements, and plug-ins.
-	 * 		See individual methods for configuration options.
-	 * @returns {CIQ.UI.Context}
+	 * @param {object} [params.config] Configuration for the chart engine, UI elements, and
+	 * 		plug-ins. See the {@tutorial Chart Configuration} tutorial for more information.
+	 * @return {CIQ.UI.Context} The chart UI context.
 	 *
 	 * @alias createChartAndUI
 	 * @memberof CIQ.UI.Chart.prototype
@@ -4544,7 +5318,13 @@ class Chart {
 		this.loadChart(uiContext);
 		if (config.language) CIQ.I18N.setLanguage(stx, config.language);
 		CIQ.UI.BaseComponent.buildReverseBindings(contextContainer);
+		contextContainer.bindingInitiated = true;
 		CIQ.UI.begin(config.onWebComponentsReady); // initiates webcomponent taps and binding
+		// Call to setTabOrderElements is moved to the event queue so the dom has a chance to render
+		window.setTimeout(function () {
+			// Update the keystrokeHub tabOrder array
+			document.body.keystrokeHub.setTabOrderElements();
+		}, 0);
 		return uiContext;
 		function getContextContainer(container) {
 			if (
@@ -4570,14 +5350,13 @@ class Chart {
 		const {
 			config: {
 				channels: {
-					breakpoint,
-					sidenavSize,
-					sidepanelSize,
-					drawingPalettes,
-					pluginPanelHeight,
-					tableView
-				}
-			},
+					breakpoint = "channel.breakpoint",
+					sidenavSize = "channel.sidenavSize",
+					sidepanelSize = "channel.sidepanelSize",
+					drawingPalettes = "channel.drawingPalettes",
+					pluginPanelHeight = "channel.pluginPanelHeight"
+				} = {}
+			} = {},
 			stx,
 			topNode: contextContainer
 		} = uiContext;
@@ -4606,6 +5385,20 @@ class Chart {
 	 * containers.
 	 *
 	 * @param {CIQ.UI.Context} uiContext The chart user interface context.
+	 * @param {object} uiContext.config Configuration parameters.
+	 * @param {object} [uiContext.config.onNewSymbolLoad] Contains two functions, `removeSeries`
+	 * 		and `loadError`. Either or both functions can be omitted. See the
+	 * 		{@tutorial Chart Configuration} tutorial for more information.
+	 * @param {boolean} [uiContext.config.restore] Indicates whether to save and restore the chart
+	 * 		layout, preferences, and drawings.
+	 * @param {string} [uiContext.config.chartId] Identifies the chart.
+	 * @param {object} [uiContext.config.selector] An assortment of CSS selectors used to obtain
+	 * 		references to the DOM nodes that represent the chart elements named by the object
+	 * 		properties.
+	 * @param {function} [uiContext.config.lookupDriver] A function definition for the chart's
+	 * 		default symbol [lookup driver]{@link CIQ.ChartEngine.Driver.Lookup}.
+	 * @param {HTMLElement} uiContext.topNode The top node of the DOM tree for this context.
+	 * 		Should contain all of the UI elements associated with the chart engine.
 	 *
 	 * @alias initLookup
 	 * @memberof CIQ.UI.Chart.prototype
@@ -4614,23 +5407,25 @@ class Chart {
 	initLookup(uiContext) {
 		const { config, topNode: contextContainer } = uiContext;
 		this.initKeystrokeHub(uiContext);
-		uiContext.changeSymbol = function (uiContext, data) {
+		uiContext.changeSymbol = function (data, cb) {
 			const { stx, loader } = uiContext;
 			if (loader) loader.show();
-			if (data.symbol == data.symbol.toLowerCase())
+			if (data.symbol == data.symbol.toLowerCase()) {
 				data.symbol = data.symbol.toUpperCase(); // set a pretty display version
+			}
 			const { removeSeries, loadError } = config.onNewSymbolLoad || {};
 			if (removeSeries) {
 				Object.values(stx.chart.series)
 					.filter(removeSeries)
 					.forEach((series) => stx.removeSeries(series.id));
 			}
-			stx.loadChart(data, function (err) {
+			stx.loadChart(data, { masterData: data._masterData }, function (err) {
 				if (loader) loader.hide();
 				if (err) {
 					if (loadError) loadError(err, uiContext);
 					return;
 				}
+				if (cb) cb(stx);
 				if (config.restore)
 					CIQ.ChartEngine.restoreDrawings(
 						stx,
@@ -4639,19 +5434,9 @@ class Chart {
 					);
 			});
 		};
-		const lookupComponents = qsa(
-			config.selector.lookupComponent,
-			contextContainer
-		);
-		if (!config.lookupDriver || !lookupComponents.length) {
-			return;
+		if (config.lookupDriver) {
+			uiContext.setLookupDriver(new config.lookupDriver());
 		}
-		uiContext.setLookupDriver(new config.lookupDriver());
-		lookupComponents.forEach(
-			(component) =>
-				component.setCallback && component.setCallback(uiContext.changeSymbol)
-		);
-		uiContext.UISymbolLookup = lookupComponents; // grid is accessing UISymbolLookup
 	}
 	/**
 	 * Attaches a {@link CIQ.UI.KeystrokeHub} to the `body` element to enable users to start
@@ -4720,11 +5505,8 @@ class Chart {
 	 * @since 7.5.0
 	 */
 	initDialogHandler(uiContext) {
-		const {
-			config: { channels, dialogs },
-			stx
-		} = uiContext;
-		channelSubscribe(channels.dialog, handleDialog, stx);
+		const { config: { channels = {}, dialogs = {} } = {}, stx } = uiContext;
+		channelSubscribe(channels.dialog || "channel.dialog", handleDialog, stx);
 		function handleDialog({ type = null, params = {} } = {}) {
 			if (!type) {
 				return;
@@ -4769,8 +5551,16 @@ class Chart {
 	 * @since 7.5.0
 	 */
 	initDrawingTools(uiContext) {
-		const { stx, config, topNode: contextContainer } = uiContext;
-		channelSubscribe(config.channels.drawing, setDrawingToolsAvailable, stx);
+		const {
+			stx,
+			config: { channels = {} } = {},
+			topNode: contextContainer
+		} = uiContext;
+		channelSubscribe(
+			channels.drawing || "channel.drawing",
+			setDrawingToolsAvailable,
+			stx
+		);
 		function setDrawingToolsAvailable(value) {
 			contextContainer.classList[value ? "add" : "remove"]("toolbar-on");
 			stx.resizeChart();
@@ -4787,10 +5577,10 @@ class Chart {
 	 * @since 7.5.0
 	 */
 	initDrawingEditListeners(uiContext) {
-		const { config, stx } = uiContext;
+		const { config: { channels = {} } = {}, stx } = uiContext;
 		const editHelper = new CIQ.UI.DrawingEdit(null, uiContext);
 		let preventAutoClose = true;
-		const drawingChannel = config.channels.drawing;
+		const drawingChannel = channels.drawing || "channel.drawing";
 		editHelper.node.addEventListener(
 			"drawing-edit-begin",
 			function (event) {
@@ -4831,38 +5621,80 @@ class Chart {
 	 * viewed symbol.
 	 *
 	 * @param {CIQ.UI.Context} uiContext The chart user interface context.
+	 * @param {CIQ.ChartEngine} uiContext.stx A reference to the chart engine.
+	 * @param {HTMLElement} uiContext.topNode The top node of the DOM tree for this context.
+	 * 		Should contain all of the UI elements associated with chart engine.
+	 * @param {object} [uiContext.config] Configuration parameters.
+	 * @param {string} [uiContext.config.chartId] Identifies the chart.
+	 * @param {boolean} [uiContext.config.restore] Indicates whether to save and restore the chart
+	 * 		layout, preferences, and drawings.
+	 * @param {function} [uiContext.config.onChartReady] A callback function to call when the
+	 * 		chart has loaded.
+	 * @param {array} [uiContext.config.initialData] An array of
+	 * 		[formatted objects]{@tutorial InputDataFormat} which provide the chart data.
+	 * @param {CIQ.UI~Loader} [uiContext.loader] A web component instance that shows loading
+	 * 		status.
 	 *
 	 * @alias loadChart
 	 * @memberof CIQ.UI.Chart.prototype
-	 * @since 7.5.0
+	 * @since
+	 * - 7.5.0
+	 * - 8.2.0 Added the `config.onChartReady` and `config.initialData` parameters.
 	 */
 	loadChart(uiContext) {
-		const { stx, topNode, config, loader } = uiContext;
+		const {
+			stx,
+			topNode,
+			config: {
+				chartId,
+				initialSymbol,
+				restore,
+				onChartReady,
+				initialData
+			} = {},
+			loader
+		} = uiContext;
 		if (loader) loader.show();
-		if (config.restore) {
-			CIQ.ChartEngine.restorePreferences(stx, config.chartId || topNode.id);
+		if (restore) {
+			CIQ.ChartEngine.restorePreferences(stx, chartId || topNode.id);
 			CIQ.ChartEngine.restoreLayout(
 				stx,
 				function () {
 					if (loader) loader.hide();
+					if (!stx.chart.symbol) {
+						loadSymbol();
+						return;
+					}
+					cbChartReady();
 				},
-				config.chartId
+				chartId
 			);
+		} else {
+			loadSymbol();
 		}
-		const { initialSymbol } = config;
-		if (initialSymbol && !stx.chart.symbol) {
-			// **Load an initial symbol. Change to null or one of your choice
-			const symbolLookup = uiContext.UISymbolLookup;
-			if (symbolLookup && symbolLookup[0] && symbolLookup[0].selectItem) {
-				symbolLookup[0].selectItem(
-					typeof initialSymbol === "string"
-						? { symbol: initialSymbol }
-						: initialSymbol
-				);
+		function loadSymbol() {
+			if (stx.crossSection) {
+				stx.setChartType("crosssection");
 			}
+			if (!initialSymbol) {
+				cbChartReady();
+				return;
+			}
+			const data =
+				typeof initialSymbol === "string"
+					? { symbol: initialSymbol }
+					: initialSymbol;
+			data._masterData = initialData;
+			// **Load an initial symbol. Change to null or one of your choice
+			uiContext.changeSymbol(data, cbChartReady);
 		}
-		if (stx.termStructure) {
-			stx.setChartType("termstructure");
+		function cbChartReady() {
+			if (!onChartReady) return;
+			// execute configuration callback on next tick
+			// as this function can be invoked synchronously, for example if there is no
+			// symbol in layout and default symbol is not providing, leading to configuration
+			// callback executed before call stack is cleard
+			setTimeout(() => onChartReady(stx));
 		}
 	}
 	/**
@@ -4882,38 +5714,87 @@ class Chart {
 	notifySizeChanges(uiContext) {
 		const {
 			stx,
-			topNode: { clientWidth: width, clientHeight: height },
-			config: { channels }
+			topNode: {
+				clientWidth: width,
+				clientHeight: height,
+				classList: contextClasses
+			},
+			config: { channels = {} } = {}
 		} = uiContext;
 		// avoid notification if there are no changes in dimensions
-		const previous = channelRead(channels.containerSize, stx);
+		const previous = channelRead(
+			channels.containerSize || "channel.containerSize",
+			stx
+		);
 		if (
-			// has been set and is the same dimeensions
+			// has been set and is the same dimensions
 			previous &&
 			previous.width === width &&
 			previous.height === height
 		) {
 			return;
 		}
-		const breakpoint = this.getBreakpoint(width);
-		channelWrite(channels.breakpoint, breakpoint, stx);
-		channelWrite(channels.containerSize, { width, height }, stx);
+		const breakpoint = this.getBreakpoint(width, height);
+		if (!contextClasses.contains(breakpoint[1])) {
+			channelWrite(
+				channels.breakpoint || "channel.breakpoint",
+				breakpoint[1],
+				stx
+			);
+		}
+		if (breakpoint[0] !== stx.chart.breakpoint) {
+			// Move the second breakpoint channelWrite to the event queue so it doesn't immediately overwrite the first
+			window.setTimeout(() =>
+				channelWrite(
+					channels.breakpoint || "channel.breakpoint",
+					breakpoint[0],
+					stx
+				)
+			);
+			stx.notifyBreakpoint(breakpoint[0]);
+		}
+		channelWrite(
+			channels.containerSize || "channel.containerSize",
+			{ width, height },
+			stx
+		);
 		stx.resizeChart();
 	}
 	/**
-	 * Maps numeric widths to responsive break types. Break types include small (`break-sm`),
-	 * medium (`break-md`), and large (`break-lg`).
+	 * Determines responsive design breakpoints based on numeric width and height values.
 	 *
-	 * @param {Number} width The widht in pixels for which a break type is determined.
-	 * @return {String} The break type, one of `break-sm`, `break-md`, or `break-lg`.
+	 * Width breakpoints:
+	 * - small &mdash; "break-sm"
+	 * - medium &mdash; "break-md"
+	 * - large &mdash; "break-lg"
+	 *
+	 * Height breakpoints:
+	 * - small &mdash; "break-height-sm"
+	 * - medium &mdash; "break-height-md"
+	 * - large &mdash; "break-height-lg"
+	 *
+	 * @param {number} width The width in pixels for which a breakpoint is determined.
+	 * @param {number} [height] The height in pixels for which a breakpoint is determined.
+	 * @return {string|string[]} The width breakpoint if the optional `height` parameter is not
+	 * 		provided; for example, "break-sm". If `height` is provided, returns an array
+	 * 		containing the width breakpoint and height breakpoint; for example
+	 * 		`["break-sm", "break-height-sm"]`.
 	 *
 	 * @alias getBreakpoint
 	 * @memberof CIQ.UI.Chart.prototype
 	 * @since 7.5.0
+	 * @since 8.2.1 Added the `height` parameter. Added the `string[]` type to the return value.
 	 */
-	getBreakpoint(width) {
-		if (width > 700) return "break-lg";
-		return width > 584 ? "break-md" : "break-sm";
+	getBreakpoint(width, height) {
+		let breakWidth = "break-sm";
+		if (width > 768) breakWidth = "break-lg";
+		else if (width > 584) breakWidth = "break-md";
+		// If no height is provided, return the single string.
+		if (typeof height === "undefined") return breakWidth;
+		let breakHeight = "break-height-sm";
+		if (height > 768) breakHeight = "break-height-lg";
+		else if (height > 400) breakHeight = "break-height-md";
+		return [breakWidth, breakHeight];
 	}
 	/**
 	 * Initiates event marker functionality.
@@ -4935,14 +5816,16 @@ class Chart {
 		}
 	}
 	/**
-	 * Installs add-ons and plug-ins.
+	 * Installs plug-ins.
 	 *
-	 * @param {object} params
+	 * See {@link CIQ.ChartEngine.create} for the installation of add-ons.
+	 *
+	 * @param {object} params Function parameters.
 	 * @param {CIQ.ChartEngine} [params.stx] A reference to the chart engine.
 	 * @param {CIQ.UI.Context} [params.uiContext] The chart user interface context.
-	 * @param {Object} [params.config] Contains the chart configuration, which includes a list of
-	 * 		add-ons and a list of plug-ins.
-	 * @param {String} [params.type] Type of extension, either "addOns" or "plugins".
+	 * @param {object} [params.config] Contains the chart configuration, which includes a list of
+	 * 		plug-ins.
+	 * @param {string} [params.type] Type of extension. Currently, only "plugins" is supported.
 	 *
 	 * @alias initExtensions
 	 * @memberof CIQ.UI.Chart.prototype
@@ -4969,6 +5852,7 @@ class Chart {
 						params
 					);
 					const extension = new CIQ[extensionName](extensionParams);
+					CIQ.UI.activatePluginUI(stx, extensionName);
 					if (params.postInstall) params.postInstall({ uiContext, extension });
 				} catch (err) {
 					if (CIQ.debug) {
@@ -5086,7 +5970,15 @@ class Chart {
 	 */
 	breakpointSetter(uiContext) {
 		return function setBreakpointClass(value) {
-			uiContext.topNode.classList.remove("break-lg", "break-md", "break-sm");
+			const { classList: contextClasses } = uiContext.topNode;
+			let breakpoints = [
+				["break-lg", "break-md", "break-sm"], // width breakpoints
+				["break-height-lg", "break-height-md", "break-height-sm"] // height breakpoints
+			];
+			breakpoints.forEach((breakpointGroup) => {
+				if (breakpointGroup.includes(value))
+					contextClasses.remove(...breakpointGroup);
+			});
 			uiContext.topNode.classList.add(value);
 		};
 	}
@@ -5102,6 +5994,8 @@ CIQ.UI.Chart = Chart;
  * undocumented methods of this class. The methods are designed for backward compatibility with
  * older code that used jQuery; they are not intended for direct API use.
  *
+ * @name Faquery
+ * @class
  * @since 8.1.0
  */
 class Faquery {
@@ -5307,8 +6201,11 @@ class Faquery {
 	show() {
 		return this._((el) => {
 			if (el.style.display === "none") {
-				el.style.display = el.style.displayCache || "block";
-				el.style.displayCache = undefined;
+				if (el.style.displayCache === undefined) el.style.display = "block";
+				else {
+					el.style.display = el.style.displayCache;
+					el.style.displayCache = undefined;
+				}
 			}
 			return [el];
 		});
@@ -5333,7 +6230,6 @@ class Faquery {
  * @returns {object} A jQuery object if jQuery is enabled and `force` is false; otherwise,
  * 		a {@link Faquery} object. The returned object wraps `element`.
  *
- * @alias $
  * @memberof CIQ.UI
  * @since 8.1.0
  */

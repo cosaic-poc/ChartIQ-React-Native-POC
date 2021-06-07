@@ -42,7 +42,9 @@ div, li, span, a {
 /* You can safely remove or override these */
 input:not([type]), 
 input[type="text"], 
-input[type="number"] {
+input[type="number"],
+input[type="date"],
+input[type="time"] {
 	border: #ddd solid 1px;
 	padding: 0 5px 0 10px;
 }

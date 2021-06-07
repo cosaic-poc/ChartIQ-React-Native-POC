@@ -14,11 +14,8 @@ declare module '../js/chartiq.js' {
   }
 
   /**
-   * Namespace for UI helper objects.
-   *
-   * Designed to be used as helper methods for the included WebComponents. A full
-   * tutorial on how to work with and customize the web components can be found here:
-   * {@tutorial Web Component Interface}.
+   * Namespace for UI helper objects designed to be used with the library
+   * [web components]WebComponents.
    *
    */
   export namespace CIQ.UI {
@@ -36,9 +33,7 @@ declare module '../js/chartiq.js' {
      * tutorial on how to work with and customize the web components can be found here:
      * {@tutorial Web Component Interface}.
      *
-     * Construct with an CIQ.ChartEngine object.
-     *
-     * 		should contain all of the UI elements associated with the CIQ.ChartEngine.
+     * 		contain all of the UI elements associated with the chart engine.
      *
      */
     class Context {
@@ -49,62 +44,78 @@ declare module '../js/chartiq.js' {
        * tutorial on how to work with and customize the web components can be found here:
        * {@tutorial Web Component Interface}.
        *
-       * Construct with an CIQ.ChartEngine object.
-       *
-       * @param stx The chart object to associate this UI.
-       * @param topNode The top node of the DOM tree for this context. That node
-       * 		should contain all of the UI elements associated with the CIQ.ChartEngine.
-       * @param [params] Optional parameters.
+       * @param stx The chart object to associate with this UI context.
+       * @param topNode The top node of the DOM tree for this context. The top node should
+       * 		contain all of the UI elements associated with the chart engine.
+       * @param [params] Context parameters.
        *
        */
-      constructor(stx: CIQ.ChartEngine, topNode: HTMLElement, params?: Object)
+      constructor(stx: CIQ.ChartEngine, topNode: HTMLElement, params?: object)
       /**
-       * Abstract method that should be overridden. See example.
+       * Executes a symbol change request on the UI context.
        *
-       * Designed to be used as a helper method for the included WebComponents. A full tutorial on how to work with and customize the web components can be found here: {@tutorial Web Component Interface}
+       * You must create an implementation of this abstract method (see example below).
        *
-       * @param  data A symbol data object acceptable for CIQ.ChartEngine#loadChart
-       * @example
-       UIContext.changeSymbol=function(data){
-       var stx=this.stx;
-       if(this.loader) this.loader.show();
-       if(data.symbol==data.symbol.toLowerCase())
-       data.symbol=data.symbol.toUpperCase(); // set a pretty display version
-       // reset comparisons - remove this loop to transfer from symbol to symbol.
-       for(var field in stx.chart.series) {
-       // keep studies
-       if (stxx.chart.series[field].parameters.bucket != "study" ) stx.removeSeries(field);
-       }
-       var self=this;
-       stx.loadChart(data, function(err) {
-       if(err){
-       // add 'symbol not found error' here if one needed.
-       if(self.loader) self.loader.hide();
-       return;
-       }
-       if(self.loader) self.loader.hide();
-       CIQ.ChartEngine.restoreDrawings(stx, stx.chart.symbol);
-       });
-       };
+       * @param data A symbol data object acceptable by CIQ.ChartEngine#loadChart.
+       * @param data.symbol A financial instrument symbol.
+       * @param [cb] A callback function to execute when the symbol change is complete.
+       *
+       * @abstract
+       * @since 8.2.0 Added the `cb` parameter.
+       *
+       * @example <caption>Method Implementation</caption>
+       * uiContext.changeSymbol = function (data, cb) {
+       *     const { stx, loader } = uiContext;
+       *     if (loader) loader.show();
+       *
+       *     if (data.symbol == data.symbol.toLowerCase())
+       *         data.symbol = data.symbol.toUpperCase(); // Set a pretty display version.
+       *
+       *     // Reset comparisons -- remove this loop to transfer from symbol to symbol.
+       *     for (let field in stx.chart.series) {
+       *         // Keep studies.
+       *         if (stxx.chart.series[field].parameters.bucket != "study" ) stx.removeSeries(field);
+       *     }
+       *
+       *     stx.loadChart(data, function(err) {
+       *         if (err) {
+       *             // Add 'symbol not found error' here if one needed.
+       *             if (loader) loader.hide();
+       *             return;
+       *         }
+       *         if (loader) loader.hide();
+       *         CIQ.ChartEngine.restoreDrawings(stx, stx.chart.symbol);
+       *     });
+       *
+       *     if (cb) cb(stx);
+       * };
        *
        */
-      public changeSymbol(data: Object): void
+      public changeSymbol(data: {symbol: string}, cb?: Function): void
       /**
-       * Sets the [lookup driver]CIQ.ChartEngine.Driver.Lookup to be used with the [cq-lookup web component]WebComponents.cq-lookup.
+       * Sets the [lookup driver]CIQ.ChartEngine.Driver.Lookup used by the
+       * [cq-lookup]WebComponents.cq-lookup web component.
        *
-       * Designed to be used as a helper method for the included WebComponents. A full tutorial on how to work with and customize the web components can be found here: {@tutorial Web Component Interface}
+       * The lookup driver searches for matching symbols as text is entered in the
+       * [cq-lookup]WebComponents.cq-lookup web component's input field.
        *
-       * The lookup driver will be called to search for matching symbols as data is typed into the set `UIContext.UISymbolLookup` field.
+       * @param driver Lookup driver for the
+       * 		[cq-lookup]WebComponents.cq-lookup web component.
        *
-       * See `function startUI()` in sample-template-advanced.html for complete sample implementation.
        *
-       * @param driver Lookup driver for cq-lookup component
        * @example
-       * UIContext=new CIQ.UI.Context(stxx, document.querySelector("cq-context,[cq-context]"));
+       * // Create a context object.
+       * UIContext = new CIQ.UI.Context(stxx, document.querySelector("cq-context,[cq-context]"));
+       *
+       * // Add a lookup driver to the context. The cq-lookup web component accesses the driver from the context.
        * UIContext.setLookupDriver(new CIQ.ChartEngine.Driver.Lookup.ChartIQ());
-       * UIContext.UISymbolLookup=document.querySelector(".ciq-search cq-lookup");
-       * UIContext.UISymbolLookup.setCallback(function(context, data){
-       *	context.changeSymbol(data);
+       *
+       * // Get a reference to the cq-lookup web component.
+       * UIContext.UISymbolLookup = document.querySelector(".ciq-search cq-lookup");
+       *
+       * // Set a callback on the cq-lookup web component.
+       * UIContext.UISymbolLookup.setCallback(function(context, data) {
+       *     context.changeSymbol(data);
        * });
        */
       public setLookupDriver(driver: CIQ.ChartEngine.Driver.Lookup): void
@@ -133,12 +144,22 @@ declare module '../js/chartiq.js' {
        * @return true if in modal mode
        */
       public isModal(): Boolean
+      /**
+       * Checks the chart for a study legend that is active and has keyboard navigation control.
+       *
+       * @return true if a [cq-study-legend]WebComponents.cq-study-legend component is
+       * 		both active and has keyboard navigation control; otherwise, false.
+       *
+       * @since 8.3.0
+       */
+      public isLegendKeyboardActive(): boolean
     }
     /**
      * Abstract class for WebComponents using this framework.
      *
      * Provides a base set of functionality for web components.
      *
+     * @class
      * @extends HTMLElement
      *
      * @see WebComponents
@@ -279,11 +300,69 @@ declare module '../js/chartiq.js' {
        *
        */
       public removeClaim(helper: CIQ.UI.Helper): void
+      /**
+       * Finds the elements in `items` that have a `cq-focused` attribute.
+       *
+       * @param items A list of elements that are selectable via keyboard navigation.
+       * @return The elements in `items` that have a `cq-focused` attribute, or an empty
+       * 		array if no elements are found.
+       *
+       * @since 8.3.0
+       */
+      public findFocused(items: NodeList): any[]
+      /**
+       * Focuses the next item in the tab order.
+       *
+       * Locates the first element in `items` that has a `cq-focused` attribute. If an element is
+       * found, the attribute is removed from all elements in `items`, and `cq-focused` is applied
+       * to the element that follows (in the tab order) the element that was found.
+       *
+       * If no elements are found with the `cq-focused` attribute, the attribute is applied to the
+       * first element in `items` (last element if `reverse` is true). If the last element in `items`
+       * (first element if `reverse` is true) is found to have the `cq-focused` attribute, focus
+       * remains on that element.
+       *
+       * @param items A list of elements that are selectable via keyboard navigation.
+       * @param [reverse] If true, the operation is performed in reverse order; that is,
+       * 		from the last element in `items` to the first.
+       * @return true if a `cq-focused` attribute has changed, false if nothing has changed.
+       *
+       * @since 8.3.0
+       *
+       * @see [focusItem]CIQ.UI.BaseComponent#focusItem
+       */
+      public focusNextItem(items: NodeList, reverse?: boolean): boolean
+      /**
+       * Adds a `cq-focused` attribute to `item` and highlights `item`.
+       *
+       * @param item Element that receives keyboard focus and is highlighted.
+       *
+       * @since 8.3.0
+       */
+      public focusItem(item: HTMLElement): void
+      /**
+       * Removes the `cq-focused` attribute from all elements in `items`.
+       *
+       * @param items A list of elements that are selectable via keyboard navigation.
+       *
+       * @since 8.3.0
+       */
+      public removeFocused(items: NodeList): void
+      /**
+       * Selects (clicks) the first element in `items` that has a `cq-focused` attribute.
+       *
+       * @param items A list of elements that are selectable via keyboard navigation.
+       * @param e The keystroke event.
+       *
+       * @since 8.3.0
+       */
+      public clickFocusedItem(items: NodeList, e: Event): void
     }
     /**
      * Abstract class for web components that use a CIQ.UI.Context to gain access to an
      * instance of the chart engine.
      *
+     * @class
      * @extends CIQ.UI.BaseComponent
      *
      * @see WebComponents
@@ -331,8 +410,8 @@ declare module '../js/chartiq.js' {
     /**
      * A tag that is modally aware of the chart.
      *
+     * @class
      * @extends CIQ.UI.ContextTag}
-     * @private
      */
     class ModalTag {
     }
@@ -343,7 +422,8 @@ declare module '../js/chartiq.js' {
      * tutorial on how to work with and customize the web components can be found here:
      * {@tutorial Web Component Interface}.
      *
-     * @extends CIQ.UI.BaseComponent}
+     * @class
+     * @extends CIQ.UI.BaseComponent
      */
     class DialogContentTag {
       /**
@@ -508,25 +588,6 @@ declare module '../js/chartiq.js' {
        */
       constructor(node: HTMLElement | undefined, context: CIQ.UI.Context)
       /**
-       * Teardown the current edit mode.
-       *
-       * Designed to be used as a helper method for the included WebComponents. A full tutorial on how to work with and customize the web components can be found here: {@tutorial Web Component Interface}
-       *
-       * Used internally by the DrawingEdit instance. May also be used by the UI
-       * to explicitly stop editing.
-       *
-       * @param activator not used, passed by stxtap binding
-       * @param action a friendly name that caused the edit mode to end
-       * @fires CIQ.UI.DrawingEdit#drawing-edit-end
-       * @example <caption>Button to manually end edit mode</caption>
-       * <div class="ciq-drawing-edit-only" cq-section>
-       * 	<div class="ciq-btn" stxtap="DrawingEdit.endEdit('close')">Done Editing</div>
-       * </div>
-       *
-       * @since 6.2.0
-       */
-      public endEdit(activator: Object, action: String): void
-      /**
        * Drawing context menu edit settings option.
        *
        * Designed to be used as a helper method for the included WebComponents. A full tutorial on how to work with and customize the web components can be found here: {@tutorial Web Component Interface}
@@ -554,6 +615,16 @@ declare module '../js/chartiq.js' {
        */
       public clone(): void
       /**
+       * Change the order of the drawingObjects array, which determines the layering of drawings.
+       *
+       * Designed to be used as a helper method for the included WebComponents. A full tutorial on how to work with and customize the web components can be found here: {@tutorial Web Component Interface}
+       *
+       * @param activator
+       * @param layer the action to apply to the current drawing. May be "up", "down", "top", or "bottom"
+       * @since 6.2.0
+       */
+      public reorderLayer(activator: Object, layer: String): void
+      /**
        * Drawing context menu remove/delete option.
        *
        * Designed to be used as a helper method for the included WebComponents. A full tutorial on how to work with and customize the web components can be found here: {@tutorial Web Component Interface}
@@ -571,10 +642,10 @@ declare module '../js/chartiq.js' {
      *
      * Requires the [cq-study-dialog]WebComponents.cq-study-dialog web component.
      *
-     * Sets up a [studyOverlayEdit]studyOverlayEditEventListener event listener to display
-     * a context menu for editing or deleting overlays and a
-     * [studyPanelEdit]studyPanelEditEventListener event listener to display a dialog for
-     * editing study parameters.
+     * Sets up a [studyOverlayEditEventListener]CIQ.ChartEngine~studyOverlayEditEventListener
+     * to display a context menu for editing or deleting overlays and a
+     * [studyPanelEditEventListener]CIQ.ChartEngine~studyPanelEditEventListener to display a
+     * dialog for editing study parameters.
      *
      * 		context.
      *
@@ -590,10 +661,10 @@ declare module '../js/chartiq.js' {
        *
        * Requires the [cq-study-dialog]WebComponents.cq-study-dialog web component.
        *
-       * Sets up a [studyOverlayEdit]studyOverlayEditEventListener event listener to display
-       * a context menu for editing or deleting overlays and a
-       * [studyPanelEdit]studyPanelEditEventListener event listener to display a dialog for
-       * editing study parameters.
+       * Sets up a [studyOverlayEditEventListener]CIQ.ChartEngine~studyOverlayEditEventListener
+       * to display a context menu for editing or deleting overlays and a
+       * [studyPanelEditEventListener]CIQ.ChartEngine~studyPanelEditEventListener to display a
+       * dialog for editing study parameters.
        *
        * @param [node=context.topNode] Automatically attaches to the top node of the
        * 		context.
@@ -626,7 +697,7 @@ declare module '../js/chartiq.js' {
        * {@tutorial Web Component Interface}.
        *
        * @param params Parameters from the
-       * 		[studyPanelEdit]studyPanelEditEventListener event listener.
+       * 		[studyPanelEditEventListener]CIQ.ChartEngine~studyPanelEditEventListener.
        */
       public editPanel(params: object): void
       /**
@@ -638,7 +709,7 @@ declare module '../js/chartiq.js' {
        * {@tutorial Web Component Interface}.
        *
        * @param params Parameters from the
-       * 		[studyOverlayEdit]studyOverlayEditEventListener event listener.
+       * 		[studyOverlayEditEventListener]CIQ.ChartEngine~studyOverlayEditEventListener.
        */
       public editOverlay(params: object): void
       /**
@@ -831,6 +902,18 @@ declare module '../js/chartiq.js' {
         timeUnit: number
       ): void
       /**
+       * Sets the display periodicity.
+       *
+       * Usually this is called from an observer that is in CIQ.UI.Layout#periodicity
+       *
+       * Designed to be used as a helper method for the included WebComponents. A full tutorial on how to work with and customize the web components can be found here: {@tutorial Web Component Interface}
+       *
+       * @param  stx    The chart object to examine for periodicity
+       * @param  params Parameters
+       * @param params.selector The selector to update
+       */
+      public showPeriodicity(stx: CIQ.ChartEngine, params: {selector: HTMLElement}): void
+      /**
        * Populates and displays the language widget.
        *
        * Designed to be used as a helper method for the included WebComponents. A full tutorial on how to work with and customize the web components can be found here: {@tutorial Web Component Interface}
@@ -876,37 +959,57 @@ declare module '../js/chartiq.js' {
         }
       )
       /**
-       * Displays the markers of the type indicated or removes them all.
-       * Updates display state of menu items
+       * Displays the markers specified by the `type` parameter. If `type` is not provided, all
+       * currently displayed markers are removed. Must be called from a menu item.
        *
-       * 	Must be called from a menu item.
+       * To use this function:
        *
-       * To use, first create the methods for managing the markers:
-       * ```
-       * var markerImplementation=new MarkersSample(stxx);
-       * ```
+       * 1. Create an implementation that provides the methods for managing markers.
        *
-       * Inside the `startUI` function add this line ( See sample-template-advanced.html for exact placement ):
-       * ```
-       * var UIMarkers=new CIQ.UI.Markers(UIContext, {menuItemSelector:".stx-markers cq-item", implementation:markerImplementation});
-       * ```
+       *    The marker implementation must include a `showMarkers` function that accepts the following
+       *    parameters:
+       *    - `type` — Categorizes the marker as a circle, square, or specialized type such as
+       *      trade or video.
+       *    - `renderType` — Specifies the marker class, either [Simple]CIQ.Marker.Simple or
+       *      [Performance]CIQ.Marker.Performance.
        *
-       * markerImplementation should include showMarkers function which should accept the following parameters:
-       * - type 			: primary type of marker, such as: circle, square or of a specialized type such as: trade, video etc.
-       * 								if type parameter is not provided all currently displayed markers are removed
-       * - renderType : a secondary marker type
+       *    See the `MarkersSample` class in the *markersSample.js* file in the *examples/markers*
+       *    folder of your library for a complete example implementation.
        *
-       * A full implementation of the `MarkersSample` class can be found in the `examples/markers` directory.
+       * 2. Assign the implementation to the `eventMarkersImplementation` property of the chart
+       *    configuration object.
+       *
+       *    For example, from the *sample-template-advanced.html* template (in the *examples/templates*
+       *    folder of your library):
+       *    ```
+       *    import marker from "./examples/markers/markersSample.js";
+       *
+       *    const config = getDefaultConfig({
+       *        markerSample: marker.MarkersSample,
+       *        .
+       *        .
+       *        .
+       *    });
+       *    ```
+       *
+       *    The `markerSample` parameter is assigned to the `eventMarkersImplementation` property of the
+       *    chart configuration object.
+       *
+       *    See the <a href="tutorial-Chart%20Configuration.html" target="_blank">Chart Configuration</a>
+       *    tutorial for more information.
+       *
        * @param node
-       * @param type marker type (Circle, Square, Callout)
-       * @param markerType Class of marker to draw (Simple or Performance)
+       * @param type Marker type: "circle", "square", or "callout".
+       * @param markerType Class of marker to draw: "Simple" or "Performance".
+       *
+       * @since 7.1.0 Added `markerType`.
+       *
        * @example
-       * 	<cq-item stxtap="Markers.showMarkers('square')">
-       * 	Simple Square<span></span>
+       * <cq-item stxtap="Markers.showMarkers('square')">
+       *     Simple Square<span></span>
        * </cq-item>
-       * @since 7.1.0 Adds `markerType`.
        */
-      public showMarkers(node: HTMLElement, type: String, markerType: String): void
+      public showMarkers(node: HTMLElement, type: string, markerType: string): void
     }
     /**
      * UI Helper for capturing and handling keystrokes. cb to capture the key.
@@ -976,32 +1079,40 @@ declare module '../js/chartiq.js' {
       public setActiveContext(context: CIQ.UI.Context): void
     }
     /**
-     * Self registering global web component that manages the overall UI on the attached div tag.
+     * Handles tap events and callbacks and prevents underlay clicks.
      *
-     * Designed to be used as a helper method for the included WebComponents. A full tutorial on how to work with and customize the web components can be found here: {@tutorial Web Component Interface}
+     * Designed to be used as a helper method for the included WebComponents. A full
+     * tutorial on how to work with and customize the web components can be found here:
+     * {@tutorial Web Component Interface}.
      *
-     * This component keeps track of open menus and dialogs and attaches click and tap (onclick or ontouch) events in order to close them.
+     * Creates an array of the active menus (the active menu stack) to keep track of which menu
+     * component is currently active.
      *
-     * By default it is attached to the **"body"**, but it can be changed to a different div tag if this behavior is too broad for your particular implementation.
      */
     class UIManager {
       /**
-       * Prevents underlay clicks and handles tap events and callbacks.
+       * Handles tap events and callbacks and prevents underlay clicks.
        *
-       * Designed to be used as a helper method for the included WebComponents. A full tutorial on how to work with and customize the WebComponents can be found here: {@tutorial Web Component Interface}
+       * Designed to be used as a helper method for the included WebComponents. A full
+       * tutorial on how to work with and customize the web components can be found here:
+       * {@tutorial Web Component Interface}.
        *
-       * Creates an array of the active Menus to keep track of which component is currently active.
+       * Creates an array of the active menus (the active menu stack) to keep track of which menu
+       * component is currently active.
+       *
        */
-      public constructor()
+      constructor()
       /**
-       * Attach a callback to an individual component as part of the context.
+       * Attaches a "resize" event listener to an individual component as part of the context.
        *
-       * Designed to be used as a helper method for the included WebComponents. A full tutorial on how to work with and customize the WebComponents can be found here: {@tutorial Web Component Interface}
+       * Designed to be used as a helper method for the included WebComponents. A full
+       * tutorial on how to work with and customize the web components can be found here:
+       * {@tutorial Web Component Interface}.
        *
        */
       public connectedCallback(): void
       /**
-       * Removes a callback from a component.
+       * Removes a "resize" event listener from a component.
        *
        * Designed to be used as a helper method for the included WebComponents. A full
        * tutorial on how to work with and customize the WebComponents can be found here:
@@ -1010,65 +1121,98 @@ declare module '../js/chartiq.js' {
        */
       public disconnectedCallback(): void
       /**
-       * Closes the current active menu and resets the activeMenuStack.
+       * Closes the current active menu and resets the active menu stack.
        *
-       * Designed to be used as a helper method for the included WebComponents. A full tutorial on how to work with and customize the WebComponents can be found here: {@tutorial Web Component Interface}
+       * Designed to be used as a helper method for the included WebComponents. A full
+       * tutorial on how to work with and customize the web components can be found here:
+       * {@tutorial Web Component Interface}.
        *
-       * @param menu
+       * @param [menu] The menu to be closed. If a menu is not specified, all active
+       * 		menus are closed.
+       *
        */
-      public closeMenu(menu: HTMLElement): void
+      public closeMenu(menu?: HTMLElement): void
       /**
+       * Closes the menu that is at the top of the active menu stack.
+       *
+       * @since 6.2.0 Added `cq-close-top` menu attribute to optionally close parent menus.
+       *
        * @example
        * <cq-dialog>
-       * 	<cq-drawing-context>
-       * 		<cq-menu cq-close-top="cq-dialog[cq-drawing-context]">
-       * 			<div>This is a sub-menu</div>
-       * 			<cq-menu-dropdown>
-       * 				<cq-item>A stxtap event that bubbles to body will call UIManager#closeTopMenu</cq-item>
-       * 				<cq-item>With the cq-close-top attribute above, the dialog will be closed as well</cq-item>
-       * 			</cq-menu-dropdown>
-       * 		</cq-menu>
-       * 	</cq-drawing-context>
+       *     <cq-drawing-context>
+       *         <cq-menu cq-close-top="cq-dialog[cq-drawing-context]">
+       *             <div>This is a sub-menu</div>
+       *             <cq-menu-dropdown>
+       *                 <cq-item>A stxtap event that bubbles to body will call UIManager#closeTopMenu</cq-item>
+       *                 <cq-item>With the cq-close-top attribute above, the dialog will be closed as well</cq-item>
+       *             </cq-menu-dropdown>
+       *         </cq-menu>
+       *     </cq-drawing-context>
        * </cq-dialog>
-       * @since 6.2.0 Added `cq-close-top` menu attribute to optionally close parent menus.
        */
       public closeTopMenu(): void
+      /**
+       * Finds all `cq-lift` elements for the specified menu, but not lifts that are within nested
+       * menus.
+       *
+       * @param menu The menu to search for `cq-lift` elements.
+       * @return Any found lifts as a jQuery object, if available, or an Faquery
+       * 		object.
+       *
+       * @since 8.1.0
+       */
+      public findLifts(menu: HTMLElement): object
+      /**
+       * Ends modal mode if there are no active menus. See also CIQ.ChartEngine#modalEnd.
+       *
+       */
       public ifAllClosed(): void
       /**
-       * Lifts a menu to an absolute position on the body, so that it can rise above any
-       * overflow: hidden, scroll or iscroll situations.
+       * Lifts a menu to an absolute position on the `body` element, so that it can rise above any
+       * `hidden` or `scroll` overflow situations.
        *
-       * Designed to be used as a helper method for the included WebComponents. A full tutorial on how to work with and customize the WebComponents can be found here: {@tutorial Web Component Interface}
+       * Designed to be used as a helper method for the included WebComponents. A full
+       * tutorial on how to work with and customize the web components can be found here:
+       * {@tutorial Web Component Interface}.
        *
-       * Use cq-lift attribute to indicate that the menu should be lifted when opened
-       *
-       * context.lifts is an array that contains all of the current lifts so that they can be restored when the menu is closed
+       * Use the `cq-lift` attribute to indicate that the menu should be lifted when opened.
        *
        * @param element DOM node to be lifted.
+       *
        */
       public lift(element: HTMLElement): void
       /**
-       * Opens a menu item within the UI.Context.
+       * Opens a menu item within the chart CIQ.UI.Context.
        *
-       * Designed to be used as a helper method for the included WebComponents. A full tutorial on how to work with and customize the WebComponents can be found here: {@tutorial Web Component Interface}
+       * Designed to be used as a helper method for the included WebComponents. A full
+       * tutorial on how to work with and customize the web components can be found here:
+       * {@tutorial Web Component Interface}.
        *
-       * @param menu
-       * @param params
+       * @param menu The menu to be opened.
+       * @param params Configuration parameters for the opened menu.
+       *
        */
-      public openMenu(menu: HTMLElement, params: Object): void
+      public openMenu(menu: HTMLElement, params: object): void
       /**
+       * Restores `element` to its position in the DOM tree before the element was lifted. Also
+       * restores the element's CSS settings to the settings that existed before the element was
+       * lifted.
        *
-       * @param element
+       * @param element The DOM node to be restored.
+       *
        */
       public restoreLift(element: HTMLElement): void
       /**
-       * Sets the top level menu in the activeMenuStack.
+       * Gets the topmost menu in the active menu stack.
        *
-       * Designed to be used as a helper method for the included WebComponents. A full tutorial on how to work with and customize the WebComponents can be found here: {@tutorial Web Component Interface}
+       * Designed to be used as a helper method for the included WebComponents. A full
+       * tutorial on how to work with and customize the web components can be found here:
+       * {@tutorial Web Component Interface}.
        *
-       * @return activeMenuStack
+       * @return The topmost active menu.
+       *
        */
-      public topMenu(): void
+      public topMenu(): HTMLElement
     }
     /**
      * The Chart class contains a collection of methods used to instantiate and configure charts
@@ -1077,25 +1221,26 @@ declare module '../js/chartiq.js' {
      * The decisions on what to initiate and how it gets initiated are based on the provided
      * configuration object and the availabilty of resources loaded in the CIQ namespace.
      *
+     * @class
      * @since 7.5.0
      */
     class Chart {
       /**
        * Creates the chart engine and user interface, including the UI context.
        *
-       * @param [params] function parameters
-       * @param [params.container] The HTML element that hosts the user interface elements
-       * 		of the chart. The element is a `cq-context` element, or it contains a `cq-context`
-       * 		element or element with a `cq-context` attribute. The context element, in turn,
-       * 		contains a chart container element; that is, an element with class
+       * @param [params] Function parameters.
+       * @param [params.container] The HTML element that hosts the user interface
+       * 		elements of the chart. The element is a `cq-context` element, or it contains a
+       * 		`cq-context` element or element with a `cq-context` attribute. The context element,
+       * 		in turn, contains a chart container element; that is, an element with class
        * 		`chartContainer`.
-       * @param [params.config] Configuration for the chart engine, UI elements, and plug-ins.
-       * 		See individual methods for configuration options.
-       * @returns
+       * @param [params.config] Configuration for the chart engine, UI elements, and
+       * 		plug-ins. See the {@tutorial Chart Configuration} tutorial for more information.
+       * @return The chart UI context.
        *
        * @since 7.5.0
        */
-      public createChartAndUI(params?: {container?: HTMLElement, config?: Object}): CIQ.UI.Context
+      public createChartAndUI(params?: {container?: HTMLElement, config?: object}): CIQ.UI.Context
       /**
        * Initializes the chart container size change listener, channel subscriptions, and the
        * keystroke hub and its focus management (see CIQ.UI.KeystrokeHub).
@@ -1110,10 +1255,35 @@ declare module '../js/chartiq.js' {
        * containers.
        *
        * @param uiContext The chart user interface context.
+       * @param uiContext.config Configuration parameters.
+       * @param [uiContext.config.onNewSymbolLoad] Contains two functions, `removeSeries`
+       * 		and `loadError`. Either or both functions can be omitted. See the
+       * 		{@tutorial Chart Configuration} tutorial for more information.
+       * @param [uiContext.config.restore] Indicates whether to save and restore the chart
+       * 		layout, preferences, and drawings.
+       * @param [uiContext.config.chartId] Identifies the chart.
+       * @param [uiContext.config.selector] An assortment of CSS selectors used to obtain
+       * 		references to the DOM nodes that represent the chart elements named by the object
+       * 		properties.
+       * @param [uiContext.config.lookupDriver] A function definition for the chart's
+       * 		default symbol [lookup driver]CIQ.ChartEngine.Driver.Lookup.
+       * @param uiContext.topNode The top node of the DOM tree for this context.
+       * 		Should contain all of the UI elements associated with the chart engine.
        *
        * @since 7.5.0
        */
-      public initLookup(uiContext: CIQ.UI.Context): void
+      public initLookup(
+        uiContext: {
+          config: {
+            onNewSymbolLoad?: object,
+            restore?: boolean,
+            chartId?: string,
+            selector?: object,
+            lookupDriver?: Function
+          },
+          topNode: HTMLElement
+        }
+      ): void
       /**
        * Attaches a CIQ.UI.KeystrokeHub to the `body` element to enable users to start
        * typing anywhere on the page to activate the chart's symbol input box.
@@ -1182,10 +1352,37 @@ declare module '../js/chartiq.js' {
        * viewed symbol.
        *
        * @param uiContext The chart user interface context.
+       * @param uiContext.stx A reference to the chart engine.
+       * @param uiContext.topNode The top node of the DOM tree for this context.
+       * 		Should contain all of the UI elements associated with chart engine.
+       * @param [uiContext.config] Configuration parameters.
+       * @param [uiContext.config.chartId] Identifies the chart.
+       * @param [uiContext.config.restore] Indicates whether to save and restore the chart
+       * 		layout, preferences, and drawings.
+       * @param [uiContext.config.onChartReady] A callback function to call when the
+       * 		chart has loaded.
+       * @param [uiContext.config.initialData] An array of
+       * 		[formatted objects]{@tutorial InputDataFormat} which provide the chart data.
+       * @param [uiContext.loader] A web component instance that shows loading
+       * 		status.
        *
-       * @since 7.5.0
+       * @since
+       * - 7.5.0
+       * - 8.2.0 Added the `config.onChartReady` and `config.initialData` parameters.
        */
-      public loadChart(uiContext: CIQ.UI.Context): void
+      public loadChart(
+        uiContext: {
+          stx: CIQ.ChartEngine,
+          topNode: HTMLElement,
+          config?: {
+            chartId?: string,
+            restore?: boolean,
+            onChartReady?: Function,
+            initialData?: any[]
+          },
+          loader?: CIQ.UI.Loader
+        }
+      ): void
       /**
        * Event handler for chart container size changes. Posts messages in the `breakpoint` and
        * `containerSize` channels when the context container size has changed.
@@ -1200,15 +1397,29 @@ declare module '../js/chartiq.js' {
        */
       public notifySizeChanges(uiContext: CIQ.UI.Context): void
       /**
-       * Maps numeric widths to responsive break types. Break types include small (`break-sm`),
-       * medium (`break-md`), and large (`break-lg`).
+       * Determines responsive design breakpoints based on numeric width and height values.
        *
-       * @param width The widht in pixels for which a break type is determined.
-       * @return The break type, one of `break-sm`, `break-md`, or `break-lg`.
+       * Width breakpoints:
+       * - small — "break-sm"
+       * - medium — "break-md"
+       * - large — "break-lg"
+       *
+       * Height breakpoints:
+       * - small — "break-height-sm"
+       * - medium — "break-height-md"
+       * - large — "break-height-lg"
+       *
+       * @param width The width in pixels for which a breakpoint is determined.
+       * @param [height] The height in pixels for which a breakpoint is determined.
+       * @return The width breakpoint if the optional `height` parameter is not
+       * 		provided; for example, "break-sm". If `height` is provided, returns an array
+       * 		containing the width breakpoint and height breakpoint; for example
+       * 		`["break-sm", "break-height-sm"]`.
        *
        * @since 7.5.0
+       * @since 8.2.1 Added the `height` parameter. Added the `string[]` type to the return value.
        */
-      public getBreakpoint(width: Number): String
+      public getBreakpoint(width: number, height?: number): string|string[]
       /**
        * Initiates event marker functionality.
        *
@@ -1218,14 +1429,16 @@ declare module '../js/chartiq.js' {
        */
       public initEventMarkers(uiContext: CIQ.UI.Context): void
       /**
-       * Installs add-ons and plug-ins.
+       * Installs plug-ins.
        *
-       * @param params
+       * See CIQ.ChartEngine.create for the installation of add-ons.
+       *
+       * @param params Function parameters.
        * @param [params.stx] A reference to the chart engine.
        * @param [params.uiContext] The chart user interface context.
        * @param [params.config] Contains the chart configuration, which includes a list of
-       * 		add-ons and a list of plug-ins.
-       * @param [params.type] Type of extension, either "addOns" or "plugins".
+       * 		plug-ins.
+       * @param [params.type] Type of extension. Currently, only "plugins" is supported.
        *
        * @since 7.5.0
        */
@@ -1233,8 +1446,8 @@ declare module '../js/chartiq.js' {
         params: {
           stx?: CIQ.ChartEngine,
           uiContext?: CIQ.UI.Context,
-          config?: Object,
-          type?: String
+          config?: object,
+          type?: string
         }
       ): void
       /**
@@ -1306,20 +1519,6 @@ declare module '../js/chartiq.js' {
      */
     function stxtap(element: HTMLElement, listener: Function, selector?: string): void
     /**
-     * Determines the visibility of a DOM element based on the following CSS properties:
-     * - opacity
-     * - display
-     * - visibility
-     * - width
-     * - height
-     *
-     * @param node The node for which visibility is determined.
-     * @return Whether the element is visible.
-     *
-     * @since 8.1.0
-     */
-    function trulyVisible(node: HTMLElement): boolean
-    /**
      * Attaches a callback to listen for resize events on the DOM.
      *
      * Designed to be used as a helper method for the included WebComponents.
@@ -1358,7 +1557,7 @@ declare module '../js/chartiq.js' {
      * @param args Arguments array (a "spread" is also supported).
      *
      */
-    function containerExecute(self: Object, fn: String, args: any[]): void
+    function containerExecute(self: object, fn: string, args: any[]): void
     /**
      * Convenience function to display the changing price of a node (price flash green/red).
      *
@@ -1667,11 +1866,8 @@ declare module '../js/chartiq.js' {
 
   export namespace CIQ {
     /**
-     * Namespace for UI helper objects.
-     *
-     * Designed to be used as helper methods for the included WebComponents. A full
-     * tutorial on how to work with and customize the web components can be found here:
-     * {@tutorial Web Component Interface}.
+     * Namespace for UI helper objects designed to be used with the library
+     * [web components]WebComponents.
      *
      */
     class UI {
@@ -1715,10 +1911,26 @@ declare module '../js/chartiq.js' {
   }
 
   /**
+   * Approximates a subset of jQuery functionality.
+   *
+   * This class exists to support jQuery-like methods within the existing web components.
+   *
+   * **Note:** New web components should be written using native accessors instead of the
+   * undocumented methods of this class. The methods are designed for backward compatibility with
+   * older code that used jQuery; they are not intended for direct API use.
+   *
+   * @class
+   * @since 8.1.0
+   */
+  export class Faquery {
+  }
+
+  /**
    * Abstract class for WebComponents using this framework.
    *
    * Provides a base set of functionality for web components.
    *
+   * @class
    * @extends HTMLElement
    *
    * @see WebComponents
@@ -1747,36 +1959,39 @@ declare module '../js/chartiq.js' {
     ): CIQ.UI.Helper
     /**
      * Set bindings for a node that has been created dynamically. The attribute can be either
-     * "stxbind", "stxtap" or "stxsetget".
+     * "stxbind", "stxtap", or "stxsetget".
      *
      * Designed to be used as a helper method for the included WebComponents. A full
      * tutorial on how to work with and customize the WebComponents can be found here:
      * {@tutorial Web Component Interface}.
      *
-     * In the case of stxsetget, a "set" and "get" will be prepended to the bound method.
-     * <Helper>.getXxxxx() will be called once during this initialization. That method should
-     * set up a binding.
+     * In the case of "stxsetget", a "set" and "get" will be prepended to the bound method.
+     * \<Helper\>.getXxxxx() is called once during this initialization. That method should set up
+     * a binding.
      *
-     * When tapping (or changing value in the case of an input field) <Helper>.setXxxx() will
-     * be called.
+     * When tapping (or changing a value in the case of an input field), \<Helper\>.setXxxx() is
+     * called.
      *
-     * Bindings in web components will search for the nearest parent component that contains
-     * the expected function (see the examples).
+     * Bindings in web components search for the nearest parent component that contains the
+     * expected function (see the examples).
      *
      * @param node The node to bind.
      * @param [params] Parameters passed as the final argument.
+     * @return true if binding succeeded; false if binding failed.
      *
-     * @since 7.0.0 Previously CIQ.UI.BaseComponent.bind.
+     * @since
+     * - 7.0.0 Previously CIQ.UI.BaseComponent.bind.
+     * - 8.2.0 Added return boolean.
      *
      * @example
      * <caption>Look for the next parent with method <code>tool()</code>.</caption>
-     * stxtap="tool('gartley')"
+     * stxtap = "tool('gartley')"
      *
      * @example
      * <caption>To explicitly target a web component, use a prefix.</caption>
-     * stxtap="DrawingToolbar.tool('gartley')"
+     * stxtap = "DrawingToolbar.tool('gartley')"
      */
-    function bindNode(node: HTMLElement, params?: Object): void
+    function bindNode(node: HTMLElement, params?: object): boolean
     /**
      * Travels the DOM tree and locates `stxbind` attributes.
      *
@@ -1905,6 +2120,13 @@ declare module '../js/chartiq.js' {
       },
       e: KeyboardEvent
     ): boolean
+    /**
+     * Global method to add a hot key handler. Hot keys are defined in `hotkeyConfig.hotkeys` in *js/defaultConfiguration.js*).
+     * @param  identifier Name identifying the keystroke handler
+     * @param  handler Function to call when the hot key combination is pressed.
+     * @param stx A reference to the chart engine.
+     */
+    function addHotKeyHandler(identifier: string, handler: Function, stx: CIQ.ChartEngine): void
     /**
      * Default hotkey execution. Called from CIQ.UI.KeystrokeHub.defaultHotKeys.
      *

@@ -4,7 +4,6 @@
 // Usage: new MarkersSample(stxx);
 //
 import { CIQ, markers } from "../../js/standard.js";
-import { highPerformanceMarkers } from "../../js/advanced.js";
 import marker from "../../examples/markers/markersSample.js";
 var _css;
 if (
@@ -19,12 +18,16 @@ else if (typeof define === "function" && define.amd)
 	});
 else if (typeof window !== "undefined")
 	CIQ.loadStylesheet("examples/markers/tradeAnalyticsSample.css");
-CIQ.activateImports(markers, highPerformanceMarkers); // so we can access high performance markers
 if (_css) CIQ.addInternalStylesheet(_css, "tradeAnalyticsSample.css");
-CIQ.activateImports(markers, highPerformanceMarkers);
+CIQ.activateImports(markers);
 const MarkersSample = marker.MarkersSample;
 MarkersSample.registerType("trade", "showTradeAnalytics");
 MarkersSample.prototype.showTradeAnalytics = function () {
+	if (!CIQ.Marker.Performance) {
+		return console.error(
+			"tradeAnalyticsSample feature requires first activating highPerformanceMarkers feature."
+		);
+	}
 	let { stx } = this;
 	let { chart } = stx;
 	let { dataSet, dataSegment } = chart;
@@ -43,8 +46,8 @@ MarkersSample.prototype.showTradeAnalytics = function () {
 				"Starting Price: " +
 				dataSegment[10].Close +
 				"\n\
-							Shares: 5000\n\
-							Exchange: " +
+			Shares: 5000\n\
+						Exchange: " +
 				chart.market.market_def.name
 		})
 	});
@@ -63,8 +66,8 @@ MarkersSample.prototype.showTradeAnalytics = function () {
 					"Ending Price: " +
 					dataSegment[dataSegment.length - 2].Close +
 					"\n\
-							Shares: 5000\n\
-							Exchange: " +
+				Shares: 5000\n\
+						Exchange: " +
 					chart.market.market_def.name
 			})
 		});

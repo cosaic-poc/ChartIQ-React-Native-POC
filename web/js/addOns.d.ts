@@ -5,6 +5,15 @@ export { CIQ }
  * CIQ namespace extension
  */
 declare module '../js/chartiq.js' {
+  export namespace CIQ.UI {
+    /**
+     * CIQ.UI.Context interface placeholder to be augmented in *componentUI.js* with properties.
+     *
+     */
+    interface Context {
+    }
+  }
+
   export namespace CIQ {
     /**
      * CIQ.EaseMachine interface placeholder to be augmented in *standard.js* with properties.
@@ -19,291 +28,12 @@ declare module '../js/chartiq.js' {
     interface Marker {
     }
     /**
-     * Add-On that animates the chart.
-     *
-     * Requires `addOns.js`
-     *
-     * The chart is animated in three ways:
-     * 1.  The current price pulsates
-     * 2.  The current price appears to move smoothly from the previous price
-     * 3.  The chart's y-axis smoothly expands/contracts when a new high or low is reached
-     *
-     * The following chart types are supported: line, mountain, baseline_delta.
-     *
-     * Chart aggregations such as Kagi, Renko, Range Bars, etc. are not supported.
-     *
-     * **Animation displays more gracefully when updates are sent into the chart one at a time using CIQ.ChartEngine#updateChartData
-     * instead of in batches using a [QuoteFeed]CIQ.ChartEngine#attachQuoteFeed. Sending data in batches will produce a ‘jumping’ effect.**
-     *
-     * By default, there will be a flashing beacon created using a canvas circle. If instead you want to use a custom animation beacon, you will be able to extend the functionality yourself as follows:
-     * - In js/addOns.js, at the bottom of the CIQ.Animation function, there is an stx.append("draw") function.
-     * - Make a copy of this function so you can override the behavior.
-     * - In there you will see it determine var x and y, which are the coordinates for the center of the beacon.
-     * - At the bottom of this append function, we draw the beacon by using the Canvas arc() function to draw a circle and then fill() to make the circle solid.
-     * - You can replace  the canvas circle with an image using [CanvasRenderingContext2D.drawImage()](https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D#Drawing_images) .
-     * - Example:
-     *
-     *   ```
-     *   var image = document.getElementById('beacon'); // include a hidden image on your HTML
-     *   context.drawImage(image, x-10, y-10, 20, 20); // add the image on the canvas. Offset the x and y values by the radius of the beacon.
-     *   ```
-     *
-     * Animation Example <iframe width="800" height="500" scrolling="no" seamless="seamless" align="top" style="float:top" src="https://jsfiddle.net/chartiq/6fqw652z/embedded/result,js,html/" allowfullscreen="allowfullscreen" frameborder="1"></iframe>
-     *
-     * You can disable animation after each different [chart type is activated]CIQ.ChartEngine#setChartType by calling:
-     * ```
-     * stxx.mainSeriesRenderer.supportsAnimation=false;
-     * ```
-     * Keep in mind that changing to a different chart type, may once again enable animation. You can override this by [adding an event listener]CIQ.ChartEngine#addEventListener on [layout changes]layoutEventListener.
-     *
-     * @since
-     * - 3.0.0 Now part of *addOns.js*. Previously provided as a standalone *animation.js* file.
-     * - 4.0.0 Beacon only flashes for line charts. On candles or bars, it is suppressed as it produces an unnatural effect.
-     * - 7.0.2 Now takes one configuration object as its constructor. Must have a reference to a chart engine.
-     * @example
-     * 	new CIQ.Animation({stx: stxx, animationParameters: {tension:0.3}});  //Default animation with splining tension of 0.3
-     *
-     */
-    class Animation {
-      /**
-       * Add-On that animates the chart.
-       *
-       * Requires `addOns.js`
-       *
-       * The chart is animated in three ways:
-       * 1.  The current price pulsates
-       * 2.  The current price appears to move smoothly from the previous price
-       * 3.  The chart's y-axis smoothly expands/contracts when a new high or low is reached
-       *
-       * The following chart types are supported: line, mountain, baseline_delta.
-       *
-       * Chart aggregations such as Kagi, Renko, Range Bars, etc. are not supported.
-       *
-       * **Animation displays more gracefully when updates are sent into the chart one at a time using CIQ.ChartEngine#updateChartData
-       * instead of in batches using a [QuoteFeed]CIQ.ChartEngine#attachQuoteFeed. Sending data in batches will produce a ‘jumping’ effect.**
-       *
-       * By default, there will be a flashing beacon created using a canvas circle. If instead you want to use a custom animation beacon, you will be able to extend the functionality yourself as follows:
-       * - In js/addOns.js, at the bottom of the CIQ.Animation function, there is an stx.append("draw") function.
-       * - Make a copy of this function so you can override the behavior.
-       * - In there you will see it determine var x and y, which are the coordinates for the center of the beacon.
-       * - At the bottom of this append function, we draw the beacon by using the Canvas arc() function to draw a circle and then fill() to make the circle solid.
-       * - You can replace  the canvas circle with an image using [CanvasRenderingContext2D.drawImage()](https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D#Drawing_images) .
-       * - Example:
-       *
-       *   ```
-       *   var image = document.getElementById('beacon'); // include a hidden image on your HTML
-       *   context.drawImage(image, x-10, y-10, 20, 20); // add the image on the canvas. Offset the x and y values by the radius of the beacon.
-       *   ```
-       *
-       * Animation Example <iframe width="800" height="500" scrolling="no" seamless="seamless" align="top" style="float:top" src="https://jsfiddle.net/chartiq/6fqw652z/embedded/result,js,html/" allowfullscreen="allowfullscreen" frameborder="1"></iframe>
-       *
-       * You can disable animation after each different [chart type is activated]CIQ.ChartEngine#setChartType by calling:
-       * ```
-       * stxx.mainSeriesRenderer.supportsAnimation=false;
-       * ```
-       * Keep in mind that changing to a different chart type, may once again enable animation. You can override this by [adding an event listener]CIQ.ChartEngine#addEventListener on [layout changes]layoutEventListener.
-       *
-       * @param config The constructor parameters
-       * @param config.stx The chart object
-       * @param [config.animationParameters] Configuration parameters
-       * @param [config.animationParameters.stayPut=false] Set to true for last tick to stay in position it was scrolled and have rest of the chart move backwards as new ticks are added instead of having new ticks advance forward and leave the rest of the chart in place.
-       * @param [config.animationParameters.ticksFromEdgeOfScreen=5] Number of ticks from the right edge the chart should stop moving forward so the last tick never goes off screen (only applicable if stayPut=false)
-       * @param [config.animationParameters.granularity=1000000] Set to a value that will give enough granularity for the animation.  The larger the number the smaller the price jump between frames, which is good for charts that need a very slow smooth animation either because the price jumps between ticks are very small, or because the animation was set up to run over a large number of frames when instantiating the CIQ.EaseMachine.
-       * @param [config.animationParameters.tension=null] Splining tension for smooth curves around data points (range 0-1).
-       * @param config.easeMachine Override the default easeMachine.  Default is `new CIQ.EaseMachine(Math.easeOutCubic, 1000);`
-       * @since
-       * - 3.0.0 Now part of *addOns.js*. Previously provided as a standalone *animation.js* file.
-       * - 4.0.0 Beacon only flashes for line charts. On candles or bars, it is suppressed as it produces an unnatural effect.
-       * - 7.0.2 Now takes one configuration object as its constructor. Must have a reference to a chart engine.
-       * @example
-       * 	new CIQ.Animation({stx: stxx, animationParameters: {tension:0.3}});  //Default animation with splining tension of 0.3
-       *
-       */
-      constructor(
-        config: {
-          stx: CIQ.ChartEngine,
-          easeMachine: CIQ.EaseMachine,
-          animationParameters?: {
-            stayPut?: boolean,
-            ticksFromEdgeOfScreen?: number,
-            granularity?: number,
-            tension?: number
-          }
-        }
-      )
-    }
-    /**
-     * Add-On that allows a "continuous zoom", changing periodicities as the maxTicks and/or candlewidth hits a set boundary.
-     *
-     * Although this feature is available for all chart styles, it shows best on continuous renderings such as lines and mountains, vs. candles and bars.
-     * This is because some users may find the changes in candle width, that takes place as the same range is displayed in a different periodicity, unnatural.
-     * The effect can be mitigated by increasing the number of boundaries so periodicities change more often, preventing large candle width changes;
-     * and by using the periodicity roll up feature instead of fetching new data from a quote feed. See examples.
-     *
-     * See CIQ.ChartEngine#setPeriodicity and CIQ.ChartEngine#createDataSet
-     *
-     * Requires `addOns.js`
-     *
-     * The feature will not work without supplying at least one element within the periodicities array,
-     * and at least one property within the boundaries object.
-     *
-     * 										The periodicities are objects with period, interval, [timeUnit] properties (see CIQ.ChartEngine#setPeriodicity).
-     * @since 7.0.0
-     * @example
-     * new CIQ.ContinuousZoom({
-     *	stx: stxx,
-     *	periodicities:[
-     *		{period:1,   interval:"month"},
-     *		{period:1,   interval:"day"},
-     *		{period:2,   interval:30},
-     *		{period:1,   interval:5},
-     *		{period:15,  interval:1,  timeUnit:"second"},
-     *		{period:1,   interval:1,  timeUnit:"second"}
-     *	],
-     *	boundaries:{
-     *		maxCandleWidth: 100,
-     *		minCandleWidth: 3,
-     *		maxTicks: 500,
-     *		minTicks: 10
-     *	}
-     * });
-     * @example
-     //smother periodicity change by rolling daily into weekly and monthly.
-     // Also try reusing the same interval data and have the chart roll it instead of fetching new data.
-     stxx.dontRoll=false;
-     new CIQ.ContinuousZoom({
-     stx: stxx,
-     periodicities:[
-     // daily interval data
-     {period:1,   interval:"month"},
-     {period:2,   interval:"week"},
-     {period:1,   interval:"week"},
-     {period:3,   interval:"day"},
-     {period:1,   interval:"day"},
-     // 30 minute interval data
-     {period:16,   interval:30},
-     {period:8,   interval:30},
-     {period:4,   interval:30},
-     {period:2,   interval:30},
-     // one minute interval data
-     {period:30,   interval:1},
-     {period:15,   interval:1},
-     {period:10,   interval:1},
-     {period:5,   interval:1},
-     {period:2,   interval:1},
-     {period:1,   interval:1},
-     // one second interval data
-     {period:30,  interval:1,  timeUnit:"second"},
-     {period:15,  interval:1,  timeUnit:"second"},
-     {period:5,   interval:1,  timeUnit:"second"},
-     {period:2,   interval:1,  timeUnit:"second"},
-     {period:1,   interval:1,  timeUnit:"second"},
-     ],
-     boundaries:{
-     maxCandleWidth: 15,
-     minCandleWidth: 3
-     }
-     });
-     */
-    class ContinuousZoom {
-      /**
-       * Add-On that allows a "continuous zoom", changing periodicities as the maxTicks and/or candlewidth hits a set boundary.
-       *
-       * Although this feature is available for all chart styles, it shows best on continuous renderings such as lines and mountains, vs. candles and bars.
-       * This is because some users may find the changes in candle width, that takes place as the same range is displayed in a different periodicity, unnatural.
-       * The effect can be mitigated by increasing the number of boundaries so periodicities change more often, preventing large candle width changes;
-       * and by using the periodicity roll up feature instead of fetching new data from a quote feed. See examples.
-       *
-       * See CIQ.ChartEngine#setPeriodicity and CIQ.ChartEngine#createDataSet
-       *
-       * Requires `addOns.js`
-       *
-       * The feature will not work without supplying at least one element within the periodicities array,
-       * and at least one property within the boundaries object.
-       *
-       * @param params Configuration parameters
-       * @param params.stx The chart object
-       * @param params.periodicities Set this array with eligible periodicities here, in any order. These will be the periodicities which will be used by the continuous zooming once a boundary is hit.
-       * 										The periodicities are objects with period, interval, [timeUnit] properties (see CIQ.ChartEngine#setPeriodicity).
-       * @param params.boundaries Optional boundary cases to trigger the periodicity change. Hitting a max boundary will switch to the next larger periodicity; hitting a min boundary will switch to the next smaller periodicity.
-       * @param [params.boundaries.maxCandleWidth] largest size of candle in pixels to display before switching
-       * @param [params.boundaries.minCandleWidth] smallest size of candle in pixels to display before switching
-       * @param [params.boundaries.maxTicks] most number of ticks to display before switching
-       * @param [params.boundaries.minTicks] least number of ticks to display before switching
-       * @since 7.0.0
-       * @example
-       * new CIQ.ContinuousZoom({
-       *	stx: stxx,
-       *	periodicities:[
-       *		{period:1,   interval:"month"},
-       *		{period:1,   interval:"day"},
-       *		{period:2,   interval:30},
-       *		{period:1,   interval:5},
-       *		{period:15,  interval:1,  timeUnit:"second"},
-       *		{period:1,   interval:1,  timeUnit:"second"}
-       *	],
-       *	boundaries:{
-       *		maxCandleWidth: 100,
-       *		minCandleWidth: 3,
-       *		maxTicks: 500,
-       *		minTicks: 10
-       *	}
-       * });
-       * @example
-       //smother periodicity change by rolling daily into weekly and monthly.
-       // Also try reusing the same interval data and have the chart roll it instead of fetching new data.
-       stxx.dontRoll=false;
-       new CIQ.ContinuousZoom({
-       stx: stxx,
-       periodicities:[
-       // daily interval data
-       {period:1,   interval:"month"},
-       {period:2,   interval:"week"},
-       {period:1,   interval:"week"},
-       {period:3,   interval:"day"},
-       {period:1,   interval:"day"},
-       // 30 minute interval data
-       {period:16,   interval:30},
-       {period:8,   interval:30},
-       {period:4,   interval:30},
-       {period:2,   interval:30},
-       // one minute interval data
-       {period:30,   interval:1},
-       {period:15,   interval:1},
-       {period:10,   interval:1},
-       {period:5,   interval:1},
-       {period:2,   interval:1},
-       {period:1,   interval:1},
-       // one second interval data
-       {period:30,  interval:1,  timeUnit:"second"},
-       {period:15,  interval:1,  timeUnit:"second"},
-       {period:5,   interval:1,  timeUnit:"second"},
-       {period:2,   interval:1,  timeUnit:"second"},
-       {period:1,   interval:1,  timeUnit:"second"},
-       ],
-       boundaries:{
-       maxCandleWidth: 15,
-       minCandleWidth: 3
-       }
-       });
-       */
-      constructor(
-        params: {
-          stx: CIQ.ChartEngine,
-          periodicities: any[],
-          boundaries: {
-            maxCandleWidth?: number,
-            minCandleWidth?: number,
-            maxTicks?: number,
-            minTicks?: number
-          }
-        }
-      )
-    }
-    /**
      * Use this constructor to initialize filtering and visualization styles of extended hours by the use of shading and delimitation lines.
      *
-     * Requires `addOns.js`.
+     *  Extended hours can be toggled using the Ctrl+Alt+X keystroke combination (see the
+     * `extendedHours` action in `hotkeyConfig.hotkeys` in *js/defaultConfiguration.js*).
+     *
+     * Requires *addOns.js*.
      *
      * This visualization will only work if data for the corresponding sessions is provided from your quote feed and the market definitions have the corresponding entries.
      * See CIQ.Market for details on how to define extended (non-default) hours.
@@ -324,8 +54,15 @@ declare module '../js/chartiq.js' {
      *
      * **Important:** This module must be initialized before CIQ.ChartEngine#importLayout or the sessions will not be able to be restored.
      *
-     * Example <iframe width="800" height="500" scrolling="no" seamless="seamless" align="top" style="float:top" src="https://jsfiddle.net/chartiq/g2vvww67/embedded/result,js,html/" allowfullscreen="allowfullscreen" frameborder="1"></iframe>
+     * Example:
+     * <iframe width="800" height="500" scrolling="no" seamless="seamless" align="top"
+     *         style="float:top"
+     *         src="https://jsfiddle.net/chartiq/g2vvww67/embedded/result,js,html/"
+     *         allowfullscreen="allowfullscreen" frameborder="1">
+     * </iframe>
      *
+     * 		CIQ.ExtendedHours.set is invoked, rather than calling
+     * 		CIQ.ChartEngine#loadChart to reload the data from the server.
      * 		element that contains the UI control for the extended hours add-on. In a multi-chart
      * 		document, the add-on is available only on charts that have a menu DOM element with
      * 		the value for `menuContextClass` as a class attribute.
@@ -372,7 +109,10 @@ declare module '../js/chartiq.js' {
       /**
        * Use this constructor to initialize filtering and visualization styles of extended hours by the use of shading and delimitation lines.
        *
-       * Requires `addOns.js`.
+       *  Extended hours can be toggled using the Ctrl+Alt+X keystroke combination (see the
+       * `extendedHours` action in `hotkeyConfig.hotkeys` in *js/defaultConfiguration.js*).
+       *
+       * Requires *addOns.js*.
        *
        * This visualization will only work if data for the corresponding sessions is provided from your quote feed and the market definitions have the corresponding entries.
        * See CIQ.Market for details on how to define extended (non-default) hours.
@@ -393,11 +133,18 @@ declare module '../js/chartiq.js' {
        *
        * **Important:** This module must be initialized before CIQ.ChartEngine#importLayout or the sessions will not be able to be restored.
        *
-       * Example <iframe width="800" height="500" scrolling="no" seamless="seamless" align="top" style="float:top" src="https://jsfiddle.net/chartiq/g2vvww67/embedded/result,js,html/" allowfullscreen="allowfullscreen" frameborder="1"></iframe>
+       * Example:
+       * <iframe width="800" height="500" scrolling="no" seamless="seamless" align="top"
+       *         style="float:top"
+       *         src="https://jsfiddle.net/chartiq/g2vvww67/embedded/result,js,html/"
+       *         allowfullscreen="allowfullscreen" frameborder="1">
+       * </iframe>
        *
-       * @param params The constructor parameters
-       * @param [params.stx] The chart object
-       * @param [params.filter] Setting to true performs a filter of masterData when CIQ.ExtendedHours.set is invoked, rather than calling CIQ.ChartEngine#loadChart to reload the data from the server.
+       * @param params The constructor parameters.
+       * @param [params.stx] The chart object.
+       * @param [params.filter] Setting to true performs a filter of masterData when
+       * 		CIQ.ExtendedHours.set is invoked, rather than calling
+       * 		CIQ.ChartEngine#loadChart to reload the data from the server.
        * @param [params.menuContextClass] A CSS class name used to query the menu DOM
        * 		element that contains the UI control for the extended hours add-on. In a multi-chart
        * 		document, the add-on is available only on charts that have a menu DOM element with
@@ -448,42 +195,68 @@ declare module '../js/chartiq.js' {
           menuContextClass?: string
         }
       )
+      /**
+       * Prepares the extended hours settings and classes for the session names enumerated in the arguments without actually displaying or loading the data.
+       *
+       * This method can be used to force a particular session to load by default by calling it before CIQ.ChartEngine#loadChart.
+       * Otherwise the chart will be loaded with all sessions disabled until CIQ.ExtendedHours.set is invoked.
+       *
+       * CIQ.ChartEngine#importLayout will also call this method to ensure the sessions are restored as previously saved.
+       *
+       * @param  enable Set to turn on/off the extended-hours visualization.
+       * @param  sessions The sessions to visualize when enable is true.  Any sessions previously visualized will be disabled.  If set to null, will default to ["pre","post"].
+       * @since 5.0.0
+       */
+      public prepare(enable: boolean, sessions: any[]): void
+      /**
+       * Turns on or off extended hours for the session names enumerated in the arguments.
+       * @param  enable Set to turn on/off the extended-hours visualization.
+       * @param  sessions The sessions to visualize when enable is true.  Any sessions previously visualized will be disabled.  If set to null, will default to ["pre","post"].
+       * @param  cb Optional callback function to be invoked once chart is reloaded with extended hours data.
+       */
+      public set(enable: boolean, sessions: any[], cb: Function): void
     }
     /**
-     * Creates an add-on that sets the chart UI to full-screen mode. In full-screen mode, a class `full-screen` is added
-     * to the context element used for styling. In addition, elements with the class `full-screen-hide` are hidden.
-     * Elements with the class `full-screen-show` that are normally hidden are shown.
+     * Creates an add-on that sets the chart UI to full-screen mode. In full-screen mode, a class
+     * `full-screen` is added to the context element used for styling. In addition, elements with the
+     * class `full-screen-hide` are hidden. Elements with the class `full-screen-show` that are
+     * normally hidden are shown.
      *
-     * Requires `addOns.js`.
+     * Requires *addOns.js*.
      *
      * ![Full-screen display](./img-Full-Screen-Chart.png)
      *
-     * @example
-     * 	new CIQ.FullScreen({stx:stxx});
+     *
      * @since 7.3.0
+     *
+     * @example
+     * new CIQ.FullScreen({ stx: stxx });
      */
     class FullScreen {
       /**
-       * Creates an add-on that sets the chart UI to full-screen mode. In full-screen mode, a class `full-screen` is added
-       * to the context element used for styling. In addition, elements with the class `full-screen-hide` are hidden.
-       * Elements with the class `full-screen-show` that are normally hidden are shown.
+       * Creates an add-on that sets the chart UI to full-screen mode. In full-screen mode, a class
+       * `full-screen` is added to the context element used for styling. In addition, elements with the
+       * class `full-screen-hide` are hidden. Elements with the class `full-screen-show` that are
+       * normally hidden are shown.
        *
-       * Requires `addOns.js`.
+       * Requires *addOns.js*.
        *
        * ![Full-screen display](./img-Full-Screen-Chart.png)
        *
-       * @param params Configuration parameters
-       * @param [params.stx] The chart object
-       * @example
-       * 	new CIQ.FullScreen({stx:stxx});
+       * @param params Configuration parameters.
+       * @param [params.stx] The chart object.
+       *
        * @since 7.3.0
+       *
+       * @example
+       * new CIQ.FullScreen({ stx: stxx });
        */
       constructor(params: {stx?: CIQ.ChartEngine})
     }
     /**
      * Add-On that puts the chart into "sleep mode" after a period of inactivity.
      *
-     * Requires `addOns.js`
+     * Requires *addOns.js*.
      *
      * In sleep mode, a class "ciq-sleeping" will be added to the body.  This will dim out the chart.
      * Sleep mode is ended when interaction with the chart is detected.
@@ -498,7 +271,7 @@ declare module '../js/chartiq.js' {
       /**
        * Add-On that puts the chart into "sleep mode" after a period of inactivity.
        *
-       * Requires `addOns.js`
+       * Requires *addOns.js*.
        *
        * In sleep mode, a class "ciq-sleeping" will be added to the body.  This will dim out the chart.
        * Sleep mode is ended when interaction with the chart is detected.
@@ -526,11 +299,1267 @@ declare module '../js/chartiq.js' {
       )
     }
     /**
+     * Add-on that adds a range slider to the chart.
+     *
+     * The range slider allows the `dataSegment` to be selectable as a portion of the data set.
+     *
+     * The range slider can be toggled using the Ctrl+Alt+R keystroke combination (see the
+     * `rangeSlider` action in `hotkeyConfig.hotkeys` in *js/defaultConfiguration.js*).
+     *
+     * Requires *addOns.js*.
+     *
+     * Also requires additional CSS. Add the following style sheet:
+     * ```
+     * <link rel="stylesheet" type="text/css" href="css/chartiq.css" media="screen" />
+     * ```
+     * or directly include this CSS:
+     * ```
+     * .stx_range_slider.shading {
+     *     background-color: rgba(128, 128, 128, 0.3);
+     *     border: solid 2px #0090b7;
+     *     width: 5px;
+     * }
+     * ```
+     * Once instantiated, the range slider can be displayed or hidden by setting the `rangeSlider`
+     * parameter of the primary chart's [layout object]CIQ.ChartEngine#layout and then issuing
+     * a layout change event to trigger the new status. When initialing loading the chart, enable the
+     * range slider in a callback function to prevent out&#8209;of&#8209;sequence issues. See the
+     * examples below.
+     *
+     * A range slider is simply another chart. So you configure it and customize it using the same
+     * parameters as you would the primary chart. The only difference is that the slider object is a
+     * sub&#8209;element of the primary chart, contained in the `slider.slider` object.
+     *
+     * For example, if you wanted to turn off the x-axis on the slider, assuming a chart instantiated
+     * as `stxx`, you would execute:
+     * ```
+     * stxx.slider.slider.xaxisHeight = 0;
+     * ```
+     *
+     * It is important to note that the range slider chart DOM element creates itself below the
+     * primary chart container element, not inside the container. As such, all styling must be on a
+     * parent `div` container rather than on the primary chart container itself to ensure styling is
+     * shared between the chart and range slider containers.
+     *
+     * For example, do this:
+     * ```
+     * <div class="all-charts">
+     *     <div style="grid-column: span 6; grid-row: span 2;">
+     *         <div class="chartwrap"> <!-- Beginning of wrapper with desired styling. -->
+     *             <div class="chartContainer1" style="width:100%;height:100%;position:relative"></div>
+     *             <!-- The slider will be added here. -->
+     *         </div> <!-- End of wrapper. -->
+     *     </div>
+     * </div>
+     * ```
+     *
+     * not this:
+     * ```
+     * <div class="all-charts">
+     *     <div class="chartwrap" style="grid-column: span 6; grid-row: span 2;">
+     *         <div class="chartContainer1" style="width: 100%; height: 100%; position: relative"></div>
+     *     </div>
+     * </div>
+     * ```
+     *
+     * Range slider example:
+     * <iframe width="800" height="350" scrolling="no" seamless="seamless" align="top"
+     *         style="float:top" src="https://jsfiddle.net/chartiq/dtug29yx/embedded/result,js,html/"
+     *         allowfullscreen="allowfullscreen" frameborder="1">
+     * </iframe>
+     *
+     * 		unit, such as "px".
+     * 		`stxx.container`.
+     * 		that contains the UI control for the range slider add-on. In a multi-chart document, the
+     * 		add-on is available only on charts that have a menu DOM element with the value for
+     * 		`menuContextClass` as a class attribute.
+     *
+     * @since
+     * - 4.0.0
+     * - 6.1.0 Added `params.yAxis`.
+     * - 8.0.0 Added `params.menuContextClass`.
+     *
+     * @example
+     * <caption>
+     * 		Create a range slider and enable it by default using the <code>loadChart</code> callback.
+     * </caption>
+     * const stxx = new CIQ.ChartEngine({ container: document.querySelector(".chartContainer") });
+     *
+     * stxx.attachQuoteFeed(quoteFeedSimulator,{ refreshInterval: 1, bufferSize: 200 });
+     *
+     * // Instantiate a range slider.
+     * new CIQ.RangeSlider({ stx: stxx });
+     *
+     * function displayChart(){
+     *     stxx.loadChart("SPY", null, function() {
+     *         // For smoother visualization, enable after the main chart has completed loading its data.
+     *         stxx.layout.rangeSlider = true; // Show the slider.
+     *         stxx.changeOccurred("layout"); // Signal the change to force a redraw.
+     *     });
+     * }
+     *
+     * @example
+     * <caption>
+     * 		Create a range slider and enable/disable it using commands to be triggered from a menu.
+     * </caption>
+     * const stxx = new CIQ.ChartEngine({ container: document.querySelector(".chartContainer") });
+     *
+     * // Instantiate a range slider.
+     * new CIQ.RangeSlider({ stx: stxx });
+     *
+     * // To display the slider from a menu use:
+     * stxx.layout.rangeSlider = true; // Show the slider.
+     * stxx.changeOccurred("layout"); // Signal the change to force a redraw.
+     *
+     * // To hide the slider from a menu use:
+     * stxx.layout.rangeSlider = false; // Hide the slider.
+     * stxx.changeOccurred("layout"); // Signal the change to force a redraw.
+     */
+    class RangeSlider {
+      /**
+       * Add-on that adds a range slider to the chart.
+       *
+       * The range slider allows the `dataSegment` to be selectable as a portion of the data set.
+       *
+       * The range slider can be toggled using the Ctrl+Alt+R keystroke combination (see the
+       * `rangeSlider` action in `hotkeyConfig.hotkeys` in *js/defaultConfiguration.js*).
+       *
+       * Requires *addOns.js*.
+       *
+       * Also requires additional CSS. Add the following style sheet:
+       * ```
+       * <link rel="stylesheet" type="text/css" href="css/chartiq.css" media="screen" />
+       * ```
+       * or directly include this CSS:
+       * ```
+       * .stx_range_slider.shading {
+       *     background-color: rgba(128, 128, 128, 0.3);
+       *     border: solid 2px #0090b7;
+       *     width: 5px;
+       * }
+       * ```
+       * Once instantiated, the range slider can be displayed or hidden by setting the `rangeSlider`
+       * parameter of the primary chart's [layout object]CIQ.ChartEngine#layout and then issuing
+       * a layout change event to trigger the new status. When initialing loading the chart, enable the
+       * range slider in a callback function to prevent out&#8209;of&#8209;sequence issues. See the
+       * examples below.
+       *
+       * A range slider is simply another chart. So you configure it and customize it using the same
+       * parameters as you would the primary chart. The only difference is that the slider object is a
+       * sub&#8209;element of the primary chart, contained in the `slider.slider` object.
+       *
+       * For example, if you wanted to turn off the x-axis on the slider, assuming a chart instantiated
+       * as `stxx`, you would execute:
+       * ```
+       * stxx.slider.slider.xaxisHeight = 0;
+       * ```
+       *
+       * It is important to note that the range slider chart DOM element creates itself below the
+       * primary chart container element, not inside the container. As such, all styling must be on a
+       * parent `div` container rather than on the primary chart container itself to ensure styling is
+       * shared between the chart and range slider containers.
+       *
+       * For example, do this:
+       * ```
+       * <div class="all-charts">
+       *     <div style="grid-column: span 6; grid-row: span 2;">
+       *         <div class="chartwrap"> <!-- Beginning of wrapper with desired styling. -->
+       *             <div class="chartContainer1" style="width:100%;height:100%;position:relative"></div>
+       *             <!-- The slider will be added here. -->
+       *         </div> <!-- End of wrapper. -->
+       *     </div>
+       * </div>
+       * ```
+       *
+       * not this:
+       * ```
+       * <div class="all-charts">
+       *     <div class="chartwrap" style="grid-column: span 6; grid-row: span 2;">
+       *         <div class="chartContainer1" style="width: 100%; height: 100%; position: relative"></div>
+       *     </div>
+       * </div>
+       * ```
+       *
+       * Range slider example:
+       * <iframe width="800" height="350" scrolling="no" seamless="seamless" align="top"
+       *         style="float:top" src="https://jsfiddle.net/chartiq/dtug29yx/embedded/result,js,html/"
+       *         allowfullscreen="allowfullscreen" frameborder="1">
+       * </iframe>
+       *
+       * @param params Configuration parameters.
+       * @param [params.stx] The chart object.
+       * @param [params.height="95px"] Height of the range slider panel. Must include a CSS
+       * 		unit, such as "px".
+       * @param [params.yAxis] Y-axis parameters.
+       * @param [params.chartContainer] Handle to the main chart container. Defaults to
+       * 		`stxx.container`.
+       * @param [params.menuContextClass] A CSS class name used to query the menu DOM element
+       * 		that contains the UI control for the range slider add-on. In a multi-chart document, the
+       * 		add-on is available only on charts that have a menu DOM element with the value for
+       * 		`menuContextClass` as a class attribute.
+       *
+       * @since
+       * - 4.0.0
+       * - 6.1.0 Added `params.yAxis`.
+       * - 8.0.0 Added `params.menuContextClass`.
+       *
+       * @example
+       * <caption>
+       * 		Create a range slider and enable it by default using the <code>loadChart</code> callback.
+       * </caption>
+       * const stxx = new CIQ.ChartEngine({ container: document.querySelector(".chartContainer") });
+       *
+       * stxx.attachQuoteFeed(quoteFeedSimulator,{ refreshInterval: 1, bufferSize: 200 });
+       *
+       * // Instantiate a range slider.
+       * new CIQ.RangeSlider({ stx: stxx });
+       *
+       * function displayChart(){
+       *     stxx.loadChart("SPY", null, function() {
+       *         // For smoother visualization, enable after the main chart has completed loading its data.
+       *         stxx.layout.rangeSlider = true; // Show the slider.
+       *         stxx.changeOccurred("layout"); // Signal the change to force a redraw.
+       *     });
+       * }
+       *
+       * @example
+       * <caption>
+       * 		Create a range slider and enable/disable it using commands to be triggered from a menu.
+       * </caption>
+       * const stxx = new CIQ.ChartEngine({ container: document.querySelector(".chartContainer") });
+       *
+       * // Instantiate a range slider.
+       * new CIQ.RangeSlider({ stx: stxx });
+       *
+       * // To display the slider from a menu use:
+       * stxx.layout.rangeSlider = true; // Show the slider.
+       * stxx.changeOccurred("layout"); // Signal the change to force a redraw.
+       *
+       * // To hide the slider from a menu use:
+       * stxx.layout.rangeSlider = false; // Hide the slider.
+       * stxx.changeOccurred("layout"); // Signal the change to force a redraw.
+       */
+      constructor(
+        params: {
+          stx?: CIQ.ChartEngine,
+          height?: number,
+          yAxis?: object,
+          chartContainer?: number,
+          menuContextClass?: string
+        }
+      )
+      /**
+       * Dynamically updates the styling of the range slider.
+       *
+       * This method can be used to update CSS styles if you are injecting stylesheets using
+       * JavaScript.
+       *
+       * @param obj The CSS selector for which a style property is changed.
+       * @param attribute The style property changed in the CSS selector rule-set.
+       * @param value The value to apply to the CSS property.
+       *
+       * @since 8.0.0
+       *
+       * @example
+       * // Set the shading of the range slider.
+       * stxx.slider.updateStyles(
+       *     'stx_range_slider shading',
+       *     'backgroundColor',
+       *     'rgba(200, 50, 50, 0.45)'
+       * );
+       *
+       * @example
+       * // Set the color of the bars of the range slider to red.
+       * stxx.slider.updateStyles(
+       *     'stx_range_slider shading',
+       *     'borderTopColor',
+       *     'rgba(255, 0, 0)'
+       * );
+       */
+      public updateStyles(obj: string, attribute: string, value: string): void
+    }
+    /**
+     * Displays a legend of keyboard shortcuts and the actions the shortcuts perform.
+     *
+     * Delegates display of the legend to the
+     * [cq-floating-window]WebComponents.cq-floating-window web component by dispatching a
+     * "floatingWindow" event (see
+     * [floatingWindowEventListener]CIQ.ChartEngine~floatingWindowEventListener).
+     *
+     * Creates the legend from keyboard shortcut specifications contained in a configuration object;
+     * for example, the default chart configuration object (see the {@tutorial Chart Configuration}
+     * tutorial).
+     *
+     *  The keyboard shortcuts legend can be toggled using the Ctrl+Alt+K keystroke combination (see the
+     * `shortcuts` action in `hotkeyConfig.hotkeys` in *js/defaultConfiguration.js*).
+     *
+     * Requires *addOns.js*.
+     *
+     * 		legend is created.
+     * 		and drawing tool keyboard shortcuts. Typically, this object is the chart configuration
+     * 		object. See the {@tutorial Chart Configuration} tutorial for the data format for keyboard
+     * 		shortcuts.
+     * 		keyboard shortcuts legend.
+     * 		instance in a multi-chart document has its own keyboard shortcuts legend. If false, all
+     * 		charts share the same legend.
+     *
+     * @since 8.2.0
+     *
+     * @example
+     * new CIQ.Shortcuts(
+     *     stx: stxx,
+     *     config: {
+     *         drawingTools: [{ label: "line", shortcut: "l" }],
+     *         hotkeyConfig: {
+     *             hotkeys: [{ label: "Pan chart up", action: "up", commands: ["ArrowUp", "Up"] }]
+     *         }
+     *     }
+     * );
+     */
+    class Shortcuts {
+      /**
+       * Displays a legend of keyboard shortcuts and the actions the shortcuts perform.
+       *
+       * Delegates display of the legend to the
+       * [cq-floating-window]WebComponents.cq-floating-window web component by dispatching a
+       * "floatingWindow" event (see
+       * [floatingWindowEventListener]CIQ.ChartEngine~floatingWindowEventListener).
+       *
+       * Creates the legend from keyboard shortcut specifications contained in a configuration object;
+       * for example, the default chart configuration object (see the {@tutorial Chart Configuration}
+       * tutorial).
+       *
+       *  The keyboard shortcuts legend can be toggled using the Ctrl+Alt+K keystroke combination (see the
+       * `shortcuts` action in `hotkeyConfig.hotkeys` in *js/defaultConfiguration.js*).
+       *
+       * Requires *addOns.js*.
+       *
+       * @param params The constructor parameters.
+       * @param params.stx The chart engine instance for which the keyboard shortcuts
+       * 		legend is created.
+       * @param params.config A configuration object that includes specifications for hot keys
+       * 		and drawing tool keyboard shortcuts. Typically, this object is the chart configuration
+       * 		object. See the {@tutorial Chart Configuration} tutorial for the data format for keyboard
+       * 		shortcuts.
+       * @param [params.width="580"] The width of the floating window that contains the
+       * 		keyboard shortcuts legend.
+       * @param [params.windowForEachChart=true] A flag that indicates whether each chart
+       * 		instance in a multi-chart document has its own keyboard shortcuts legend. If false, all
+       * 		charts share the same legend.
+       *
+       * @since 8.2.0
+       *
+       * @example
+       * new CIQ.Shortcuts(
+       *     stx: stxx,
+       *     config: {
+       *         drawingTools: [{ label: "line", shortcut: "l" }],
+       *         hotkeyConfig: {
+       *             hotkeys: [{ label: "Pan chart up", action: "up", commands: ["ArrowUp", "Up"] }]
+       *         }
+       *     }
+       * );
+       */
+      constructor(
+        params: {
+          stx: CIQ.ChartEngine,
+          config: object,
+          width?: number,
+          windowForEachChart?: boolean
+        }
+      )
+      /**
+       * The chart engine instance for which the keyboard shortcuts legend is created.
+       *
+       * @since 8.2.0
+       */
+      public stx: CIQ.ChartEngine
+      /**
+       * Width of the floating window that contains the keyboard shortcuts legend.
+       *
+       * @since 8.2.0
+       */
+      public width: number
+      /**
+       * In a multi-chart document, indicates whether each chart has its own keyboard shortcuts
+       * legend. If false, all charts share the same legend.
+       *
+       * @since 8.2.0
+       */
+      public windowForEachChart: boolean
+      /**
+       * Enables the keyboard shortcuts legend user interface.
+       *
+       * Adds a `showShortCuts` function to the CIQ.UI.Layout helper. The `showShortCuts`
+       * function calls this class's [toggle]CIQ.Shortcuts#toggle function to show and hide the
+       * keyboard shortcuts legend. Call `showShortCuts` in your application's user interface (see
+       * example).
+       *
+       * This function is called when the add-on is instantiated.
+       *
+       * @param stx The chart engine that provides the UI context for the keyboard
+       * 		shortcuts legend.
+       *
+       * @since 8.2.0
+       *
+       * @example <caption>Create a button that shows and hides the keyboard shortcuts legend.</caption>
+       * <div class="ciq-footer full-screen-hide">
+       *     <div class="shortcuts-ui ciq-shortcut-button"
+       *          stxtap="Layout.showShortcuts()"
+       *          title="Toggle shortcut legend">
+       *     </div>
+       * </div>
+       */
+      public enableUI(stx: CIQ.ChartEngine): void
+      /**
+       * Ensures that an instance of the [cq-floating-window]WebComponents.cq-floating-window
+       * web component is available to handle event messaging and create the shortcuts legend floating
+       * window.
+       *
+       * This function is called when the add-on is instantiated.
+       *
+       * @param stx The chart engine that provides the UI context, which contains the
+       * [cq-floating-window]WebComponents.cq-floating-window web component.
+       *
+       * @since 8.2.0
+       */
+      public ensureMessagingAvailable(stx: CIQ.ChartEngine): void
+      /**
+       * Creates the contents of the keyboard shortcuts legend based on specifications contained in a
+       * configuration object. The contents are displayed in a
+       * [cq-floating-window]WebComponents.cq-floating-window web component.
+       *
+       * This function is called when the add-on is instantiated.
+       *
+       * @param config A configuration object that includes specifications for drawing tool
+       * 		keyboard shortcuts and hot keys. Typically, this object is the chart configuration object
+       * 		(see the {@tutorial Chart Configuration} tutorial).
+       * @return The keyboard shortcuts legend as HTML.
+       *
+       * @since 8.2.0
+       */
+      public getShortcutContent(config: object): string
+      /**
+       * Opens and closes the floating window that contains the keyboard shortcuts legend.
+       *
+       * @param [value] If true, the window is opened. If false, the window is closed.
+       * 		If not provided, the window state is toggled. That is, the window is opened if it is
+       * 		currently closed; closed, if it is currently open.
+       *
+       * @since 8.2.0
+       */
+      public toggle(value?: boolean): void
+    }
+    /**
+     * Creates an overlay that displays the visible chart data segment as a table.
+     *
+     * The overlay includes controls that enable users to copy the table data to the clipboard or
+     * download the data as a character-separated values (CSV) file. See
+     * TableViewBuilder.dataToCsv for the default separator character.
+     *
+     * The table view can be opened using the Alt+K keystroke combination and closed using the Escape
+     * key (see the `tableView` action in `hotkeyConfig.hotkeys` in *js/defaultConfiguration.js*).
+     *
+     * Requires *addOns.js*.
+     *
+     * 		which the table view is created.
+     * 		table columns. **Note:** The units can be any CSS unit acceptable by the CSS `calc`
+     * 		function.
+     * 		view covers the entire chart, including user interface elements (symbol input field,
+     * 		menus, etc.). For example, if the value of this parameter is 1000, the table view covers
+     * 		the entire chart area if the chart width is <= 999 pixels.
+     * 		ultimately contains the table view; for example, ".chartContainer".
+     * 		the previous data point should be used instead of the opening price of the current data
+     * 		point to determine the amount of change for the current data point; that is,
+     * 		(current close - previous close) or (current close - current open).
+     *
+     * @since 8.1.0
+     *
+     * @example
+     * new CIQ.TableView({ stx: stxx });
+     */
+    class TableView {
+      /**
+       * Creates an overlay that displays the visible chart data segment as a table.
+       *
+       * The overlay includes controls that enable users to copy the table data to the clipboard or
+       * download the data as a character-separated values (CSV) file. See
+       * TableViewBuilder.dataToCsv for the default separator character.
+       *
+       * The table view can be opened using the Alt+K keystroke combination and closed using the Escape
+       * key (see the `tableView` action in `hotkeyConfig.hotkeys` in *js/defaultConfiguration.js*).
+       *
+       * Requires *addOns.js*.
+       *
+       * @param params Configuration parameters.
+       * @param params.stx A reference to the chart engine that contains the chart for
+       * 		which the table view is created.
+       * @param [params.minColumnWidth="84px"] The minimum width (including units) of the
+       * 		table columns. **Note:** The units can be any CSS unit acceptable by the CSS `calc`
+       * 		function.
+       * @param [params.coverUIMaxWidth=400] The chart width (in pixels) below which the table
+       * 		view covers the entire chart, including user interface elements (symbol input field,
+       * 		menus, etc.). For example, if the value of this parameter is 1000, the table view covers
+       * 		the entire chart area if the chart width is <= 999 pixels.
+       * @param [params.coverContainer] A CSS selector used to obtain the DOM element that
+       * 		ultimately contains the table view; for example, ".chartContainer".
+       * @param [params.usePreviousCloseForChange=true] Indicates whether the closing price of
+       * 		the previous data point should be used instead of the opening price of the current data
+       * 		point to determine the amount of change for the current data point; that is,
+       * 		(current close - previous close) or (current close - current open).
+       *
+       * @since 8.1.0
+       *
+       * @example
+       * new CIQ.TableView({ stx: stxx });
+       */
+      constructor(
+        params: {
+          stx: CIQ.ChartEngine,
+          minColumnWidth?: string,
+          coverUIMaxWidth?: number,
+          coverContainer?: string,
+          usePreviousCloseForChange?: boolean
+        }
+      )
+      /**
+       * The chart engine instance that contains the chart for which the table view is created.
+       *
+       * @since 8.1.0
+       */
+      public stx: CIQ.ChartEngine
+      /**
+       * Toggle to display and hide additional table view columns, such as % Change and Volume.
+       *
+       * **Note:** Data in the additional columns might not be present in the chart view because
+       * the data is calculated (for example, % Change) or is not part of the standard chart
+       * display (for example, Volume — which can be displayed with the
+       * [Volume Chart]CIQ.Studies.createVolumeChart study).
+       *
+       * @since 8.1.0
+       */
+      public viewAdditionalColumns: boolean
+      /**
+       * Minimum width of the table view columns, including units. The units can be any CSS
+       * unit acceptable by the CSS `calc` function.
+       *
+       * @since 8.1.0
+       */
+      public minColumnWidth: string
+      /**
+       * The chart width in pixels below which the table view covers the entire chart, including
+       * user interface elements, such as the menus and footer.
+       *
+       * @since 8.1.0
+       */
+      public coverUIMaxWidth: number
+      /**
+       * A CSS selector used to obtain the DOM element that hosts the table view.
+       *
+       * @since 8.1.0
+       */
+      public coverContainer: string
+      /**
+       * If true, the closing price of the previous data point is used instead of the opening
+       * price of the current data point to determine the amount of change for the current data
+       * point.
+       *
+       * @since 8.1.0
+       */
+      public usePreviousCloseForChange: boolean
+      /**
+       * A reference to the TableViewBuilder namespace for access to the namespace
+       * static methods.
+       *
+       * @since 8.1.0
+       */
+      public builder: TableViewBuilder
+      /**
+       * Displays the table view.
+       *
+       * @param [params] Configuration parameters.
+       * @param [params.config] Table column information.
+       * @param [params.onClose] Callback function to execute on closing the table view. The
+       * 		callback enables synchronization of state in the application when the table view is
+       * 		closed.
+       *
+       * @since 8.1.0
+       */
+      public open(params?: {config?: object, onClose?: Function}): void
+      /**
+       * Closes the table view.
+       *
+       * @param [notify=true] Indicates whether the `onClose` callback function is set (see
+       * 		[open]CIQ.TableView#open).
+       *
+       * @since 8.1.0
+       */
+      public close(notify?: boolean): void
+      /**
+       * Opens the table view if it is closed. Closes the table view if it is open.
+       *
+       * @since 8.1.0
+       */
+      public toggle(): void
+      /**
+       * Subscribes to changes in the table view component communication channel, which enables other
+       * components to open and close the table view.
+       *
+       * @param uiContext The user interface context of the table view. Provides the
+       * 		communication channel path that identifies the table view channel.
+       * @param [channelPath] Specifies the channel path if the path is not available in the
+       * 		context configuration provided by `uiContext`.
+       *
+       * @since 8.1.0
+       */
+      public subscribeToChanges(uiContext: CIQ.UI.Context, channelPath?: string): void
+    }
+    /**
+     * Add-on that creates a detailed tooltip as the user's mouse hovers over data points on the
+     * chart. The tooltip contains information such as the open, high, low, and close prices of
+     * stock quotes.
+     *
+     * Tooltip example:
+     * <iframe width="800" height="500" scrolling="no" seamless="seamless" align="top"
+     *         style="float:top"
+     *         src="https://jsfiddle.net/chartiq/5kux6j8p/embedded/result,js,html/"
+     *         allowfullscreen="allowfullscreen" frameborder="1">
+     * </iframe>
+     *
+     * **Note:** Prior to version 8.2.0, the tooltip was directly linked to the crosshairs. The
+     * crosshairs had to be active for the tooltip to be displayed.
+     *
+     * Requires *addOns.js* and *markers.js*, or the bundle *standard.js*.
+     *
+     * There can be only one `CIQ.Tooltip` per chart.
+     *
+     * Color and layout can be customized by overriding the CSS rule-sets defined for the
+     * `stx-hu-tooltip` and related type selectors in *stx-chart.css*. Do not modify
+     * *stx-chart.css*; create a separate style sheet file that overrides *stx-chart.css* in the
+     * CSS cascade. See the example below.
+     *
+     * `CIQ.Tooltip` automatically creates its own HTML inside the chart container. Here is an
+     * example of the structure (there will be one field tag per displayed element):
+     * ```
+     * <stx-hu-tooltip>
+     *     <stx-hu-tooltip-field>
+     *         <stx-hu-tooltip-field-name></stx-hu-tooltip-field-name>
+     *         <stx-hu-tooltip-field-value></stx-hu-tooltip-field-value>
+     *     </stx-hu-tooltip-field>
+     * </stx-hu-tooltip>
+     * ```
+     * By default, the `stx-hu-tooltip-field` elements are inserted in the following order:
+     * - DT
+     * - Open
+     * - High
+     * - Low
+     * - Close
+     * - Volume
+     * - series
+     * - studies
+     *
+     * But the default layout can be changed. You can override the order of fields or change the
+     * labels by manually inserting the HTML that the tooltip would otherwise have created for
+     * that field. If no override HTML is found for a particular field, the default is used.
+     * **Note:** This HTML must be placed inside the chart container.
+     *
+     * All of the code is provided in *addOns.js* and can be fully customized by copying the
+     * source code from the library and overriding the functions with your changes. Be sure to
+     * never modify a library file, as this will hinder upgrades.
+     *
+     * For example, concatenating the field name (e.g., "Jaw") with the study name (e.g.,
+     * "Alligator" ) is the default behavior of the tooltip for displaying the value title. Feel
+     * free to override this behavior by creating your own custom version of the `renderFunction()`
+     * for the `CIQ.Tooltip`. To do this, copy the entire `CIQ.Tooltip` code (found in *addOns.js*)
+     * and make the changes to your custom version. Load your custom version instead. Specifically,
+     * look for the following code in the `renderFunction()` that pushes out the text for each
+     * study field:
+     * ```
+     * let newFieldName = document.createElement("stx-hu-tooltip-field-name");
+     * newFieldName.innerHTML = this.translateIf(fieldName);
+     * newField.appendChild(newFieldName);
+     * ```
+     * Replace `fieldName` with anything you want to use as the field title and push that instead.
+     *
+     * Visual Reference:
+     * ![stx-hu-tooltip](stx-hu-tooltip.png "stx-hu-tooltip")
+     *
+     * 		the mouse is over the primary line/bars.
+     * 		when the internal chart periodicity is a daily interval (see
+     * 		CIQ.ChartEngine.isDailyInterval).
+     * 		there is no data between bars. **Note:** A value of `null` is not considered missing
+     * 		data.
+     * 		time zone; false, to use the `displayZone` time zone (see
+     * 		CIQ.ChartEngine#setTimeZone).
+     * 		point) the mouse is hovering over is highlighted. Applies to the floating tooltip only
+     * 		(the dynamic tooltip points to the bar). If the crosshairs are active, this parameter
+     * 		is ignored.
+     *
+     * @since
+     * - 09-2016-19
+     * - 5.0.0 Now `tooltipParams.showOverBarOnly` is available to show tooltip only when over the
+     * 		primary line/bars.
+     * - 5.1.1 `tooltipParams.change` set to true to show the change in daily value when
+     * 		displaying a daily interval.
+     * - 6.2.5 New `tooltipParams.interpolation` flag to show estimated value for missing series
+     * 		data points.
+     * - 7.0.0 New `tooltipParams.useDataZone` flag to show the date in either the `dataZone` or
+     * 		`displayZone` date/time.
+     * - 8.2.0 Decoupled `CIQ.Tooltip` from the crosshairs and added highlighting of the data
+     * 		point (or bar) the mouse is hovering over. The new `tooltipParams.showBarHighlight`
+     * 		parameter enables or disables the highlighting.
+     *
+     * @example <caption>Add a tooltip to a chart:</caption>
+     * // First declare your chart engine.
+     * const stxx = new CIQ.ChartEngine({ container: document.querySelector(".chartContainer")[0] });
+     *
+     * // Then link the tooltip to that chart.
+     * // Note how we've enabled OHL, Volume, Series and Studies.
+     * new CIQ.Tooltip({ stx: stxx, ohl: true, volume: true, series: true, studies: true });
+     *
+     * @example <caption>Customize the order, layout, or text in tooltip labels:</caption>
+     * // In this example, we've rearranged the HTML to display the Close field first, then the DT.
+     * // We are also labeling the DT 'Date/Time' and the Close 'Last'.
+     * // The rest of the fields are displayed in their default order.
+     *
+     * <stx-hu-tooltip>
+     *     <stx-hu-tooltip-field field="Close">
+     *         <stx-hu-tooltip-field-name>Last</stx-hu-tooltip-field-name>
+     *         <stx-hu-tooltip-field-value></stx-hu-tooltip-field-value>
+     *     </stx-hu-tooltip-field>
+     *     <stx-hu-tooltip-field field="DT">
+     *         <stx-hu-tooltip-field-name>Date/Time</stx-hu-tooltip-field-name>
+     *         <stx-hu-tooltip-field-value></stx-hu-tooltip-field-value>
+     *     </stx-hu-tooltip-field>
+     * </stx-hu-tooltip>
+     *
+     * @example <caption>Customize the CSS for the tooltip (see <i>stx-chart.css</i>):</caption>
+     * stx-hu-tooltip {
+     *     position: absolute;
+     *     left: -50000px;
+     *     z-index: 30;
+     *     white-space: nowrap;
+     *     padding: 6px;
+     *     border: 1px solid gray;
+     *     background-color: rgba(42,81,208,.5);
+     *     color: white;
+     * }
+     *
+     * stx-hu-tooltip-field {
+     *     display:table-row;
+     * }
+     *
+     * stx-hu-tooltip-field-name {
+     *     display:table-cell;
+     *     font-weight:bold;
+     *     padding-right:5px;
+     * }
+     *
+     * stx-hu-tooltip-field-name:after {
+     *     content:':';
+     * }
+     *
+     * stx-hu-tooltip-field-value {
+     *     display:table-cell;
+     *     text-align:right;
+     * }
+     */
+    class Tooltip {
+      /**
+       * Add-on that creates a detailed tooltip as the user's mouse hovers over data points on the
+       * chart. The tooltip contains information such as the open, high, low, and close prices of
+       * stock quotes.
+       *
+       * Tooltip example:
+       * <iframe width="800" height="500" scrolling="no" seamless="seamless" align="top"
+       *         style="float:top"
+       *         src="https://jsfiddle.net/chartiq/5kux6j8p/embedded/result,js,html/"
+       *         allowfullscreen="allowfullscreen" frameborder="1">
+       * </iframe>
+       *
+       * **Note:** Prior to version 8.2.0, the tooltip was directly linked to the crosshairs. The
+       * crosshairs had to be active for the tooltip to be displayed.
+       *
+       * Requires *addOns.js* and *markers.js*, or the bundle *standard.js*.
+       *
+       * There can be only one `CIQ.Tooltip` per chart.
+       *
+       * Color and layout can be customized by overriding the CSS rule-sets defined for the
+       * `stx-hu-tooltip` and related type selectors in *stx-chart.css*. Do not modify
+       * *stx-chart.css*; create a separate style sheet file that overrides *stx-chart.css* in the
+       * CSS cascade. See the example below.
+       *
+       * `CIQ.Tooltip` automatically creates its own HTML inside the chart container. Here is an
+       * example of the structure (there will be one field tag per displayed element):
+       * ```
+       * <stx-hu-tooltip>
+       *     <stx-hu-tooltip-field>
+       *         <stx-hu-tooltip-field-name></stx-hu-tooltip-field-name>
+       *         <stx-hu-tooltip-field-value></stx-hu-tooltip-field-value>
+       *     </stx-hu-tooltip-field>
+       * </stx-hu-tooltip>
+       * ```
+       * By default, the `stx-hu-tooltip-field` elements are inserted in the following order:
+       * - DT
+       * - Open
+       * - High
+       * - Low
+       * - Close
+       * - Volume
+       * - series
+       * - studies
+       *
+       * But the default layout can be changed. You can override the order of fields or change the
+       * labels by manually inserting the HTML that the tooltip would otherwise have created for
+       * that field. If no override HTML is found for a particular field, the default is used.
+       * **Note:** This HTML must be placed inside the chart container.
+       *
+       * All of the code is provided in *addOns.js* and can be fully customized by copying the
+       * source code from the library and overriding the functions with your changes. Be sure to
+       * never modify a library file, as this will hinder upgrades.
+       *
+       * For example, concatenating the field name (e.g., "Jaw") with the study name (e.g.,
+       * "Alligator" ) is the default behavior of the tooltip for displaying the value title. Feel
+       * free to override this behavior by creating your own custom version of the `renderFunction()`
+       * for the `CIQ.Tooltip`. To do this, copy the entire `CIQ.Tooltip` code (found in *addOns.js*)
+       * and make the changes to your custom version. Load your custom version instead. Specifically,
+       * look for the following code in the `renderFunction()` that pushes out the text for each
+       * study field:
+       * ```
+       * let newFieldName = document.createElement("stx-hu-tooltip-field-name");
+       * newFieldName.innerHTML = this.translateIf(fieldName);
+       * newField.appendChild(newFieldName);
+       * ```
+       * Replace `fieldName` with anything you want to use as the field title and push that instead.
+       *
+       * Visual Reference:
+       * ![stx-hu-tooltip](stx-hu-tooltip.png "stx-hu-tooltip")
+       *
+       * @param tooltipParams The constructor parameters.
+       * @param [tooltipParams.stx] The chart object.
+       * @param [tooltipParams.ohl] Set to true to show OHL data (Close is always shown).
+       * @param [tooltipParams.volume] Set to true to show Volume.
+       * @param [tooltipParams.series] Set to true to show value of series.
+       * @param [tooltipParams.studies] Set to true to show value of studies.
+       * @param [tooltipParams.showOverBarOnly] Set to true to show the tooltip only when
+       * 		the mouse is over the primary line/bars.
+       * @param [tooltipParams.change] Set to true to show the change in daily value
+       * 		when the internal chart periodicity is a daily interval (see
+       * 		CIQ.ChartEngine.isDailyInterval).
+       * @param [tooltipParams.interpolation] Set to true to show the estimated value when
+       * 		there is no data between bars. **Note:** A value of `null` is not considered missing
+       * 		data.
+       * @param [tooltipParams.useDataZone] Set to true to show the date in the `dataZone`
+       * 		time zone; false, to use the `displayZone` time zone (see
+       * 		CIQ.ChartEngine#setTimeZone).
+       * @param [tooltipParams.showBarHighlight=true] Specifies whether the bar (data
+       * 		point) the mouse is hovering over is highlighted. Applies to the floating tooltip only
+       * 		(the dynamic tooltip points to the bar). If the crosshairs are active, this parameter
+       * 		is ignored.
+       *
+       * @since
+       * - 09-2016-19
+       * - 5.0.0 Now `tooltipParams.showOverBarOnly` is available to show tooltip only when over the
+       * 		primary line/bars.
+       * - 5.1.1 `tooltipParams.change` set to true to show the change in daily value when
+       * 		displaying a daily interval.
+       * - 6.2.5 New `tooltipParams.interpolation` flag to show estimated value for missing series
+       * 		data points.
+       * - 7.0.0 New `tooltipParams.useDataZone` flag to show the date in either the `dataZone` or
+       * 		`displayZone` date/time.
+       * - 8.2.0 Decoupled `CIQ.Tooltip` from the crosshairs and added highlighting of the data
+       * 		point (or bar) the mouse is hovering over. The new `tooltipParams.showBarHighlight`
+       * 		parameter enables or disables the highlighting.
+       *
+       * @example <caption>Add a tooltip to a chart:</caption>
+       * // First declare your chart engine.
+       * const stxx = new CIQ.ChartEngine({ container: document.querySelector(".chartContainer")[0] });
+       *
+       * // Then link the tooltip to that chart.
+       * // Note how we've enabled OHL, Volume, Series and Studies.
+       * new CIQ.Tooltip({ stx: stxx, ohl: true, volume: true, series: true, studies: true });
+       *
+       * @example <caption>Customize the order, layout, or text in tooltip labels:</caption>
+       * // In this example, we've rearranged the HTML to display the Close field first, then the DT.
+       * // We are also labeling the DT 'Date/Time' and the Close 'Last'.
+       * // The rest of the fields are displayed in their default order.
+       *
+       * <stx-hu-tooltip>
+       *     <stx-hu-tooltip-field field="Close">
+       *         <stx-hu-tooltip-field-name>Last</stx-hu-tooltip-field-name>
+       *         <stx-hu-tooltip-field-value></stx-hu-tooltip-field-value>
+       *     </stx-hu-tooltip-field>
+       *     <stx-hu-tooltip-field field="DT">
+       *         <stx-hu-tooltip-field-name>Date/Time</stx-hu-tooltip-field-name>
+       *         <stx-hu-tooltip-field-value></stx-hu-tooltip-field-value>
+       *     </stx-hu-tooltip-field>
+       * </stx-hu-tooltip>
+       *
+       * @example <caption>Customize the CSS for the tooltip (see <i>stx-chart.css</i>):</caption>
+       * stx-hu-tooltip {
+       *     position: absolute;
+       *     left: -50000px;
+       *     z-index: 30;
+       *     white-space: nowrap;
+       *     padding: 6px;
+       *     border: 1px solid gray;
+       *     background-color: rgba(42,81,208,.5);
+       *     color: white;
+       * }
+       *
+       * stx-hu-tooltip-field {
+       *     display:table-row;
+       * }
+       *
+       * stx-hu-tooltip-field-name {
+       *     display:table-cell;
+       *     font-weight:bold;
+       *     padding-right:5px;
+       * }
+       *
+       * stx-hu-tooltip-field-name:after {
+       *     content:':';
+       * }
+       *
+       * stx-hu-tooltip-field-value {
+       *     display:table-cell;
+       *     text-align:right;
+       * }
+       */
+      constructor(
+        tooltipParams: {
+          stx?: CIQ.ChartEngine,
+          ohl?: boolean,
+          volume?: boolean,
+          series?: boolean,
+          studies?: boolean,
+          showOverBarOnly?: boolean,
+          change?: boolean,
+          interpolation?: boolean,
+          useDataZone?: boolean,
+          showBarHighlight?: boolean
+        }
+      )
+    }
+    /**
+     * Add-On that animates the chart.
+     *
+     * Requires *addOns.js*.
+     *
+     * The chart is animated in three ways:
+     * 1.  The current price pulsates
+     * 2.  The current price appears to move smoothly from the previous price
+     * 3.  The chart's y-axis smoothly expands/contracts when a new high or low is reached
+     *
+     * The following chart types are supported: line, mountain, baseline_delta.
+     *
+     * Chart aggregations such as Kagi, Renko, Range Bars, etc. are not supported.
+     *
+     * **Animation displays more gracefully when updates are sent into the chart one at a time using CIQ.ChartEngine#updateChartData
+     * instead of in batches using a [QuoteFeed]CIQ.ChartEngine#attachQuoteFeed. Sending data in batches will produce a ‘jumping’ effect.**
+     *
+     * By default, there will be a flashing beacon created using a canvas circle. If instead you want to use a custom animation beacon, you will be able to extend the functionality yourself as follows:
+     * - In js/addOns.js, at the bottom of the CIQ.Animation function, there is an stx.append("draw") function.
+     * - Make a copy of this function so you can override the behavior.
+     * - In there you will see it determine var x and y, which are the coordinates for the center of the beacon.
+     * - At the bottom of this append function, we draw the beacon by using the Canvas arc() function to draw a circle and then fill() to make the circle solid.
+     * - You can replace  the canvas circle with an image using [CanvasRenderingContext2D.drawImage()](https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D#Drawing_images) .
+     * - Example:
+     *
+     *   ```
+     *   var image = document.getElementById('beacon'); // include a hidden image on your HTML
+     *   context.drawImage(image, x-10, y-10, 20, 20); // add the image on the canvas. Offset the x and y values by the radius of the beacon.
+     *   ```
+     *
+     * Animation Example <iframe width="800" height="500" scrolling="no" seamless="seamless" align="top" style="float:top" src="https://jsfiddle.net/chartiq/6fqw652z/embedded/result,js,html/" allowfullscreen="allowfullscreen" frameborder="1"></iframe>
+     *
+     * You can disable animation after each different [chart type is activated]CIQ.ChartEngine#setChartType by calling:
+     * ```
+     * stxx.mainSeriesRenderer.supportsAnimation=false;
+     * ```
+     * Keep in mind that changing to a different chart type, may once again enable animation. You can override this by [adding an event listener]CIQ.ChartEngine#addEventListener on [layout changes]CIQ.ChartEngine~layoutEventListener.
+     *
+     * @since
+     * - 3.0.0 Now part of *addOns.js*. Previously provided as a standalone *animation.js* file.
+     * - 4.0.0 Beacon only flashes for line charts. On candles or bars, it is suppressed as it produces an unnatural effect.
+     * - 7.0.2 Now takes one configuration object as its constructor. Must have a reference to a chart engine.
+     * @example
+     * 	new CIQ.Animation({stx: stxx, animationParameters: {tension:0.3}});  //Default animation with splining tension of 0.3
+     *
+     */
+    class Animation {
+      /**
+       * Add-On that animates the chart.
+       *
+       * Requires *addOns.js*.
+       *
+       * The chart is animated in three ways:
+       * 1.  The current price pulsates
+       * 2.  The current price appears to move smoothly from the previous price
+       * 3.  The chart's y-axis smoothly expands/contracts when a new high or low is reached
+       *
+       * The following chart types are supported: line, mountain, baseline_delta.
+       *
+       * Chart aggregations such as Kagi, Renko, Range Bars, etc. are not supported.
+       *
+       * **Animation displays more gracefully when updates are sent into the chart one at a time using CIQ.ChartEngine#updateChartData
+       * instead of in batches using a [QuoteFeed]CIQ.ChartEngine#attachQuoteFeed. Sending data in batches will produce a ‘jumping’ effect.**
+       *
+       * By default, there will be a flashing beacon created using a canvas circle. If instead you want to use a custom animation beacon, you will be able to extend the functionality yourself as follows:
+       * - In js/addOns.js, at the bottom of the CIQ.Animation function, there is an stx.append("draw") function.
+       * - Make a copy of this function so you can override the behavior.
+       * - In there you will see it determine var x and y, which are the coordinates for the center of the beacon.
+       * - At the bottom of this append function, we draw the beacon by using the Canvas arc() function to draw a circle and then fill() to make the circle solid.
+       * - You can replace  the canvas circle with an image using [CanvasRenderingContext2D.drawImage()](https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D#Drawing_images) .
+       * - Example:
+       *
+       *   ```
+       *   var image = document.getElementById('beacon'); // include a hidden image on your HTML
+       *   context.drawImage(image, x-10, y-10, 20, 20); // add the image on the canvas. Offset the x and y values by the radius of the beacon.
+       *   ```
+       *
+       * Animation Example <iframe width="800" height="500" scrolling="no" seamless="seamless" align="top" style="float:top" src="https://jsfiddle.net/chartiq/6fqw652z/embedded/result,js,html/" allowfullscreen="allowfullscreen" frameborder="1"></iframe>
+       *
+       * You can disable animation after each different [chart type is activated]CIQ.ChartEngine#setChartType by calling:
+       * ```
+       * stxx.mainSeriesRenderer.supportsAnimation=false;
+       * ```
+       * Keep in mind that changing to a different chart type, may once again enable animation. You can override this by [adding an event listener]CIQ.ChartEngine#addEventListener on [layout changes]CIQ.ChartEngine~layoutEventListener.
+       *
+       * @param config The constructor parameters
+       * @param config.stx The chart object
+       * @param [config.animationParameters] Configuration parameters
+       * @param [config.animationParameters.stayPut=false] Set to true for last tick to stay in position it was scrolled and have rest of the chart move backwards as new ticks are added instead of having new ticks advance forward and leave the rest of the chart in place.
+       * @param [config.animationParameters.ticksFromEdgeOfScreen=5] Number of ticks from the right edge the chart should stop moving forward so the last tick never goes off screen (only applicable if stayPut=false)
+       * @param [config.animationParameters.granularity=1000000] Set to a value that will give enough granularity for the animation.  The larger the number the smaller the price jump between frames, which is good for charts that need a very slow smooth animation either because the price jumps between ticks are very small, or because the animation was set up to run over a large number of frames when instantiating the CIQ.EaseMachine.
+       * @param [config.animationParameters.tension=null] Splining tension for smooth curves around data points (range 0-1).
+       * @param config.easeMachine Override the default easeMachine.  Default is `new CIQ.EaseMachine(Math.easeOutCubic, 1000);`
+       * @since
+       * - 3.0.0 Now part of *addOns.js*. Previously provided as a standalone *animation.js* file.
+       * - 4.0.0 Beacon only flashes for line charts. On candles or bars, it is suppressed as it produces an unnatural effect.
+       * - 7.0.2 Now takes one configuration object as its constructor. Must have a reference to a chart engine.
+       * @example
+       * 	new CIQ.Animation({stx: stxx, animationParameters: {tension:0.3}});  //Default animation with splining tension of 0.3
+       *
+       */
+      constructor(
+        config: {
+          stx: CIQ.ChartEngine,
+          easeMachine: CIQ.EaseMachine,
+          animationParameters?: {
+            stayPut?: boolean,
+            ticksFromEdgeOfScreen?: number,
+            granularity?: number,
+            tension?: number
+          }
+        }
+      )
+    }
+    /**
+     * Add-on that responds to the chart zoom action, changing periodicities as the number of ticks and/or candle width
+     * hits a set boundary.
+     *
+     * Although this feature is available for all chart styles, it shows best on continuous renderings
+     * such as lines and mountains vs. candles and bars. This is because some users may find the
+     * changes in candle width that take place as the same range is displayed in a different
+     * periodicity, inappropriate. The effect can be mitigated by increasing the number of boundaries
+     * so periodicities change more often, preventing large candle width changes, and by using the
+     * periodicity roll up feature instead of fetching new data from a quote feed. See examples.
+     *
+     * See CIQ.ChartEngine#setPeriodicity and CIQ.ChartEngine#createDataSet
+     *
+     * Requires *addOns.js*.
+     *
+     * The feature will not work without supplying at least one element within the periodicities array
+     * and at least one property within the boundaries object.
+     *
+     * 		These will be the periodicities which will be used by the continuous zooming once a
+     * 		boundary is hit. The periodicities are objects with `period`, `interval`, and optional
+     * 		`timeUnit` properties (see CIQ.ChartEngine#setPeriodicity).
+     * 		Hitting a maximum boundary switches to the next larger periodicity; hitting a minimum
+     * 		boundary switches to the next smaller periodicity.
+     * 		before switching periodicity.
+     * 		before switching periodicity.
+     * 		periodicity.
+     * 		periodicity.
+     *
+     * @since 7.0.0
+     *
+     * @example
+     * new CIQ.ContinuousZoom({
+     *     stx: stxx,
+     *     periodicities: [
+     *         { period:1, interval:"month" },
+     *         { period:1, interval:"day" },
+     *         { period:2, interval:30 },
+     *         { period:1, interval:5 },
+     *         { period:15, interval:1, timeUnit:"second" },
+     *         { period:1, interval:1, timeUnit:"second" }
+     *     ],
+     *     boundaries: {
+     *         maxCandleWidth: 100,
+     *         minCandleWidth: 3,
+     *         maxTicks: 500,
+     *         minTicks: 10
+     *     }
+     * });
+     *
+     * @example
+     * // Smother periodicity change by rolling daily into weekly and monthly.
+     * // Also try reusing the same interval data and have the chart roll it instead of fetching new data.
+     * stxx.dontRoll = false;
+     * new CIQ.ContinuousZoom({
+     *     stx: stxx,
+     *     periodicities: [
+     *         // Daily interval data
+     *         {period:1, interval:"month"},
+     *         {period:2, interval:"week"},
+     *         {period:1, interval:"week"},
+     *         {period:3, interval:"day"},
+     *         {period:1, interval:"day"},
+     *         // 30 minute interval data
+     *         {period:16, interval:30},
+     *         {period:8, interval:30},
+     *         {period:4, interval:30},
+     *         {period:2, interval:30},
+     *         // one minute interval data
+     *         {period:30, interval:1},
+     *         {period:15, interval:1},
+     *         {period:10, interval:1},
+     *         {period:5, interval:1},
+     *         {period:2, interval:1},
+     *         {period:1, interval:1},
+     *         // One second interval data
+     *         {period:30,interval:1, timeUnit:"second"},
+     *         {period:15,interval:1, timeUnit:"second"},
+     *         {period:5, interval:1, timeUnit:"second"},
+     *         {period:2, interval:1, timeUnit:"second"},
+     *         {period:1, interval:1, timeUnit:"second"},
+     *     ],
+     *     boundaries: {
+     *         maxCandleWidth: 15,
+     *         minCandleWidth: 3
+     *    }
+     * });
+     */
+    class ContinuousZoom {
+      /**
+       * Add-on that responds to the chart zoom action, changing periodicities as the number of ticks and/or candle width
+       * hits a set boundary.
+       *
+       * Although this feature is available for all chart styles, it shows best on continuous renderings
+       * such as lines and mountains vs. candles and bars. This is because some users may find the
+       * changes in candle width that take place as the same range is displayed in a different
+       * periodicity, inappropriate. The effect can be mitigated by increasing the number of boundaries
+       * so periodicities change more often, preventing large candle width changes, and by using the
+       * periodicity roll up feature instead of fetching new data from a quote feed. See examples.
+       *
+       * See CIQ.ChartEngine#setPeriodicity and CIQ.ChartEngine#createDataSet
+       *
+       * Requires *addOns.js*.
+       *
+       * The feature will not work without supplying at least one element within the periodicities array
+       * and at least one property within the boundaries object.
+       *
+       * @param params Configuration parameters.
+       * @param params.stx The chart object.
+       * @param params.periodicities Set this array with eligible periodicities in any order.
+       * 		These will be the periodicities which will be used by the continuous zooming once a
+       * 		boundary is hit. The periodicities are objects with `period`, `interval`, and optional
+       * 		`timeUnit` properties (see CIQ.ChartEngine#setPeriodicity).
+       * @param params.boundaries Optional boundary cases to trigger the periodicity change.
+       * 		Hitting a maximum boundary switches to the next larger periodicity; hitting a minimum
+       * 		boundary switches to the next smaller periodicity.
+       * @param [params.boundaries.maxCandleWidth] Largest size of candle in pixels to display
+       * 		before switching periodicity.
+       * @param [params.boundaries.minCandleWidth] Smallest size of candle in pixels to display
+       * 		before switching periodicity.
+       * @param [params.boundaries.maxTicks] Most number of ticks to display before switching
+       * 		periodicity.
+       * @param [params.boundaries.minTicks] Least number of ticks to display before switching
+       * 		periodicity.
+       *
+       * @since 7.0.0
+       *
+       * @example
+       * new CIQ.ContinuousZoom({
+       *     stx: stxx,
+       *     periodicities: [
+       *         { period:1, interval:"month" },
+       *         { period:1, interval:"day" },
+       *         { period:2, interval:30 },
+       *         { period:1, interval:5 },
+       *         { period:15, interval:1, timeUnit:"second" },
+       *         { period:1, interval:1, timeUnit:"second" }
+       *     ],
+       *     boundaries: {
+       *         maxCandleWidth: 100,
+       *         minCandleWidth: 3,
+       *         maxTicks: 500,
+       *         minTicks: 10
+       *     }
+       * });
+       *
+       * @example
+       * // Smother periodicity change by rolling daily into weekly and monthly.
+       * // Also try reusing the same interval data and have the chart roll it instead of fetching new data.
+       * stxx.dontRoll = false;
+       * new CIQ.ContinuousZoom({
+       *     stx: stxx,
+       *     periodicities: [
+       *         // Daily interval data
+       *         {period:1, interval:"month"},
+       *         {period:2, interval:"week"},
+       *         {period:1, interval:"week"},
+       *         {period:3, interval:"day"},
+       *         {period:1, interval:"day"},
+       *         // 30 minute interval data
+       *         {period:16, interval:30},
+       *         {period:8, interval:30},
+       *         {period:4, interval:30},
+       *         {period:2, interval:30},
+       *         // one minute interval data
+       *         {period:30, interval:1},
+       *         {period:15, interval:1},
+       *         {period:10, interval:1},
+       *         {period:5, interval:1},
+       *         {period:2, interval:1},
+       *         {period:1, interval:1},
+       *         // One second interval data
+       *         {period:30,interval:1, timeUnit:"second"},
+       *         {period:15,interval:1, timeUnit:"second"},
+       *         {period:5, interval:1, timeUnit:"second"},
+       *         {period:2, interval:1, timeUnit:"second"},
+       *         {period:1, interval:1, timeUnit:"second"},
+       *     ],
+       *     boundaries: {
+       *         maxCandleWidth: 15,
+       *         minCandleWidth: 3
+       *    }
+       * });
+       */
+      constructor(
+        params: {
+          stx: CIQ.ChartEngine,
+          periodicities: any[],
+          boundaries: {
+            maxCandleWidth?: number,
+            minCandleWidth?: number,
+            maxTicks?: number,
+            minTicks?: number
+          }
+        }
+      )
+    }
+    /**
      * Creates the outliers add-on which scales the y-axis to the main trend, hiding outlier
      * values. Markers are placed at the location of the outlier values enabling the user to
      * restore the full extent of the y-axis by selecting the markers.
      *
-     * Requires *js/addOns.js*.
+     *  Outliers show/hide can be toggled using the Ctrl+Alt+O keystroke combination (see the
+     * `outliers` action in `hotkeyConfig.hotkeys` in *js/defaultConfiguration.js*).
+     *
+     * Requires *addOns.js*.
      *
      * ![Chart with hidden outliers](./img-Chart-with-Hidden-Outliers.png "Chart with hidden outliers")
      *
@@ -548,7 +1577,7 @@ declare module '../js/chartiq.js' {
      * - 8.0.0 Added `params.altColors` and `params.menuContextClass`.
      *
      * @example
-     * new CIQ.Outliers({stx:stxx});
+     * new CIQ.Outliers({ stx: stxx });
      */
     class Outliers {
       /**
@@ -556,7 +1585,10 @@ declare module '../js/chartiq.js' {
        * values. Markers are placed at the location of the outlier values enabling the user to
        * restore the full extent of the y-axis by selecting the markers.
        *
-       * Requires *js/addOns.js*.
+       *  Outliers show/hide can be toggled using the Ctrl+Alt+O keystroke combination (see the
+       * `outliers` action in `hotkeyConfig.hotkeys` in *js/defaultConfiguration.js*).
+       *
+       * Requires *addOns.js*.
        *
        * ![Chart with hidden outliers](./img-Chart-with-Hidden-Outliers.png "Chart with hidden outliers")
        *
@@ -579,7 +1611,7 @@ declare module '../js/chartiq.js' {
        * - 8.0.0 Added `params.altColors` and `params.menuContextClass`.
        *
        * @example
-       * new CIQ.Outliers({stx:stxx});
+       * new CIQ.Outliers({ stx: stxx });
        */
       constructor(
         params: {
@@ -831,48 +1863,57 @@ declare module '../js/chartiq.js' {
      *
      * ![Plot Complementer](./img-Data-Forecasting.png)
      *
-     * The complementary series is a permanent fixture of the series which it complements. It moves in tandem with the series,
-     * and gets removed with the series. In all other respects, though, it behaves like its own series. It shows separately in
-     * the panel legend and plots using its own renderer.
+     * The complementary series is a permanent fixture of the series which it complements. It moves
+     * in tandem with the series, and gets removed with the series. In all other respects, though, it
+     * behaves like its own series. It shows separately in the panel legend and plots using its own
+     * renderer.
      *
-     * Charts can have multiple `PlotComplementer` instances. Each instance is attached to the chart engine as a member of a
-     * `PlotComplementer` collection.
+     * Charts can have multiple `PlotComplementer` instances. Each instance is attached to the chart
+     * engine as a member of a `PlotComplementer` collection.
      *
-     * Multiple `PlotComplementer` instances can be associated with a time series. To link a `PlotComplementer` to a series,
-     * specify the series instrument in the `params.filter` function. See `[setQuoteFeed]CIQ.PlotComplementer#setQuoteFeed`.
+     * Multiple `PlotComplementer` instances can be associated with a time series. To link a
+     * `PlotComplementer` to a series, specify the series instrument in the `params.filter` function.
+     * See `[setQuoteFeed]CIQ.PlotComplementer#setQuoteFeed`.
      *
-     * **Note:** The series created by this add-on is not exported with the layout, since it is created in tandem with the series
-     * it complements. Currently, this feature works only with non-comparison series.
+     * **Note:** The series created by this add-on is not exported with the layout, since it is
+     * created in tandem with the series it complements. Currently, this feature works only with
+     * non-comparison series.
      *
-     * 					series created by the add-on.
-     * 					See `[setQuoteFeed]CIQ.PlotComplementer#setQuoteFeed`.
-     * 					label (`symbol`) for the complementary series and a short description (`display`) that is appended to
-     * 					the label; for example:
-     * ```javascript
+     * Requires *addOns.js*.
+     *
+     * 		a random key is chosen.
+     * 		quote requests for any series created by the add-on.
+     * 		parameter list.
+     * 		parameter list. See `[setQuoteFeed]CIQ.PlotComplementer#setQuoteFeed`.
+     * 		The `decorator` provides the label (`symbol`) for the complementary series and a short
+     * 		description (`display`) that is appended to the label; for example:
+     * ```
      * decorator: {symbol:"_fcst", display:" Forecast"}
      * ```
-     * 					Otherwise, a unique ID is used.
-     * 					that override the default rendering parameters. The `renderingParameters` object can be set or changed
-     * 					at any time. The default parameters can be restored by calling
-     * 					CIQ.PlotComplementer#resetRenderingParameters.
-     * 					<p>Here are a few examples of rendering parameters:</p>
-     * ```javascript
-     * //Assuming a PlotComplementer declared as "forecaster":
+     * 		complementary series. Otherwise, a unique ID is used.
+     * 		collection of parameters that override the default rendering parameters. The
+     * 		`renderingParameters` object can be set or changed at any time. The default parameters
+     * 		can be restored by calling CIQ.PlotComplementer#resetRenderingParameters.
+     * 		<p>Here are a few examples of rendering parameters:</p>
+     * ```
+     * // Assuming a PlotComplementer declared as "forecaster":
      * forecaster.renderingParameters = {chartType:"scatterplot", opacity:0.5, field:"Certainty"}
      * forecaster.renderingParameters = {chartType:"histogram", border_color:"transparent", opacity:0.3}
      * forecaster.renderingParameters = {chartType:"channel", opacity:0.5, pattern:"dotted"}
      * forecaster.renderingParameters = {chartType:"candle", opacity:0.5, color:"blue", border_color:"blue"}
      * ```
+     *
      * @since 7.3.0
-     * @example <caption>Use for Forecasting</caption>
-     var forecaster = new CIQ.PlotComplementer({
-     stx:stxx,
-     id:"forecast",
-     quoteFeed: fcstFeed.quoteFeedForecastSimulator,
-     behavior: {refreshInterval:60},
-     decorator: {symbol:"_fcst", display:" Forecast"},
-     renderingParameters: {chartType:"channel", opacity:0.5, pattern:"dotted"}
-     });
+     *
+     * @example <caption>Forecasting</caption>
+     * let forecaster = new CIQ.PlotComplementer({
+     *     stx:stxx,
+     *     id:"forecast",
+     *     quoteFeed: fcstFeed.quoteFeedForecastSimulator,
+     *     behavior: {refreshInterval:60},
+     *     decorator: {symbol:"_fcst", display:" Forecast"},
+     *     renderingParameters: {chartType:"channel", opacity:0.5, pattern:"dotted"}
+     * });
      */
     class PlotComplementer {
       /**
@@ -880,58 +1921,67 @@ declare module '../js/chartiq.js' {
        *
        * ![Plot Complementer](./img-Data-Forecasting.png)
        *
-       * The complementary series is a permanent fixture of the series which it complements. It moves in tandem with the series,
-       * and gets removed with the series. In all other respects, though, it behaves like its own series. It shows separately in
-       * the panel legend and plots using its own renderer.
+       * The complementary series is a permanent fixture of the series which it complements. It moves
+       * in tandem with the series, and gets removed with the series. In all other respects, though, it
+       * behaves like its own series. It shows separately in the panel legend and plots using its own
+       * renderer.
        *
-       * Charts can have multiple `PlotComplementer` instances. Each instance is attached to the chart engine as a member of a
-       * `PlotComplementer` collection.
+       * Charts can have multiple `PlotComplementer` instances. Each instance is attached to the chart
+       * engine as a member of a `PlotComplementer` collection.
        *
-       * Multiple `PlotComplementer` instances can be associated with a time series. To link a `PlotComplementer` to a series,
-       * specify the series instrument in the `params.filter` function. See `[setQuoteFeed]CIQ.PlotComplementer#setQuoteFeed`.
+       * Multiple `PlotComplementer` instances can be associated with a time series. To link a
+       * `PlotComplementer` to a series, specify the series instrument in the `params.filter` function.
+       * See `[setQuoteFeed]CIQ.PlotComplementer#setQuoteFeed`.
        *
-       * **Note:** The series created by this add-on is not exported with the layout, since it is created in tandem with the series
-       * it complements. Currently, this feature works only with non-comparison series.
+       * **Note:** The series created by this add-on is not exported with the layout, since it is
+       * created in tandem with the series it complements. Currently, this feature works only with
+       * non-comparison series.
+       *
+       * Requires *addOns.js*.
        *
        * @param params Configuration parameters.
        * @param params.stx The chart object.
-       * @param [params.id] Unique key used by the add-on to identify itself. If not supplied, a random key is chosen.
-       * @param [params.quoteFeed] Attaches the quote feed to the quote driver to satisfy any quote requests for any
-       * 					series created by the add-on.
-       * @param [params.behavior] Used as the behavior for the quote feed supplied in this parameter list.
-       * @param [params.filter] Used as the filter for the quote feed supplied in this parameter list.
-       * 					See `[setQuoteFeed]CIQ.PlotComplementer#setQuoteFeed`.
-       * @param [params.decorator] Container object for the `symbol` and `display` properties. The `decorator` provides the
-       * 					label (`symbol`) for the complementary series and a short description (`display`) that is appended to
-       * 					the label; for example:
-       * ```javascript
+       * @param [params.id] Unique key used by the add-on to identify itself. If not supplied,
+       * 		a random key is chosen.
+       * @param [params.quoteFeed] Attaches the quote feed to the quote driver to satisfy any
+       * 		quote requests for any series created by the add-on.
+       * @param [params.behavior] Used as the behavior for the quote feed supplied in this
+       * 		parameter list.
+       * @param [params.filter] Used as the filter for the quote feed supplied in this
+       * 		parameter list. See `[setQuoteFeed]CIQ.PlotComplementer#setQuoteFeed`.
+       * @param [params.decorator] Container object for the `symbol` and `display` properties.
+       * 		The `decorator` provides the label (`symbol`) for the complementary series and a short
+       * 		description (`display`) that is appended to the label; for example:
+       * ```
        * decorator: {symbol:"_fcst", display:" Forecast"}
        * ```
-       * @param [params.decorator.symbol] Adds this string onto the ID when creating the complementary series.
-       * 					Otherwise, a unique ID is used.
+       * @param [params.decorator.symbol] Adds this string onto the ID when creating the
+       * 		complementary series. Otherwise, a unique ID is used.
        * @param [params.decorator.display] Customizes the display value of the series.
-       * @param [params.renderingParameters={chartType:"line", width:1, opacity:0.5}] A collection of parameters
-       * 					that override the default rendering parameters. The `renderingParameters` object can be set or changed
-       * 					at any time. The default parameters can be restored by calling
-       * 					CIQ.PlotComplementer#resetRenderingParameters.
-       * 					<p>Here are a few examples of rendering parameters:</p>
-       * ```javascript
-       * //Assuming a PlotComplementer declared as "forecaster":
+       * @param [params.renderingParameters={chartType: "line", width: 1, opacity: 0.5}] A
+       * 		collection of parameters that override the default rendering parameters. The
+       * 		`renderingParameters` object can be set or changed at any time. The default parameters
+       * 		can be restored by calling CIQ.PlotComplementer#resetRenderingParameters.
+       * 		<p>Here are a few examples of rendering parameters:</p>
+       * ```
+       * // Assuming a PlotComplementer declared as "forecaster":
        * forecaster.renderingParameters = {chartType:"scatterplot", opacity:0.5, field:"Certainty"}
        * forecaster.renderingParameters = {chartType:"histogram", border_color:"transparent", opacity:0.3}
        * forecaster.renderingParameters = {chartType:"channel", opacity:0.5, pattern:"dotted"}
        * forecaster.renderingParameters = {chartType:"candle", opacity:0.5, color:"blue", border_color:"blue"}
        * ```
+       *
        * @since 7.3.0
-       * @example <caption>Use for Forecasting</caption>
-       var forecaster = new CIQ.PlotComplementer({
-       stx:stxx,
-       id:"forecast",
-       quoteFeed: fcstFeed.quoteFeedForecastSimulator,
-       behavior: {refreshInterval:60},
-       decorator: {symbol:"_fcst", display:" Forecast"},
-       renderingParameters: {chartType:"channel", opacity:0.5, pattern:"dotted"}
-       });
+       *
+       * @example <caption>Forecasting</caption>
+       * let forecaster = new CIQ.PlotComplementer({
+       *     stx:stxx,
+       *     id:"forecast",
+       *     quoteFeed: fcstFeed.quoteFeedForecastSimulator,
+       *     behavior: {refreshInterval:60},
+       *     decorator: {symbol:"_fcst", display:" Forecast"},
+       *     renderingParameters: {chartType:"channel", opacity:0.5, pattern:"dotted"}
+       * });
        */
       constructor(
         params: {
@@ -993,634 +2043,6 @@ declare module '../js/chartiq.js' {
         }
       ): void
     }
-    /**
-     * Add-on that puts a range slider under the chart.
-     *
-     * This allows the `dataSegment` to be selectable as a portion of the dataset.
-     *
-     * Requires *js/addOns.js*.
-     *
-     * It also requires additional CSS.
-     *
-     * Either add:
-     * ```
-     * <link rel="stylesheet" type="text/css" href="css/chartiq.css" media="screen" />
-     * ```
-     * Or explicitly include this CSS:
-     * ```
-     * .stx_range_slider.shading {
-     *     background-color: rgba(128, 128, 128, 0.3);
-     *     border: solid 2px #0090b7;
-     *     width: 5px;
-     * }
-     * ```
-     * Once instantiated, it can be displayed or hidden by simply  setting the `rangeSlider` parameter of the primary chart's **layout object**,
-     * and then issuing a layout change event to trigger the new status.
-     * Make sure to use the callback to enable the slider on initial load to prevent 'out of sequence' issues.
-     * See examples for exact syntax.
-     *
-     * Remember, a range slider is simply just another chart. So you configure it and customize it using the same parameters as you would the primary chart.
-     * The only difference is that the slider object will be a sub element of the primary chart, living inside the `slider.slider` object.
-     * For example, if you wanted to turn off the x axis on the slider, assuming a chart instantiated as `stxx`, you would execute:
-     * ```
-     * stxx.slider.slider.xaxisHeight=0;
-     * ```
-     *
-     * If using chartIQ Web Components, the slider needs to be created **before** the UI manager (startUI) is called for custom themes to apply.
-     *
-     * It is important to note that the range slider chart container will 'create itself' **UNDER** the primary chart container, not **INSIDE**.
-     * As such, to ensure styling is shared between the two containers, so they match in look and feel, all the styling must be on a parent div container rather than the primary chart container itself.
-     *
-     * For example, do this:
-     * ```
-     * <div class="all-charts">
-     * <div style="grid-column: span 6;grid-row: span 2;">
-     *     <div class="chartwrap"> <!-- begin of wrapper with desired styling -->
-     *     <div class="chartContainer1" style="width:100%;height:100%;position:relative"></div>
-     *     <!-- the slider will be added here -->
-     *     </div>
-     * </div> <!-- end of wrapper -->
-     * </div>
-     * ```
-     *
-     * Not this:
-     * ```HTML
-     * <div class="all-charts">
-     * <div class="chartwrap" style="grid-column: span 6;grid-row: span 2;">
-     *     <div class="chartContainer1" style="width:100%;height:100%;position:relative"></div>
-     * </div>
-     * </div>
-     * ```
-     *
-     * Range slider working example:
-     * <iframe width="800" height="350" scrolling="no" seamless="seamless" align="top" style="float:top" src="https://jsfiddle.net/chartiq/dtug29yx/embedded/result,js,html/" allowfullscreen="allowfullscreen" frameborder="1"></iframe>
-     *
-     * 		container.
-     * 		that contains the UI control for the range slider add-on. In a multi-chart document, the
-     * 		add-on is available only on charts that have a menu DOM element with the value for
-     * 		`menuContextClass` as a class attribute.
-     *
-     * @since
-     * - 4.0.0
-     * - 6.1.0 Added `params.yAxis`.
-     * - 8.0.0 Added `params.menuContextClass`.
-     *
-     * @example
-     * <caption>Declare a range slider and enable by default using the loadChart callback.</caption>
-     * var stxx=new CIQ.ChartEngine({container:document.querySelector(".chartContainer")});
-     *
-     * stxx.attachQuoteFeed(quoteFeedSimulator,{refreshInterval:1,bufferSize:200});
-     *
-     * // instantiate a range slider
-     * new CIQ.RangeSlider({stx:stxx});
-     *
-     * function displayChart(){
-     *     stxx.newChart("SPY", null, null,function(){
-     *         // for smoother visualization, enable AFTER THE MAIN CHART HAS COMPLETED LOADING ITS DATA.
-     *         stxx.layout.rangeSlider=true; // show the slider
-     *         stxx.changeOccurred("layout"); // signal the change to force a redraw.
-     *     }
-     * });
-     *
-     * @example
-     * <caption>Declare a range slider and enable/disable using commands to be triggered from a menu.</caption>
-     * var stxx=new CIQ.ChartEngine({container:document.querySelector(".chartContainer")});
-     *
-     * // Instantiate a range slider.
-     * new CIQ.RangeSlider({stx:stxx});
-     *
-     * // To display the slider from a menu use:
-     * stxx.layout.rangeSlider=true; // show the slider
-     * stxx.changeOccurred("layout"); // signal the change to force a redraw.
-     *
-     * // To hide the slider from a menu use:
-     * stxx.layout.rangeSlider=false; // hide the slider
-     * stxx.changeOccurred("layout"); // signal the change to force a redraw.
-     */
-    class RangeSlider {
-      /**
-       * Add-on that puts a range slider under the chart.
-       *
-       * This allows the `dataSegment` to be selectable as a portion of the dataset.
-       *
-       * Requires *js/addOns.js*.
-       *
-       * It also requires additional CSS.
-       *
-       * Either add:
-       * ```
-       * <link rel="stylesheet" type="text/css" href="css/chartiq.css" media="screen" />
-       * ```
-       * Or explicitly include this CSS:
-       * ```
-       * .stx_range_slider.shading {
-       *     background-color: rgba(128, 128, 128, 0.3);
-       *     border: solid 2px #0090b7;
-       *     width: 5px;
-       * }
-       * ```
-       * Once instantiated, it can be displayed or hidden by simply  setting the `rangeSlider` parameter of the primary chart's **layout object**,
-       * and then issuing a layout change event to trigger the new status.
-       * Make sure to use the callback to enable the slider on initial load to prevent 'out of sequence' issues.
-       * See examples for exact syntax.
-       *
-       * Remember, a range slider is simply just another chart. So you configure it and customize it using the same parameters as you would the primary chart.
-       * The only difference is that the slider object will be a sub element of the primary chart, living inside the `slider.slider` object.
-       * For example, if you wanted to turn off the x axis on the slider, assuming a chart instantiated as `stxx`, you would execute:
-       * ```
-       * stxx.slider.slider.xaxisHeight=0;
-       * ```
-       *
-       * If using chartIQ Web Components, the slider needs to be created **before** the UI manager (startUI) is called for custom themes to apply.
-       *
-       * It is important to note that the range slider chart container will 'create itself' **UNDER** the primary chart container, not **INSIDE**.
-       * As such, to ensure styling is shared between the two containers, so they match in look and feel, all the styling must be on a parent div container rather than the primary chart container itself.
-       *
-       * For example, do this:
-       * ```
-       * <div class="all-charts">
-       * <div style="grid-column: span 6;grid-row: span 2;">
-       *     <div class="chartwrap"> <!-- begin of wrapper with desired styling -->
-       *     <div class="chartContainer1" style="width:100%;height:100%;position:relative"></div>
-       *     <!-- the slider will be added here -->
-       *     </div>
-       * </div> <!-- end of wrapper -->
-       * </div>
-       * ```
-       *
-       * Not this:
-       * ```HTML
-       * <div class="all-charts">
-       * <div class="chartwrap" style="grid-column: span 6;grid-row: span 2;">
-       *     <div class="chartContainer1" style="width:100%;height:100%;position:relative"></div>
-       * </div>
-       * </div>
-       * ```
-       *
-       * Range slider working example:
-       * <iframe width="800" height="350" scrolling="no" seamless="seamless" align="top" style="float:top" src="https://jsfiddle.net/chartiq/dtug29yx/embedded/result,js,html/" allowfullscreen="allowfullscreen" frameborder="1"></iframe>
-       *
-       * @param params Configuration parameters.
-       * @param [params.stx] The chart object.
-       * @param [params.height=95] Height of range slider panel.
-       * @param [params.yAxis] Optional yAxis parameters.
-       * @param [params.chartContainer=stxx.container] Handle to the main chart
-       * 		container.
-       * @param [params.menuContextClass] A CSS class name used to query the menu DOM element
-       * 		that contains the UI control for the range slider add-on. In a multi-chart document, the
-       * 		add-on is available only on charts that have a menu DOM element with the value for
-       * 		`menuContextClass` as a class attribute.
-       *
-       * @since
-       * - 4.0.0
-       * - 6.1.0 Added `params.yAxis`.
-       * - 8.0.0 Added `params.menuContextClass`.
-       *
-       * @example
-       * <caption>Declare a range slider and enable by default using the loadChart callback.</caption>
-       * var stxx=new CIQ.ChartEngine({container:document.querySelector(".chartContainer")});
-       *
-       * stxx.attachQuoteFeed(quoteFeedSimulator,{refreshInterval:1,bufferSize:200});
-       *
-       * // instantiate a range slider
-       * new CIQ.RangeSlider({stx:stxx});
-       *
-       * function displayChart(){
-       *     stxx.newChart("SPY", null, null,function(){
-       *         // for smoother visualization, enable AFTER THE MAIN CHART HAS COMPLETED LOADING ITS DATA.
-       *         stxx.layout.rangeSlider=true; // show the slider
-       *         stxx.changeOccurred("layout"); // signal the change to force a redraw.
-       *     }
-       * });
-       *
-       * @example
-       * <caption>Declare a range slider and enable/disable using commands to be triggered from a menu.</caption>
-       * var stxx=new CIQ.ChartEngine({container:document.querySelector(".chartContainer")});
-       *
-       * // Instantiate a range slider.
-       * new CIQ.RangeSlider({stx:stxx});
-       *
-       * // To display the slider from a menu use:
-       * stxx.layout.rangeSlider=true; // show the slider
-       * stxx.changeOccurred("layout"); // signal the change to force a redraw.
-       *
-       * // To hide the slider from a menu use:
-       * stxx.layout.rangeSlider=false; // hide the slider
-       * stxx.changeOccurred("layout"); // signal the change to force a redraw.
-       */
-      constructor(
-        params: {
-          stx?: CIQ.ChartEngine,
-          height?: number,
-          yAxis?: object,
-          chartContainer?: number,
-          menuContextClass?: string
-        }
-      )
-      /**
-       * Dynamically updates the styling of the range slider.
-       *
-       * This method can be used to update CSS styles if you are injecting stylesheets using
-       * JavaScript.
-       *
-       * @param obj The CSS selector for which a style property is changed.
-       * @param attribute The style property changed in the CSS selector rule-set.
-       * @param value The value to apply to the CSS property.
-       *
-       * @since 8.0.0
-       *
-       * @example
-       * // Set the shading of the range slider.
-       * stxx.slider.updateStyles(
-       *     'stx_range_slider shading',
-       *     'backgroundColor',
-       *     'rgba(200, 50, 50, 0.45)'
-       * );
-       *
-       * @example
-       * // Set the color of the bars of the range slider to red.
-       * stxx.slider.updateStyles(
-       *     'stx_range_slider shading',
-       *     'borderTopColor',
-       *     'rgba(255, 0, 0)'
-       * );
-       */
-      public updateStyles(obj: string, attribute: string, value: string): void
-    }
-    /**
-     * Creates an overlay that displays the visible chart data segment as a table.
-     *
-     * The overlay includes controls that enable users to copy the table data to the clipboard or
-     * download the data as a character-separated values (CSV) file. See
-     * TableViewBuilder.dataToCsv for the default separator character.
-     *
-     * The table view can be opened using the Alt+K keystroke combination and closed using the Escape
-     * key (see the `tableView` action in `hotkeyConfig.hotkeys` in *js/defaultConfiguration.js*).
-     *
-     * 		which the table view is created.
-     * 		table columns. **Note:** The units can be any CSS unit acceptable by the CSS `calc`
-     * 		function.
-     * 		view covers the entire chart, including user interface elements (symbol input field,
-     * 		menus, etc.). For example, if the value of this parameter is 1000, the table view covers
-     * 		the entire chart area if the chart width is <= 999 pixels.
-     * 		ultimately contains the table view; for example, ".chartContainer".
-     * 		the previous data point should be used instead of the opening price of the current data
-     * 		point to determine the amount of change for the current data point; that is,
-     * 		(current close - previous close) or (current close - current open).
-     *
-     * @since 8.1.0
-     *
-     * @example
-     * new CIQ.TableView({stx:stxx});
-     */
-    class TableView {
-      /**
-       * Creates an overlay that displays the visible chart data segment as a table.
-       *
-       * The overlay includes controls that enable users to copy the table data to the clipboard or
-       * download the data as a character-separated values (CSV) file. See
-       * TableViewBuilder.dataToCsv for the default separator character.
-       *
-       * The table view can be opened using the Alt+K keystroke combination and closed using the Escape
-       * key (see the `tableView` action in `hotkeyConfig.hotkeys` in *js/defaultConfiguration.js*).
-       *
-       * @param params Configuration parameters.
-       * @param params.stx A reference to the chart engine that contains the chart for
-       * 		which the table view is created.
-       * @param [params.minColumnWidth="84px"] The minimum width (including units) of the
-       * 		table columns. **Note:** The units can be any CSS unit acceptable by the CSS `calc`
-       * 		function.
-       * @param [params.coverUIMaxWidth=400] The chart width (in pixels) below which the table
-       * 		view covers the entire chart, including user interface elements (symbol input field,
-       * 		menus, etc.). For example, if the value of this parameter is 1000, the table view covers
-       * 		the entire chart area if the chart width is <= 999 pixels.
-       * @param [params.coverContainer] A CSS selector used to obtain the DOM element that
-       * 		ultimately contains the table view; for example, ".chartContainer".
-       * @param [params.usePreviousCloseForChange=true] Indicates whether the closing price of
-       * 		the previous data point should be used instead of the opening price of the current data
-       * 		point to determine the amount of change for the current data point; that is,
-       * 		(current close - previous close) or (current close - current open).
-       *
-       * @since 8.1.0
-       *
-       * @example
-       * new CIQ.TableView({stx:stxx});
-       */
-      constructor(
-        params: {
-          stx: CIQ.ChartEngine,
-          minColumnWidth?: string,
-          coverUIMaxWidth?: number,
-          coverContainer?: string,
-          usePreviousCloseForChange?: boolean
-        }
-      )
-      /**
-       * Displays the table view.
-       *
-       * @param [params] Configuration parameters.
-       * @param [params.config] Table column information.
-       * @param [params.onClose] Callback function to execute on closing the table view. The
-       * 		callback enables synchronization of state in the application when the table view is
-       * 		closed.
-       *
-       * @since 8.1.0
-       */
-      public open(params?: {config?: object, onClose?: Function}): void
-      /**
-       * Closes the table view.
-       *
-       * @param [notify=true] Indicates whether the `onClose` callback function is set (see
-       * 		[open]CIQ.TableView#open).
-       *
-       * @since 8.1.0
-       */
-      public close(notify?: boolean): void
-      /**
-       * Opens the table view if it is closed. Closes the table view if it is open.
-       *
-       * @since 8.1.0
-       */
-      public toggle(): void
-      /**
-       * Subscribes to changes in the table view component communication channel, which enables other
-       * components to open and close the table view.
-       *
-       * @param uiContext The user interface context of the table view. Provides the
-       * 		communication channel path that identifies the table view channel.
-       * @param [channelPath] Specifies the channel path if the path is not available in the
-       * 		context configuration provided by `uiContext`.
-       *
-       * @since 8.1.0
-       */
-      public subscribeToChanges(uiContext: CIQ.UI.Context, channelPath?: string): void
-    }
-    /**
-     * Add-On that creates a hovering "tooltip" as mouse is moved over the chart when the cross-hairs are active.
-     *
-     * Tooltip Example <iframe width="800" height="500" scrolling="no" seamless="seamless" align="top" style="float:top" src="https://jsfiddle.net/chartiq/5kux6j8p/embedded/result,js,html/" allowfullscreen="allowfullscreen" frameborder="1"></iframe>
-     *
-     * The tool-tip is directly linked to the cross-hairs. So if you disable the cross hairs, the tool-tip also goes away.
-     *
-     * To toggle cross-hairs use <a href="CIQ.ChartEngine.html#layout%5B%60crosshair%60%5D">CIQ.ChartEngine.layout.crosshair</a>. Set to `true` or `false` as needed.
-     *
-     * Requires `addOns.js`; as well as `markers.js` or the bundle `standard.js`.
-     *
-     * There can be only one CIQ.Tooltip per chart.
-     *
-     * Color and layout can be customized via `stx-hu-tooltip` and related CSS classes. Defaults can be found in `stx-chart.css`.
-     *
-     * CIQ.Tooltip automatically creates its own HTML inside the chart container.
-     * Here is an example of the structure (there will be one field tag per displayed element):
-     * ```
-     * <stx-hu-tooltip>
-     * 		<stx-hu-tooltip-field>
-     * 			<stx-hu-tooltip-field-name></stx-hu-tooltip-field-name>
-     * 			<stx-hu-tooltip-field-value></stx-hu-tooltip-field-value>
-     * 		</stx-hu-tooltip-field>
-     * </stx-hu-tooltip>
-     * ```
-     * By default, the `stx-hu-tooltip-field` elements are inserted in the following order:
-     * - DT
-     * - Open
-     * - High
-     * - Low
-     * - Close
-     * - Volume
-     * - series
-     * - studies
-     *
-     * But the default layout can be changed. You can override the order of fields or change the labels by manually inserting
-     * the HTML that the tooltip would otherwise have created for that field.
-     * If no override HTML is found for a particular field, the default will be used.
-     * This HTML must be placed *inside the chart container*.
-     *
-     * All of the code is provided in `addOns.js` and can be fully customized by copying the source code from the library and overriding
-     * the functions with your changes. Be sure to never modify a library file as this will hinder upgrades.
-     *
-     * For example, concatenating the field name ( ie: 'Jaw' ) with the study name ( ie: 'Alligator' ) is the default behavior of the tooltip for displaying the value title.
-     * Feel free to override this behavior by creating your own custom version of the renderFunction() for the CIQ.Tooltip.
-     * To do this, copy the entire CIQ.Tooltip code (found in addOns.js) and make the changes to your custom version. Load your custom version instead.
-     * Specifically, look for the following code in renderFunction() that pushes out the text for each study field:
-     * ```
-     * var newFieldName = document.createElement("stx-hu-tooltip-field-name");
-     * newFieldName.innerHTML=this.translateIf(fieldName);
-     * newField.appendChild(newFieldName);
-     * ```
-     * Replace `fieldName` with anything you want to use as the field title and push that instead.
-     *
-     * Visual Reference:
-     * ![stx-hu-tooltip](stx-hu-tooltip.png "stx-hu-tooltip")
-     *
-     * @example <caption>Adding a hover tool tip to a chart:</caption>
-     *
-     * //First declare your chart engine
-     * var stxx=new CIQ.ChartEngine({container:document.querySelector(".chartContainer")[0]});
-     *
-     * //Then link the tooltip to that chart.
-     * //Note how we've enabled OHL, Volume, Series and Studies.
-     * new CIQ.Tooltip({stx:stxx, ohl:true, volume:true, series:true, studies:true});
-     *
-     * @example <caption>Customize the order, layout or text in tooltip labels:</caption>
-     * // In this example, we've rearranged the HTML to display the Close field first, then the DT
-     * // We are also labeling the DT 'Date/Time' and the Close 'Last'
-     * // The rest of the fields will be then displayed in their default order.
-     *
-     <stx-hu-tooltip>
-     <stx-hu-tooltip-field field="Close">
-     <stx-hu-tooltip-field-name>Last</stx-hu-tooltip-field-name>
-     <stx-hu-tooltip-field-value></stx-hu-tooltip-field-value>
-     </stx-hu-tooltip-field>
-     <stx-hu-tooltip-field field="DT">
-     <stx-hu-tooltip-field-name>Date/Time</stx-hu-tooltip-field-name>
-     <stx-hu-tooltip-field-value></stx-hu-tooltip-field-value>
-     </stx-hu-tooltip-field>
-     </stx-hu-tooltip>
-     *
-     * @example
-     * // Sample CSS for the hover tool tip. Working sample found in stx-chart.css
-     stx-hu-tooltip {
-     position: absolute;
-     left: -50000px;
-     z-index: 30;
-     white-space: nowrap;
-     padding: 6px;
-     border: 1px solid gray;
-     background-color: rgba(42,81,208,.5);
-     color: white;
-     }
-     stx-hu-tooltip-field {
-     display:table-row;
-     }
-     stx-hu-tooltip-field-name {
-     display:table-cell;
-     font-weight:bold;
-     padding-right:5px;
-     }
-     stx-hu-tooltip-field-name:after {
-     content:':';
-     }
-     stx-hu-tooltip-field-value {
-     display:table-cell;
-     text-align:right;
-     }
-     * @since
-     * - 09-2016-19
-     * - 5.0.0 Now `tooltipParams.showOverBarOnly` available to show tooltip only when over the primary line/bars.
-     * - 5.1.1 [tooltipParams.change] set to true to show the change in daily value when displaying a daily interval.
-     * - 6.2.5 New interpolation flag to show estimated value for missing series data points.
-     * - 7.0.0 New useDataZone flag to show the DT in either the dataZone or displayZone date/time.
-     */
-    class Tooltip {
-      /**
-       * Add-On that creates a hovering "tooltip" as mouse is moved over the chart when the cross-hairs are active.
-       *
-       * Tooltip Example <iframe width="800" height="500" scrolling="no" seamless="seamless" align="top" style="float:top" src="https://jsfiddle.net/chartiq/5kux6j8p/embedded/result,js,html/" allowfullscreen="allowfullscreen" frameborder="1"></iframe>
-       *
-       * The tool-tip is directly linked to the cross-hairs. So if you disable the cross hairs, the tool-tip also goes away.
-       *
-       * To toggle cross-hairs use <a href="CIQ.ChartEngine.html#layout%5B%60crosshair%60%5D">CIQ.ChartEngine.layout.crosshair</a>. Set to `true` or `false` as needed.
-       *
-       * Requires `addOns.js`; as well as `markers.js` or the bundle `standard.js`.
-       *
-       * There can be only one CIQ.Tooltip per chart.
-       *
-       * Color and layout can be customized via `stx-hu-tooltip` and related CSS classes. Defaults can be found in `stx-chart.css`.
-       *
-       * CIQ.Tooltip automatically creates its own HTML inside the chart container.
-       * Here is an example of the structure (there will be one field tag per displayed element):
-       * ```
-       * <stx-hu-tooltip>
-       * 		<stx-hu-tooltip-field>
-       * 			<stx-hu-tooltip-field-name></stx-hu-tooltip-field-name>
-       * 			<stx-hu-tooltip-field-value></stx-hu-tooltip-field-value>
-       * 		</stx-hu-tooltip-field>
-       * </stx-hu-tooltip>
-       * ```
-       * By default, the `stx-hu-tooltip-field` elements are inserted in the following order:
-       * - DT
-       * - Open
-       * - High
-       * - Low
-       * - Close
-       * - Volume
-       * - series
-       * - studies
-       *
-       * But the default layout can be changed. You can override the order of fields or change the labels by manually inserting
-       * the HTML that the tooltip would otherwise have created for that field.
-       * If no override HTML is found for a particular field, the default will be used.
-       * This HTML must be placed *inside the chart container*.
-       *
-       * All of the code is provided in `addOns.js` and can be fully customized by copying the source code from the library and overriding
-       * the functions with your changes. Be sure to never modify a library file as this will hinder upgrades.
-       *
-       * For example, concatenating the field name ( ie: 'Jaw' ) with the study name ( ie: 'Alligator' ) is the default behavior of the tooltip for displaying the value title.
-       * Feel free to override this behavior by creating your own custom version of the renderFunction() for the CIQ.Tooltip.
-       * To do this, copy the entire CIQ.Tooltip code (found in addOns.js) and make the changes to your custom version. Load your custom version instead.
-       * Specifically, look for the following code in renderFunction() that pushes out the text for each study field:
-       * ```
-       * var newFieldName = document.createElement("stx-hu-tooltip-field-name");
-       * newFieldName.innerHTML=this.translateIf(fieldName);
-       * newField.appendChild(newFieldName);
-       * ```
-       * Replace `fieldName` with anything you want to use as the field title and push that instead.
-       *
-       * Visual Reference:
-       * ![stx-hu-tooltip](stx-hu-tooltip.png "stx-hu-tooltip")
-       *
-       * @param tooltipParams The constructor parameters.
-       * @param [tooltipParams.stx] The chart object.
-       * @param [tooltipParams.ohl] set to true to show OHL data (Close is always shown).
-       * @param [tooltipParams.volume] set to true to show Volume.
-       * @param [tooltipParams.series] set to true to show value of series.
-       * @param [tooltipParams.studies] set to true to show value of studies.
-       * @param [tooltipParams.showOverBarOnly] set to true to show tooltip only when over the primary line/bars.
-       * @param [tooltipParams.change] set to true to show the change in daily value when isDailyInterval
-       * @param [tooltipParams.interpolation] set to true to show the estimated value when there is no data between bars. **Note** that a value of `null` is not considered missing data.
-       * @param [tooltipParams.useDataZone] set to true to show the date in the dataZone, false to use the displayZone
-       * @example <caption>Adding a hover tool tip to a chart:</caption>
-       *
-       * //First declare your chart engine
-       * var stxx=new CIQ.ChartEngine({container:document.querySelector(".chartContainer")[0]});
-       *
-       * //Then link the tooltip to that chart.
-       * //Note how we've enabled OHL, Volume, Series and Studies.
-       * new CIQ.Tooltip({stx:stxx, ohl:true, volume:true, series:true, studies:true});
-       *
-       * @example <caption>Customize the order, layout or text in tooltip labels:</caption>
-       * // In this example, we've rearranged the HTML to display the Close field first, then the DT
-       * // We are also labeling the DT 'Date/Time' and the Close 'Last'
-       * // The rest of the fields will be then displayed in their default order.
-       *
-       <stx-hu-tooltip>
-       <stx-hu-tooltip-field field="Close">
-       <stx-hu-tooltip-field-name>Last</stx-hu-tooltip-field-name>
-       <stx-hu-tooltip-field-value></stx-hu-tooltip-field-value>
-       </stx-hu-tooltip-field>
-       <stx-hu-tooltip-field field="DT">
-       <stx-hu-tooltip-field-name>Date/Time</stx-hu-tooltip-field-name>
-       <stx-hu-tooltip-field-value></stx-hu-tooltip-field-value>
-       </stx-hu-tooltip-field>
-       </stx-hu-tooltip>
-       *
-       * @example
-       * // Sample CSS for the hover tool tip. Working sample found in stx-chart.css
-       stx-hu-tooltip {
-       position: absolute;
-       left: -50000px;
-       z-index: 30;
-       white-space: nowrap;
-       padding: 6px;
-       border: 1px solid gray;
-       background-color: rgba(42,81,208,.5);
-       color: white;
-       }
-       stx-hu-tooltip-field {
-       display:table-row;
-       }
-       stx-hu-tooltip-field-name {
-       display:table-cell;
-       font-weight:bold;
-       padding-right:5px;
-       }
-       stx-hu-tooltip-field-name:after {
-       content:':';
-       }
-       stx-hu-tooltip-field-value {
-       display:table-cell;
-       text-align:right;
-       }
-       * @since
-       * - 09-2016-19
-       * - 5.0.0 Now `tooltipParams.showOverBarOnly` available to show tooltip only when over the primary line/bars.
-       * - 5.1.1 [tooltipParams.change] set to true to show the change in daily value when displaying a daily interval.
-       * - 6.2.5 New interpolation flag to show estimated value for missing series data points.
-       * - 7.0.0 New useDataZone flag to show the DT in either the dataZone or displayZone date/time.
-       */
-      constructor(
-        tooltipParams: {
-          stx?: CIQ.ChartEngine,
-          ohl?: boolean,
-          volume?: boolean,
-          series?: boolean,
-          studies?: boolean,
-          showOverBarOnly?: boolean,
-          change?: boolean,
-          interpolation?: boolean,
-          useDataZone?: boolean
-        }
-      )
-    }
-  }
-
-  export namespace CIQ.UI {
-    /**
-     * CIQ.UI.Context interface placeholder to be augmented in *componentUI.js* with properties.
-     *
-     */
-    interface Context {
-    }
   }
 
   /**
@@ -1629,180 +2051,6 @@ declare module '../js/chartiq.js' {
    * @since 8.1.0
    */
   export class TableViewBuilder {
-  }
-
-  /**
-   * Use this constructor to initialize filtering and visualization styles of extended hours by the use of shading and delimitation lines.
-   *
-   * Requires `addOns.js`.
-   *
-   * This visualization will only work if data for the corresponding sessions is provided from your quote feed and the market definitions have the corresponding entries.
-   * See CIQ.Market for details on how to define extended (non-default) hours.
-   *
-   * By default all extended hour sessions are disabled unless explicitly enabled using CIQ.ExtendedHours.prepare or CIQ.ExtendedHours.set.
-   *
-   * All possible market sessions needed to be shaded at any given time should be enabled at once with this method.
-   *
-   * Your fetch should load the required data based on the `params.stx.layout.extended` and `params.stx.layout.marketSessions` settings.
-   *
-   * Remember that when `params.filter` is set to true, this module performs a filter of already loaded masterData when CIQ.ExtendedHours.set is invoked,
-   * rather than calling CIQ.ChartEngine#loadChart to reload the data from the server every time you enable or disable this feature.
-   * So you must always return all requested sessions on your fetch responses if this flag is set.
-   *
-   * CSS info:
-   * - The styles for the shading of each session is determined by the corresponding CSS class in the form of "stx_market_session."+session_name (Example: `stx_market_session.pre`)
-   * - The divider line is determined by the CSS class "stx_market_session.divider".
-   *
-   * **Important:** This module must be initialized before CIQ.ChartEngine#importLayout or the sessions will not be able to be restored.
-   *
-   * Example <iframe width="800" height="500" scrolling="no" seamless="seamless" align="top" style="float:top" src="https://jsfiddle.net/chartiq/g2vvww67/embedded/result,js,html/" allowfullscreen="allowfullscreen" frameborder="1"></iframe>
-   *
-   * 		element that contains the UI control for the extended hours add-on. In a multi-chart
-   * 		document, the add-on is available only on charts that have a menu DOM element with
-   * 		the value for `menuContextClass` as a class attribute.
-   *
-   * @since
-   * - 06-2016-02
-   * - 3.0.0 Changed argument to an object to support `filter`.
-   * - 3.0.0 No longer necessary to explicitly call new Chart to reload data. Instead call CIQ.ExtendedHours.set function.
-   * - 5.0.0 No longer necessary to explicitly set `stx.layout.marketSessions` or `1stx.layout.extended` to manage sessions; instead call CIQ.ExtendedHours.prepare or CIQ.ExtendedHours.set.
-   * - 8.0.0 Added `params.menuContextClass`.
-   *
-   * @example
-   * // Call this only once to initialize the market sessions display manager.
-   * new CIQ.ExtendedHours({stx:stxx, filter:true});
-   *
-   * // By default all sessions are disabled unless explicitly enabled.
-   * // This forces the extended hours sessions ["pre","post"] to be enabled when the chart is initially loaded.
-   * stxx.extendedHours.prepare(true);
-   *
-   * // Now display your chart.
-   * stxx.loadChart(stxx.chart.symbol, {}, function() {});
-   *
-   * @example
-   * // Once your chart is displayed, you can call this from any UI interface to turn on extended hours.
-   * stx.extendedHours.set(true);
-   *
-   * // Or call this from any UI interface to turn off extended hours.
-   * stx.extendedHours.set(false);
-   *
-   * @example
-   * // CSS entries for a session divider and sessions named "pre" and "post".
-   * .stx_market_session.divider {
-   *     background-color: rgba(0,255,0,0.8);
-   *     width: 1px;
-   * }
-   * .stx_market_session.pre {
-   *     background-color: rgba(255,255,0,0.1);
-   * }
-   * .stx_market_session.post {
-   *     background-color: rgba(0,0,255,0.2);
-   * }
-   */
-  export namespace CIQ.ExtendedHours {
-    /**
-     * Prepares the extended hours settings and classes for the session names enumerated in the arguments without actually displaying or loading the data.
-     *
-     * This method can be used to force a particular session to load by default by calling it before CIQ.ChartEngine#loadChart.
-     * Otherwise the chart will be loaded with all sessions disabled until CIQ.ExtendedHours.set is invoked.
-     *
-     * CIQ.ChartEngine#importLayout will also call this method to ensure the sessions are restored as previously saved.
-     *
-     * @param  enable Set to turn on/off the extended-hours visualization.
-     * @param  sessions The sessions to visualize when enable is true.  Any sessions previously visualized will be disabled.  If set to null, will default to ["pre","post"].
-     * @method prepare
-     * @since 5.0.0
-     */
-    function prepare(enable: boolean, sessions: any[]): void
-    /**
-     * Turns on or off extended hours for the session names enumerated in the arguments.
-     * @param  enable Set to turn on/off the extended-hours visualization.
-     * @param  sessions The sessions to visualize when enable is true.  Any sessions previously visualized will be disabled.  If set to null, will default to ["pre","post"].
-     * @param  cb Optional callback function to be invoked once chart is reloaded with extended hours data.
-     * @method set
-     */
-    function set(enable: boolean, sessions: any[], cb: Function): void
-  }
-
-  /**
-   * Creates an overlay that displays the visible chart data segment as a table.
-   *
-   * The overlay includes controls that enable users to copy the table data to the clipboard or
-   * download the data as a character-separated values (CSV) file. See
-   * TableViewBuilder.dataToCsv for the default separator character.
-   *
-   * The table view can be opened using the Alt+K keystroke combination and closed using the Escape
-   * key (see the `tableView` action in `hotkeyConfig.hotkeys` in *js/defaultConfiguration.js*).
-   *
-   * 		which the table view is created.
-   * 		table columns. **Note:** The units can be any CSS unit acceptable by the CSS `calc`
-   * 		function.
-   * 		view covers the entire chart, including user interface elements (symbol input field,
-   * 		menus, etc.). For example, if the value of this parameter is 1000, the table view covers
-   * 		the entire chart area if the chart width is <= 999 pixels.
-   * 		ultimately contains the table view; for example, ".chartContainer".
-   * 		the previous data point should be used instead of the opening price of the current data
-   * 		point to determine the amount of change for the current data point; that is,
-   * 		(current close - previous close) or (current close - current open).
-   *
-   * @since 8.1.0
-   *
-   * @example
-   * new CIQ.TableView({stx:stxx});
-   */
-  export namespace CIQ.TableView {
-    /**
-     * The chart engine instance that contains the chart for which the table view is created.
-     *
-     * @since 8.1.0
-     */
-    let stx: CIQ.ChartEngine
-    /**
-     * Toggle to display and hide additional table view columns, such as % Change and Volume.
-     *
-     * **Note:** Data in the additional columns might not be present in the chart view because
-     * the data is calculated (for example, % Change) or is not part of the standard chart
-     * display (for example, Volume — which can be displayed with the
-     * [Volume Chart]CIQ.Studies.createVolumeChart study).
-     *
-     * @since 8.1.0
-     */
-    let viewAdditionalColumns: boolean
-    /**
-     * Minimum width of the table view columns, including units. The units can be any CSS
-     * unit acceptable by the CSS `calc` function.
-     *
-     * @since 8.1.0
-     */
-    let minColumnWidth: string
-    /**
-     * The chart width in pixels below which the table view covers the entire chart, including
-     * user interface elements, such as the menus and footer.
-     *
-     * @since 8.1.0
-     */
-    let coverUIMaxWidth: number
-    /**
-     * A CSS selector used to obtain the DOM element that hosts the table view.
-     *
-     * @since 8.1.0
-     */
-    let coverContainer: string
-    /**
-     * If true, the closing price of the previous data point is used instead of the opening
-     * price of the current data point to determine the amount of change for the current data
-     * point.
-     *
-     * @since 8.1.0
-     */
-    let usePreviousCloseForChange: boolean
-    /**
-     * A reference to the TableViewBuilder namespace for access to the namespace
-     * static methods.
-     *
-     * @since 8.1.0
-     */
-    let builder: TableViewBuilder
   }
 
   /**
@@ -1881,7 +2129,7 @@ declare module '../js/chartiq.js' {
       }
     ): HTMLElement
     /**
-     * Tranforms the chart data into a character-separated values (CSV) file, including column headers.
+     * Transforms the chart data into a character-separated values (CSV) file, including column headers.
      *
      * @param data The chart data.
      * @param params Configuration parameters.
@@ -2074,13 +2322,14 @@ declare module '../js/chartiq.js' {
     function getSeriesDataNames(stx: CIQ.ChartEngine): string[]
   }
 }
-export function animation(_export): void
-export function continuousZoom(_export): void
 export function extendedHours(_export): void
 export function fullScreen(_export): void
 export function inactivityTimer(_export): void
-export function outliers(_export): void
-export function plotComplementer(_export): void
 export function rangeSlider(_export): void
+export function shortcuts(_export): void
 export function tableView(_export): void
 export function tooltip(_export): void
+export function animation(_export): void
+export function continuousZoom(_export): void
+export function outliers(_export): void
+export function plotComplementer(_export): void

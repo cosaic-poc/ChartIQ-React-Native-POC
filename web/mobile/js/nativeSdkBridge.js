@@ -1,10 +1,10 @@
 /**
- *	8.1.0
- *	Generation date: 2020-11-19T23:23:22.994Z
+ *	8.3.0
+ *	Generation date: 2021-06-06T16:48:16.849Z
  *	Client name: sonyl test
  *	Package Type: Technical Analysis
- *	License type: trial
- *	Expiration date: "2020/12/19"
+ *	License type: annual
+ *	Expiration date: "2022/01/31"
  */
 
 /***********************************************************
@@ -22,102 +22,99 @@
 import { CIQ } from "../../js/chartiq.js";
 //disable undeclared globals
 /*jshint -W117 */
-/* global webkit, QuoteFeed */
+/* global webkit, ChartIQ*/
 let stxx = null;
 let quoteFeedNativeBridge = null;
 Object.assign(window, { CIQ }); // webview only has access to CIQ when it's on the window object
 /**
- * Contains calls that allow a native iOS and Android application to interface with the charting library
- * without having to clutter either Swift/Objective C or Java source with unnecessary Javascript.
+ * Contains calls that allow native iOS and Android applications to interface with the charting
+ * library without having to clutter <span style="white-space: nowrap;">Swift / Objective C</span>
+ * or Java/Kotlin source code with unnecessary JavaScript.
  *
- * Please note that all functions and variables are exposed globally on the webview.
+ * Please note that all functions and variables are exposed globally on the WebView.
  *
- * All methods were designed to be used with mobile sample interfaces. See {@tutorial Getting Started on Mobile} for more details.
+ * All methods were designed to be used with mobile sample interfaces. See
+ * {@tutorial Getting Started on Mobile} for more details.
  *
  * @namespace CIQ.MobileBridge
  */
 CIQ.MobileBridge = CIQ.MobileBridge || function () {};
 /**
- * Object that with a unique string:function mapping that will ensure the quotefeed calls the correct callback.
+ * Uses a unique string:function mapping to ensure that the quote feed calls the correct callback.
  *
- * Designed to be used with mobile sample interfaces. See {@tutorial Getting Started on Mobile} for more details.
- *
- * @Object
+ * @type {object}
  * @memberof CIQ.MobileBridge
  */
 CIQ.MobileBridge.quoteFeedCallbacks = {};
 /**
- * Will be set to `true` when an Android device is bring used.
+ * Set to true when an Android device is being used.
  *
- * Designed to be used with mobile sample interfaces. See {@tutorial Getting Started on Mobile} for more details.
- *
- * @boolean
+ * @type {boolean}
  * @default false
  * @memberof CIQ.MobileBridge
  */
 CIQ.MobileBridge.isAndroid = false;
 /**
- * String representing the class for CIQ's default light theme.
+ * Represents the class attribute for {@link CIQ}'s default light theme.
  *
- * Designed to be used with mobile sample interfaces. See {@tutorial Getting Started on Mobile} for more details.
- *
- * @string
+ * @type {string}
+ * @default "ciq-day"
  * @memberof CIQ.MobileBridge
  */
 CIQ.MobileBridge.dayCss = "ciq-day";
 /**
- * String representing the class for CIQ's default dark theme.
+ * Represents the class attribute for {@link CIQ}'s default dark theme.
  *
- * Designed to be used with mobile sample interfaces. See {@tutorial Getting Started on Mobile} for more details.
- *
- * @string
+ * @type {string}
+ * @default "ciq-night"
  * @memberof CIQ.MobileBridge
  */
 CIQ.MobileBridge.nightCss = "ciq-night";
 /**
- * Boolean that will be set to true when the chart has been created, ensuring to the native mobile side that it is okay to interact
+ * Set to true when the chart has been created, ensuring to the native mobile side that it is okay
+ * to interact with the chart.
  *
- * Designed to be used with mobile sample interfaces. See {@tutorial Getting Started on Mobile} for more details.
- *
- * @Boolean
+ * @type {boolean}
+ * @default false
  * @memberof CIQ.MobileBridge
  */
 CIQ.MobileBridge.chartAvailable = false;
 /**
- * DOM object of the cq-undo component. This is needed in order to relay undo/redo states to the mobile SDK.
+ * Sets the state of the loaded chart and, if a mobile message handler exists, send the response back to the native app.
  *
- * Designed to be used with mobile sample interfaces. See {@tutorial Getting Started on Mobile} for more details.
+ * @param {boolean} finished The current chart available state.
  *
- * @Object
- * @memberof CIQ.MobileBridge
- */
-CIQ.MobileBridge.undoObject = document.querySelector("cq-undo");
-/**
- * Sets the state of the loaded chart
- *
- * Designed to be used with mobile sample interfaces. See {@tutorial Getting Started on Mobile} for more details.
- *
- * @param {boolean} finished the current chart available state
  * @memberof CIQ.MobileBridge
  */
 CIQ.MobileBridge.setChartAvailable = function (finished) {
-	this.chartAvailable = finished;
+	this.chartAvailable = JSON.stringify(finished);
+	// native ui event listeners
+	if (this.isAndroid && ChartIQ) {
+		ChartIQ.chartAvailableChange(this.chartAvailable);
+	} else if (webkit.messageHandlers.chartAvailableHandler) {
+		webkit.messageHandlers.chartAvailableHandler.postMessage(
+			this.chartAvailable
+		);
+	}
 };
 /**
- * Checks the chart availability
+ * Checks the chart availability.
  *
- * Designed to be used with mobile sample interfaces. See {@tutorial Getting Started on Mobile} for more details.
+ * @return {boolean} The current chart available state.
  *
- * @returns {boolean} the current chart available state
  * @memberof CIQ.MobileBridge
  */
 CIQ.MobileBridge.isChartAvailable = function () {
 	return this.chartAvailable;
 };
 /**
- * Helper function that will set the chart engine variable for all necessary functions
- * By default the sample template uses stxx, but just in case the user changes the name
- * @param {CIQ.ChartEngine} chartEngine The chart instance
+ * Helper function that sets the chart engine variable for all necessary functions.
+ *
+ * By default the sample template uses `stxx`, but sets `stxx` to `chartEngine` just in case the
+ * user changes the name.
+ *
+ * @param {CIQ.ChartEngine} chartEngine The chart instance.
+ *
  * @memberof CIQ.MobileBridge
  */
 CIQ.MobileBridge.setChartEngineInBridge = function (chartEngine) {
@@ -125,9 +122,13 @@ CIQ.MobileBridge.setChartEngineInBridge = function (chartEngine) {
 	Object.assign(window, { stxx }); // webview only has access to the chart engine when it's on the window object
 };
 /**
- * Helper function that will set the quotefeed variable for all necessary functions
- * By default the sample template uses quoteFeedNativeBridge, but just in case the user changes the name
- * @param quoteFeed
+ * Helper function that sets the quote feed variable for all necessary functions.
+ *
+ * By default the sample template uses `quoteFeedNativeBridge`, but sets `quoteFeedNativeBridge`
+ * to `quoteFeed` just in case the user changes the name.
+ *
+ * @param quoteFeed The chart quote feed object.
+ *
  * @memberof CIQ.MobileBridge
  */
 CIQ.MobileBridge.setQuoteFeedInBridge = function (quoteFeed) {
@@ -136,9 +137,8 @@ CIQ.MobileBridge.setQuoteFeedInBridge = function (quoteFeed) {
 /**
  * Determines where the chart is being loaded based on the userAgent.
  *
- * Designed to be used with mobile sample interfaces. See {@tutorial Getting Started on Mobile} for more details.
+ * If not loaded on Android, then enables proxy logging automatically.
  *
- * If not loaded on Android then enables proxy logging automatically.
  * @memberof CIQ.MobileBridge
  */
 CIQ.MobileBridge.determineOs = function () {
@@ -151,9 +151,9 @@ CIQ.MobileBridge.determineOs = function () {
 	}
 };
 /**
- * Allow console logging in iOS. This will overwrite the default console logging on iOS to return messages via webkit.messageHandlers.
+ * Allow console logging in iOS. This will overwrite the default console logging on iOS to return
+ * messages via `webkit.messageHandlers`.
  *
- * Designed to be used with mobile sample interfaces. See {@tutorial Getting Started on Mobile} for more details.
  * @memberof CIQ.MobileBridge
  */
 CIQ.MobileBridge.proxyLogger = function () {
@@ -185,16 +185,16 @@ CIQ.MobileBridge.proxyLogger = function () {
 	};
 };
 /**
- * A simple quotefeed with data parsing functions.
+ * A simple quote feed with data parsing functions.
  *
- * Designed to be used with mobile sample interfaces. See {@tutorial Getting Started on Mobile} for more details.
- * @param {Object} parameters
- * @param {Date} parameters.start A starting date for requesting data
- * @param {Date} [parameters.end] An ending date for requesting data
- * @param {string} parameters.symbol The symbol to fetch data for
- * @param {Number} parameters.period period from a chart layout
- * @param {string} [parameters.timeUnit] timeUnit from a chart layout
- * @param {Function} cb Function passed in to handle data after it is parsed.
+ * @param {object} parameters Function parameters.
+ * @param {Date} parameters.start A starting date for requesting data.
+ * @param {Date} [parameters.end] An ending date for requesting data.
+ * @param {string} parameters.symbol The symbol to fetch data for.
+ * @param {number} parameters.period The period from a chart layout.
+ * @param {string} [parameters.timeUnit] The time unit from a chart layout.
+ * @param {function} cb Function passed in to handle data after it is parsed.
+ *
  * @memberof CIQ.MobileBridge
  */
 CIQ.MobileBridge.nativeQuoteFeed = function (parameters, cb) {
@@ -202,13 +202,13 @@ CIQ.MobileBridge.nativeQuoteFeed = function (parameters, cb) {
 	if (parameters.func === "pullInitialData") {
 		this.quoteFeedCallbacks[id] = cb;
 		if (this.isAndroid) {
-			QuoteFeed.pullInitialData(
+			ChartIQ.pullInitialData(
 				parameters.symbol,
-				parameters.period,
+				parameters.period.toString(),
 				parameters.timeUnit,
 				parameters.start.toISOString(),
 				parameters.end.toISOString(),
-				parameters,
+				JSON.stringify(parameters),
 				id
 			);
 		} else {
@@ -225,12 +225,12 @@ CIQ.MobileBridge.nativeQuoteFeed = function (parameters, cb) {
 	if (parameters.func === "pullUpdate") {
 		this.quoteFeedCallbacks[id] = cb;
 		if (this.isAndroid) {
-			QuoteFeed.pullUpdate(
+			ChartIQ.pullUpdate(
 				parameters.symbol,
-				parameters.period,
+				parameters.period.toString(),
 				parameters.timeUnit,
 				parameters.start.toISOString(),
-				parameters,
+				JSON.stringify(parameters),
 				id
 			);
 		} else {
@@ -246,13 +246,13 @@ CIQ.MobileBridge.nativeQuoteFeed = function (parameters, cb) {
 	if (parameters.func === "pullPagination") {
 		this.quoteFeedCallbacks[id] = cb;
 		if (this.isAndroid) {
-			QuoteFeed.pullPagination(
+			ChartIQ.pullPagination(
 				parameters.symbol,
-				parameters.period,
+				parameters.period.toString(),
 				parameters.timeUnit,
 				parameters.start.toISOString(),
 				parameters.end.toISOString(),
-				parameters,
+				JSON.stringify(parameters),
 				id
 			);
 		} else {
@@ -268,16 +268,38 @@ CIQ.MobileBridge.nativeQuoteFeed = function (parameters, cb) {
 	}
 };
 /**
- * Parses JSON data into an array of new OHLC quotes and updates the chart with them.
+ * Native wrapper for {@link CIQ.ChartEngine#attachQuoteFeed}.
  *
- * Designed to be used with mobile sample interfaces. See {@tutorial Getting Started on Mobile} for more details.
+ * The quote feed cannot be defined in native mobile but in JavaScript. All this function does is
+ * allow the parameters of a quote feed to be set. If you attach a quote feed using this function
+ * do not accidentally attach another quote feed in your HTML template.
  *
- * Will call {@link CIQ.ChartEngine#updateChartData} if no callback is provided to automatically update.
- * @param {String} data JSON object of your data from a query
- * @param {Function} [callbackID] A custom function to update
+ * Make sure the parameter names match up with the {@link CIQ.ChartEngine#attachQuoteFeed}.
+ *
+ * @param {string} [params] JSON string that defines all the optional parameters for
+ * 		{@link CIQ.ChartEngine#attachQuoteFeed}.
+ *
  * @memberof CIQ.MobileBridge
  */
-CIQ.MobileBridge.parseData = function (data, callbackId) {
+CIQ.MobileBridge.attachQuoteFeed = function (params) {
+	params = JSON.parse(params);
+	stxx.attachQuoteFeed(quoteFeedNativeBridge, params);
+};
+/**
+ * Parses JSON data into an array of new OHLC quotes and updates the chart with them.
+ *
+ * Calls {@link CIQ.ChartEngine#updateChartData} if no callback ID is provided.
+ *
+ * @param {string} data JSON object of your data from a query
+ * @param {string} [callbackID] Identifies a custom function to call to update the chart with the parsed data.
+ * 		The function should take an object as a parameter with the properties `quotes` and `moreAvailable`. The
+ * 		parsed data is assigned to `quotes` and the `moreAvailable` parameter of this function is assigned to
+ * 		the `moreAvailable` property, for example: `{ quotes: newQuotes, moreAvailable: moreAvailable }`.
+ * @param {boolean} [moreAvailable] Specifies whether or not to stop pagination requests
+ *
+ * @memberof CIQ.MobileBridge
+ */
+CIQ.MobileBridge.parseData = function (data, callbackId, moreAvailable) {
 	var feeddata = JSON.parse(data);
 	var newQuotes = [];
 	for (var i = 0; i < feeddata.length; i++) {
@@ -291,8 +313,9 @@ CIQ.MobileBridge.parseData = function (data, callbackId) {
 	}
 	if (callbackId) {
 		// pull method
+		if (typeof moreAvailable === "undefined") moreAvailable = false;
 		var quoteFeedCb = this.quoteFeedCallbacks[callbackId];
-		quoteFeedCb({ quotes: newQuotes, moreAvailable: true });
+		quoteFeedCb({ quotes: newQuotes, moreAvailable: moreAvailable });
 		delete this.quoteFeedCallbacks[callbackId];
 	} else {
 		// push method
@@ -302,24 +325,21 @@ CIQ.MobileBridge.parseData = function (data, callbackId) {
 /**
  * Gathers the necessary information for any HUD based on cursor position and returns that data.
  *
- * Designed to be used with mobile sample interfaces. See {@tutorial Getting Started on Mobile} for more details.
- *
  * This function will provide Open, High, Low, Close and Volume for a given quote.
+ *
  * @memberof CIQ.MobileBridge
  */
 CIQ.MobileBridge.getHudDetails = function () {
 	var data = {};
 	var tick = stxx.barFromPixel(stxx.cx);
 	var prices = stxx.chart.xaxis[tick];
-	if (prices !== null) {
-		if (prices.data) {
-			data.price = stxx.formatPrice(prices.data[stxx.chart.defaultPlotField]);
-			data.open = stxx.formatPrice(prices.data.Open);
-			data.close = stxx.formatPrice(prices.data.Close);
-			data.high = stxx.formatPrice(prices.data.High);
-			data.low = stxx.formatPrice(prices.data.Low);
-			data.volume = CIQ.condenseInt(prices.data.Volume);
-		}
+	if (prices && prices.data) {
+		data.price = stxx.formatPrice(prices.data[stxx.chart.defaultPlotField]);
+		data.open = stxx.formatPrice(prices.data.Open);
+		data.close = stxx.formatPrice(prices.data.Close);
+		data.high = stxx.formatPrice(prices.data.High);
+		data.low = stxx.formatPrice(prices.data.Low);
+		data.volume = CIQ.condenseInt(prices.data.Volume);
 	}
 	if (this.isAndroid) {
 		return data;
@@ -327,9 +347,11 @@ CIQ.MobileBridge.getHudDetails = function () {
 	return JSON.stringify(data);
 };
 /**
- * Helper function that will retrieve a chart layout value from the given property.
- * @param {string} property field name to retrieve a value for
- * @returns JSON string or a Java object representation of the field value
+ * Helper function that retrieves a chart layout value from the given property.
+ *
+ * @param {string} property Field name to retrieve a value for.
+ * @return {string|object} JSON string or Java/Kotlin object representation of the field value.
+ *
  * @memberof CIQ.MobileBridge
  */
 CIQ.MobileBridge.getLayoutProperty = function (property) {
@@ -340,9 +362,11 @@ CIQ.MobileBridge.getLayoutProperty = function (property) {
 	return JSON.stringify(layoutProperty);
 };
 /**
- * Helper function that will retrieve a Chart value from the given property.
- * @param {string} property field name to retrieve a value for
- * @returns JSON string or a Java object representation of the field value
+ * Helper function that retrieves a chart value from the given property.
+ *
+ * @param {string} property Field name to retrieve a value for.
+ * @return {string|object} JSON string or Java/Kotlin object representation of the field value.
+ *
  * @memberof CIQ.MobileBridge
  */
 CIQ.MobileBridge.getChartProperty = function (property) {
@@ -353,17 +377,19 @@ CIQ.MobileBridge.getChartProperty = function (property) {
 	return JSON.stringify(chartProperty);
 };
 /**
- * Helper function that will retrieve a Chart Engine value from the given property.
- * @param {string} property field name to retrieve a value for
- * @returns JSON string or a Java object representation of the field value
+ * Helper function that retrieves a chart engine value from the given property.
+ *
+ * @param {string} property Field name to retrieve a value for.
+ * @return {string|object} JSON string or Java/Kotlin object representation of the field value.
+ *
  * @memberof CIQ.MobileBridge
  */
 CIQ.MobileBridge.getEngineProperty = function (property) {
 	var engineProperty = stxx[property];
-	// if (this.isAndroid) {
+	if (this.isAndroid) {
 		return engineProperty;
-	// }
-	// return JSON.stringify(engineProperty);
+	}
+	return JSON.stringify(engineProperty);
 };
 //////////////////////////
 /*** Chart functions ***/
@@ -371,13 +397,21 @@ CIQ.MobileBridge.getEngineProperty = function (property) {
 /**
  * Native wrapper for {@link CIQ.ChartEngine#setPeriodicity}.
  *
- * Designed to be used with mobile sample interfaces. See {@tutorial Getting Started on Mobile} for more details.
+ * Only accepts arguments individually and passes them into a params object.
  *
- * Only accepts arguments individually and passes them into a params object
+ * @param {number} params.period The number of elements from `masterData` to roll-up together into
+ * 		one data point on the chart (candle,bar, etc). If set to 30 in a candle chart, for example,
+ * 		each candle will represent 30 raw elements of `interval/timeUnit` type.
+ * @param {string} [params.timeUnit] Type of data requested. Valid values are "millisecond",
+ * 		"second", "minute", "day", "week", "month", or 'tick'. If not set, defaults to "minute".
+ * 		**"hour" is NOT a valid time unit. Use `timeUnit:"minute", interval:60` instead.**
+ * @param {string} [params.interval] Further qualifies pre-rolled details of intra-day `timeUnits`
+ * 		("millisecond", "second", "minute") and is converted to “1” if used with "day", "week" or
+ * 		"month" 'timeUnit'. Some feeds provide data that is already rolled up. For example, there
+ * 		may be a feed that provides 5-minute bars. To let the chart know you want that 5-minute
+ * 		bar from your feed instead of having the chart get individual 1-minute bars and roll them
+ * 		up, you would set the `interval` to '5' and `timeUnit` to 'minute'.
  *
- * @param {number} params.period The number of elements from masterData to roll-up together into one data point on the chart (candle,bar, etc). If set to 30 in a candle chart, for example, each candle will represent 30 raw elements of `interval/timeUnit` type.
- * @param {string} [params.timeUnit] Type of data requested. Valid values are "millisecond","second","minute","day","week", "month" or 'tick'. If not set, will default to "minute". **"hour" is NOT a valid timeUnit. Use `timeUnit:"minute", interval:60` instead**
- * @param {string} [params.interval] Further qualifies pre-rolled details of intra-day `timeUnits` ("millisecond","second","minute") and will be converted to “1” if used with "day","week" or  "month" 'timeUnit'. Some feeds provide data that is already rolled up. For example, there may be a feed that provides 5 minute bars. To let the chart know you want that 5-minute bar from your feed instead of having the chart get individual 1 minute bars and roll them up, you would set the `interval` to '5' and `timeUnit` to 'minute'
  * @memberof CIQ.MobileBridge
  */
 CIQ.MobileBridge.setPeriodicity = function (period, interval, timeUnit) {
@@ -395,45 +429,56 @@ CIQ.MobileBridge.setPeriodicity = function (period, interval, timeUnit) {
 /**
  * Native wrapper for {@link CIQ.ChartEngine#loadChart}.
  *
- * Designed to be used with mobile sample interfaces. See {@tutorial Getting Started on Mobile} for more details.
+ * Unlike {@link CIQ.ChartEngine#loadChart}, this function only accepts a symbol and data. If you
+ * need more functionality you to manually call the library implementation of loadChart.
  *
- * Unlike {@link CIQ.ChartEngine#loadChart}, this function only accepts a symbol and data. If you need more functionality you to manually call the library implementation of loadChart.
+ * If a push method is supplying data to `callNewChart`, you will need to make use of the
+ * `chartIQView.isChartAvailable()` method for your initial data push. The pseudocode in the
+ * example gives one instance on how to use the flag.
  *
- * If a push method is supplying data to callNewChart you will need to make use of the chartIQView.isChartAvailable()
- * method for your initial data push. The pseudocode in the example gives one instance on how to use the flag.
- * @param {string} symbol The new symbol for your chart
- * @param {array} data Static data in an array to load the chart with
+ * @param {string} symbol The new symbol for your chart.
+ * @param {array} data Static data to load into the chart.
+ *
  * @memberof CIQ.MobileBridge
+ *
  * @example
- * if(chartIQView.isChartAvailable() {
- * 	pushData = retrievePushData()
- * 	chartIQView.push(pushData)
- * } else{ repeat check via polling for the isChartAvailable flag }
+ * if (chartIQView.isChartAvailable() {
+ *     pushData = retrievePushData()
+ *     chartIQView.push(pushData)
+ * } else { repeat check via polling for the isChartAvailable flag }
  */
 CIQ.MobileBridge.loadChart = function (symbol, data) {
+	const self = this;
 	if (!symbol) symbol = stxx.chart.symbol;
 	var loader = document.querySelector("cq-loader");
 	if (loader) loader.show();
 	var cb = function () {
 		if (loader) loader.hide();
-		if (!this.isAndroid)
+		CIQ.ChartEngine.restoreDrawings(stxx, symbol);
+		if (!self.isAndroid)
 			webkit.messageHandlers.newSymbolCallbackHandler.postMessage(symbol);
 	};
 	stxx.loadChart(symbol, { masterData: data }, cb);
+	Object.values(stxx.chart.series)
+		.filter((series) => series.parameters.bucket !== "study") // keep studies
+		.forEach((series) => stxx.removeSeries(series.id));
 };
 /**
  * Native wrapper for {@link CIQ.ChartEngine#setChartType}.
  *
- * Designed to be used with mobile sample interfaces. See {@tutorial Getting Started on Mobile} for more details.
+ * Removes any aggregation type and switches your chart to display the new chart type.
  *
- *  Will remove any aggregation type and switch your chart to display the new chartType.
+ * Valid chart types include: Candle, Bar, Colored Bar, Line, Hollow Candle, Mountain, and
+ * Baseline.
  *
- * Valid chartTypes include: Candle, Bar, Colored Bar, Line, Hollow Candle, Mountain and Baseline.
+ * This function should not be used for setting aggregations. Instead use
+ * {@link CIQ.MobileBridge.setAggregationType}.
  *
- * This function should not be used for setting Aggregations. Instead use setAggregationType
- * @see {@tutorial Chart Styles and Types}
- * @param {string} chartType Type of chart to display
+ * @param {string} chartType Type of chart to display.
+ *
  * @memberof CIQ.MobileBridge
+ *
+ * @see {@tutorial Chart Styles and Types} tutorial
  */
 CIQ.MobileBridge.setChartType = function (chartType) {
 	stxx.setChartType(chartType);
@@ -441,14 +486,16 @@ CIQ.MobileBridge.setChartType = function (chartType) {
 /**
  * Native wrapper for {@link CIQ.ChartEngine#setAggregationType}.
  *
- * Designed to be used with mobile sample interfaces. See {@tutorial Getting Started on Mobile} for more details.
- *
  * Valid aggregation types include: Heikin Ashi, Kagi, Renko, Range Bars, Point & Figure.
  *
- * This function should not be used to set chartTypes. Instead use setChartType
- * @see {@tutorial Chart Styles and Types}
- * @param {string} aggregationType Type of chart to display
+ * This function should not be used to set chart types. Instead use
+ * {@link CIQ.MobileBridge.setChartType}.
+ *
+ * @param {string} aggregationType Type of chart to display.
+ *
  * @memberof CIQ.MobileBridge
+ *
+ * @see {@tutorial Chart Styles and Types} tutorial
  */
 CIQ.MobileBridge.setAggregationType = function (aggregationType) {
 	stxx.setAggregationType(aggregationType);
@@ -456,20 +503,18 @@ CIQ.MobileBridge.setAggregationType = function (aggregationType) {
 /**
  * Returns the chart's main symbol.
  *
- * Designed to be used with mobile sample interfaces. See {@tutorial Getting Started on Mobile} for more details.
+ * @return {string} The chart symbol.
  *
- * @return {string} symbol
  * @memberof CIQ.MobileBridge
  */
 CIQ.MobileBridge.getSymbol = function () {
 	return stxx.chart.symbol;
 };
 /**
- * Will toggle the crosshairs on or off.
+ * Toggles the crosshairs on or off.
  *
- * Designed to be used with mobile sample interfaces. See {@tutorial Getting Started on Mobile} for more details.
+ * @param boolean Specifies whether the crosshairs are on or off.
  *
- * @param boolean
  * @memberof CIQ.MobileBridge
  */
 CIQ.MobileBridge.enableCrosshairs = function (active) {
@@ -478,38 +523,41 @@ CIQ.MobileBridge.enableCrosshairs = function (active) {
 	stxx.changeOccurred("layout");
 };
 /**
- * Will return currentVectorParameters of the engine instance.
+ * Returns the `currentVectorParameters` object of the engine instance.
  *
- * Designed to be used with mobile sample interfaces. See {@tutorial Getting Started on Mobile} for more details.
+ * @return {object} The `currentVectorParameters` object of the chart engine (see
+ * 		{@link CIQ.ChartEngine#currentVectorParameters}.
  *
- * @return {CIQ.ChartEngine#currentVectorParameters}
- * @see {@link CIQ.ChartEngine.currentVectorParameters} for documentation of parameters
  * @memberof CIQ.MobileBridge
  */
 CIQ.MobileBridge.getCurrentVectorParameters = function () {
 	return stxx.currentVectorParameters;
 };
 /**
- * Used to set currentVectorParameters of the engine instance and any values for it.
+ * Used to set values of {@link CIQ.ChartEngine#currentVectorParameters}.
  *
- * Designed to be used with mobile sample interfaces. See {@tutorial Getting Started on Mobile} for more details.
- * @param parameter
- * @param value
- * @see {@link CIQ.ChartEngine.currentVectorParameters} for documentation of parameters
+ * @param {string} parameter The parameter for which the value is set.
+ * @param {string|number|object} value The value to set.
+ *
  * @memberof CIQ.MobileBridge
  */
 CIQ.MobileBridge.setCurrentVectorParameters = function (parameter, value) {
-	stxx.currentVectorParameters[parameter] = value;
+	if (parameter === "vectorType") {
+		stxx.changeVectorType(value);
+	} else {
+		stxx.currentVectorParameters[parameter] = value;
+	}
 };
 /**
  * Native wrapper for {@link CIQ.ChartEngine#addSeries}.
  *
- * Designed to be used with mobile sample interfaces. See {@tutorial Getting Started on Mobile} for more details.
- *
  * Can set a Series as a comparison and specify line color.
- * @param {string} symbol Symbol to set
- * @param {string} hexColor Color for your symbol to be displayed as
- * @param {boolean} isComparison Boolean telling the chart whether the symbol should be compared to the main symbol
+ *
+ * @param {string} symbol Symbol to set.
+ * @param {string} hexColor Color for your symbol to be displayed as.
+ * @param {boolean} isComparison Tells the chart whether the symbol should be compared to the
+ * 		main symbol
+ *
  * @memberof CIQ.MobileBridge
  */
 CIQ.MobileBridge.addSeries = function (symbol, hexColor, isComparison) {
@@ -522,23 +570,56 @@ CIQ.MobileBridge.addSeries = function (symbol, hexColor, isComparison) {
 /**
  * Native wrapper for {@link CIQ.ChartEngine#removeSeries}.
  *
- * Designed to be used with mobile sample interfaces. See {@tutorial Getting Started on Mobile} for more details.
+ * Removes a selected symbol from the chart's series.
  *
- * Removes a selected symbol from the chart's series
- * @param {string} symbol Symbol to remove OR the series ojbect itself
+ * @param {string|object} symbol Symbol to remove OR the series object itself.
+ *
  * @memberof CIQ.MobileBridge
  */
 CIQ.MobileBridge.removeSeries = function (symbol) {
 	stxx.removeSeries(symbol);
 };
 /**
- * Sets the chart theme between 'day' or 'night' or none by adding in CSS classes to the chart's context.
- * Also clears the chart containers backgroundColor and resets the engines styles.
+ * Native wrapper for {@link CIQ.ChartEngine#modifySeries}.
  *
- * Designed to be used with mobile sample interfaces. See {@tutorial Getting Started on Mobile} for more details.
+ * Modifies a property of an existing series.
  *
- * Adding one class will remove the other, to remove both set the theme to none
- * @param {String}  theme Theme to set either 'day', 'night' or none
+ * @param {string} seriesId Id for the series to modify.
+ * @param {string} field The property you want to change.
+ * @param {string} value The value to change the property to.
+ *
+ * @memberof CIQ.MobileBridge
+ */
+CIQ.MobileBridge.modifySeries = function (seriesId, field, value) {
+	let parameters = {};
+	parameters[field] = value;
+	stxx.modifySeries(seriesId, parameters);
+};
+/**
+ * Gets all the current series on the chart.
+ *
+ * @return {string} JSON string of the series with `color` and `isComparison` fields.
+ *
+ * @memberof CIQ.MobileBridge
+ */
+CIQ.MobileBridge.getAllSeries = function () {
+	const allSeries = CIQ.clone(stxx.chart.series);
+	let seriesObj = {};
+	for (const key in allSeries) {
+		seriesObj[key] = {};
+		seriesObj[key].color = allSeries[key].parameters.color;
+		seriesObj[key].isComparison = allSeries[key].parameters.isComparison;
+	}
+	return JSON.stringify(seriesObj);
+};
+/**
+ * Sets the chart theme to "day", "night", or "none" by adding in CSS classes to the chart's
+ * context. Also clears the chart container's `backgroundColor` and resets the engine's styles.
+ *
+ * Adding one class removes the other; to remove both, set the theme to none.
+ *
+ * @param {string} theme Theme to set: "day", "night", or "none".
+ *
  * @memberof CIQ.MobileBridge
  */
 CIQ.MobileBridge.setTheme = function (theme) {
@@ -557,13 +638,13 @@ CIQ.MobileBridge.setTheme = function (theme) {
 	} else {
 		return;
 	}
-	stxx.chart.container.style.backgroundColor = "";
-	stxx.styles = {};
-	stxx.draw();
+	stxx.setThemeSettings();
 };
 /**
- * Turns the extendedHours functionality on/off
- * @param status Boolean true for on, false for off
+ * Turns the extended hours functionality on or off.
+ *
+ * @param {boolean} status true for on, false for off.
+ *
  * @memberof CIQ.MobileBridge
  */
 CIQ.MobileBridge.toggleExtendedHours = function (status) {
@@ -571,8 +652,11 @@ CIQ.MobileBridge.toggleExtendedHours = function (status) {
 };
 /**
  * Gets the translated list for a given language.
- * @param {String} langCode The I18N language code that is to be retrieved. If no language code is given all translations are returned.
- * @returns JSON string of the translations
+ *
+ * @param {String} langCode The I18N language code that is to be retrieved. If no language code is
+ * 		given, all translations are returned.
+ * @return {string} JSON string of the translations.
+ *
  * @memberof CIQ.MobileBridge
  */
 CIQ.MobileBridge.getTranslations = function (langCode) {
@@ -582,8 +666,10 @@ CIQ.MobileBridge.getTranslations = function (langCode) {
 	return JSON.stringify(CIQ.I18N.wordLists);
 };
 /**
- * Set the language for the chart
- * @param {String} langCode The I18N language code
+ * Sets the language for the chart.
+ *
+ * @param {String} langCode The I18N language code that specifies the language to set.
+ *
  * @memberof CIQ.MobileBridge
  */
 CIQ.MobileBridge.setLanguage = function (langCode) {
@@ -597,45 +683,203 @@ CIQ.MobileBridge.setLanguage = function (langCode) {
 ///////////////////////////
 /**
  * Helper function to restore the drawing tool to its default settings.
- * @param {String} toolName Name of the drawing tool
- * @param {Boolean} all set to true if you want to restore all drawings configs
+ *
+ * @param {string} toolName Name of the drawing tool.
+ * @param {boolean} all Set to true if you want to restore all drawing configurations.
+ *
  * @memberof CIQ.MobileBridge
  */
 CIQ.MobileBridge.restoreDefaultDrawingConfig = function (toolName, all) {
 	CIQ.Drawing.restoreDefaultConfig(stxx, toolName, all);
 };
 /**
- * Helper function to retrieve the drawing parameters for the given tool
- * @param {String} toolName Name of the drawing tool
- * @returns {String} JSON string of the current drawing parameters
+ * Helper function to retrieve the drawing parameters for the given tool.
+ *
+ * @param {string} toolName Name of the drawing tool.
+ * @return {string} JSON string of the current drawing parameters.
+ *
  * @memberof CIQ.MobileBridge
  */
 CIQ.MobileBridge.getDrawingParameters = function (toolName) {
-	var toolParameters = CIQ.clone(
+	const toolParameters = CIQ.clone(
 		CIQ.Drawing.getDrawingParameters(stxx, toolName)
 	);
-	if (toolParameters.waveParameters) {
-		toolParameters.waveParameters.corrective = toolParameters.waveParameters.corrective.join(
-			" "
-		);
-		toolParameters.waveParameters.impulse = toolParameters.waveParameters.impulse.join(
-			" "
-		);
+	if (!toolParameters) return; // no params for "notool"
+	let drawingKeys = Object.keys(toolParameters);
+	let font = stxx.currentVectorParameters.annotation.font;
+	if (!font.size && !font.family && !font.style && !font.weight) {
+		// annotation settings has not been set yet, set some defaults
+		font.size = "13px";
+		font.family = "Helvetica";
+		font.style = "normal";
+		font.weight = "300";
 	}
-	return JSON.stringify(toolParameters);
+	if (
+		!stxx.currentVectorParameters.active1 &&
+		!stxx.currentVectorParameters.active2 &&
+		!stxx.currentVectorParameters.active3
+	) {
+		stxx.currentVectorParameters.active1 = false;
+		stxx.currentVectorParameters.active2 = false;
+		stxx.currentVectorParameters.active3 = false;
+	}
+	if (
+		!stxx.currentVectorParameters.color1 &&
+		!stxx.currentVectorParameters.color2 &&
+		!stxx.currentVectorParameters.color3
+	) {
+		stxx.currentVectorParameters.color1 = "";
+		stxx.currentVectorParameters.color2 = "";
+		stxx.currentVectorParameters.color3 = "";
+	}
+	if (
+		!stxx.currentVectorParameters.lineWidth1 &&
+		!stxx.currentVectorParameters.lineWidth2 &&
+		!stxx.currentVectorParameters.lineWidth3
+	) {
+		stxx.currentVectorParameters.lineWidth1 = 1;
+		stxx.currentVectorParameters.lineWidth2 = 1;
+		stxx.currentVectorParameters.lineWidth3 = 1;
+	}
+	if (
+		!stxx.currentVectorParameters.pattern1 &&
+		!stxx.currentVectorParameters.pattern2 &&
+		!stxx.currentVectorParameters.pattern3
+	) {
+		stxx.currentVectorParameters.pattern1 = "dotted";
+		stxx.currentVectorParameters.pattern2 = "dotted";
+		stxx.currentVectorParameters.pattern3 = "dotted";
+	}
+	let cvp = CIQ.clone(stxx.currentVectorParameters);
+	for (const key in cvp) {
+		if (
+			!drawingKeys.includes(key) &&
+			key != "currentColor" &&
+			key != "fibonacci" &&
+			key != "annotation"
+		) {
+			delete cvp[key];
+		}
+	}
+	if (cvp.waveParameters) {
+		cvp.waveParameters.corrective = cvp.waveParameters.corrective.join(" ");
+		cvp.waveParameters.impulse = cvp.waveParameters.impulse.join(" ");
+	}
+	if (cvp.currentColor) {
+		cvp.color = cvp.currentColor;
+		delete cvp.currentColor;
+	}
+	if (cvp.annotation) {
+		cvp.font = cvp.annotation.font;
+		delete cvp.annotation;
+	}
+	// clean up fib settings cruft
+	if (cvp.fibonacci) {
+		cvp.fibs = cvp.fibonacci.fibs;
+		delete cvp.fibonacci;
+		for (let i = 0; i < cvp.fibs.length; i++) {
+			// compensate for iOS and Android apps not multiplying decimal value by 100
+			// this will likely be changed in the future
+			let levelConverted = cvp.fibs[i].level * 100;
+			cvp.fibs[i].level = Number(levelConverted.toFixed(1));
+			delete cvp.fibs[i].color;
+			delete cvp.fibs[i].parameters;
+		}
+	}
+	return JSON.stringify(cvp);
 };
 /**
- * Wrapper to set vector parameters according to what is selected on the client side
- * @param {String} parameterName Name of the drawing field to change
- * @param {String} value The value of the field to change
+ * Wrapper to set vector parameters according to what is selected on the client side.
+ *
+ * @param {string} parameterName Name of the drawing field to change.
+ * @param {string} value The value of the field to change.
+ *
  * @memberof CIQ.MobileBridge
  */
 CIQ.MobileBridge.setDrawingParameters = function (parameterName, value) {
 	if (parameterName == "color") parameterName = "currentColor";
-	stxx.currentVectorParameters[parameterName] = value;
+	switch (parameterName) {
+		case "size":
+		case "weight":
+		case "family":
+		case "style":
+			stxx.currentVectorParameters.annotation.font[parameterName] = value;
+			break;
+		case "impulse":
+		case "corrective":
+			let valueArray = value.split(" ");
+			stxx.currentVectorParameters.waveParameters[parameterName] = valueArray;
+			break;
+		case "decoration":
+		case "showLines":
+			stxx.currentVectorParameters.waveParameters[parameterName] = value;
+			break;
+		case "pattern":
+		case "lineWidth":
+			const { fibonacci } = stxx.currentVectorParameters;
+			Object.getOwnPropertyNames(stxx.currentVectorParameters)
+				.filter((name) => name.match(new RegExp(`^${parameterName}`)))
+				.forEach((name) => {
+					stxx.currentVectorParameters[name] = value;
+				});
+			fibonacci.fibs.forEach(({ parameters }) => {
+				parameters[parameterName] = value;
+			});
+			fibonacci.timezone.parameters[parameterName] = value;
+			break;
+		case "fibs":
+			const oldFibs = stxx.currentVectorParameters.fibonacci.fibs;
+			const decoded = atob(value).replace("\\", "");
+			const parsed = JSON.parse(decoded)
+				.map((entry) => {
+					const keys = Object.keys(entry);
+					keys.forEach((key) => {
+						let entryValue = entry[key].toString();
+						let numIfNum = parseFloat(entryValue);
+						if (!isNaN(numIfNum)) {
+							let sigFigs =
+								(numIfNum.toString().split(".")[1] || "").length + 2; // accommodate division by 100
+							// compensate for getDrawingParameters multiplying value by 100
+							entryValue = parseFloat((numIfNum / 100).toFixed(sigFigs));
+						} else if (["true", "false"].includes(entryValue)) {
+							entryValue = entryValue === "true";
+						}
+						entry[key] = entryValue;
+					});
+					return entry;
+				})
+				.sort((a, b) => (a.level > b.level ? 1 : -1));
+			const merged = [];
+			let i = 0;
+			let j = 0;
+			while (i < parsed.length || j < oldFibs.length) {
+				let parsedFib = parsed[i] || {};
+				let oldFib = oldFibs[j] || oldFibs[oldFibs.length - 1]; // preserve default properties
+				if (parsedFib.level === oldFib.level) {
+					merged.push(Object.assign({}, oldFib, parsedFib)); // `{}` to not mutate oldFib
+					i++;
+					j++;
+				} else if (
+					parsedFib.level !== undefined &&
+					(!oldFibs[j] || parsedFib.level < oldFib.level)
+				) {
+					merged.push(Object.assign({}, oldFib, parsedFib)); // `{}` to not mutate oldFib
+					i++;
+				} else if (parsedFib.level === undefined) {
+					break;
+				} else {
+					j++;
+				}
+			}
+			stxx.currentVectorParameters.fibonacci.fibs = merged;
+			break;
+		default:
+			stxx.currentVectorParameters[parameterName] = value;
+	}
 };
 /**
- * Helper function to find the current highlighted drawing and delete it
+ * Helper function to find the current highlighted drawing and delete it.
+ *
  * @memberof CIQ.MobileBridge
  */
 CIQ.MobileBridge.deleteDrawing = function () {
@@ -652,7 +896,8 @@ CIQ.MobileBridge.deleteDrawing = function () {
 	}
 };
 /**
- * Helper function to find the current highlighted drawing and clone it
+ * Helper function to find the current highlighted drawing and clone it.
+ *
  * @memberof CIQ.MobileBridge
  */
 CIQ.MobileBridge.cloneDrawing = function () {
@@ -673,8 +918,10 @@ CIQ.MobileBridge.cloneDrawing = function () {
 	}
 };
 /**
- * Helper function to find the current highlighted drawing and change the layer of the drawing
- * @param {String} layer The layer to assign to the drawing (top, bottom, up, down)
+ * Helper function to find the current highlighted drawing and change the layer of the drawing.
+ *
+ * @param {String} layer The layer to assign to the drawing (top, bottom, up, or down).
+ *
  * @memberof CIQ.MobileBridge
  */
 CIQ.MobileBridge.layerDrawing = function (layer) {
@@ -720,23 +967,31 @@ CIQ.MobileBridge.layerDrawing = function (layer) {
 	}
 };
 /**
- * Helper function that determines whether there are any drawings on the undostack
- * @returns {String} JSON string of true/false to determine whether there is any drawings to undo
+ * Helper function that determines whether there are any drawings on the undo stack.
+ *
+ * @return {string} JSON string of true/false to determine whether there are any drawings to undo.
+ *
  * @memberof CIQ.MobileBridge
  */
 CIQ.MobileBridge.undo = function () {
-	this.undoObject.undo();
-	let moreUndo = this.undoObject.undostack.length > 0;
+	const undoObject = document.querySelector("cq-undo");
+	if (!undoObject) return JSON.stringify(false);
+	undoObject.undo();
+	const moreUndo = undoObject.undostack.length > 0;
 	return JSON.stringify(moreUndo);
 };
 /**
- * Helper function that determines whether there are any drawings on the redostack
- * @returns {String} JSON string of true/false to determine whether there is any drawings to redo
+ * Helper function that determines whether there are any drawings on the redo stack.
+ *
+ * @return {String} JSON string of true/false to determine whether there is any drawings to redo.
+ *
  * @memberof CIQ.MobileBridge
  */
 CIQ.MobileBridge.redo = function () {
-	this.undoObject.redo();
-	let moreRedo = this.undoObject.redostack.length > 0;
+	const undoObject = document.querySelector("cq-undo");
+	if (!undoObject) return JSON.stringify(false);
+	undoObject.redo();
+	const moreRedo = undoObject.redostack.length > 0;
 	return JSON.stringify(moreRedo);
 };
 //////////////////////////
@@ -747,12 +1002,11 @@ CIQ.MobileBridge.redo = function () {
  *
  * Adds a specific study to the chart.
  *
- * Designed to be used with mobile sample interfaces. See {@tutorial Getting Started on Mobile} for more details.
+ * @param {string} studyName Study to add from the {@link CIQ.Studies.studyLibrary}.
+ * @param {object} [inputs] Custom inputs for instantiating the study.
+ * @param {object} [outputs] Custom outputs for instantiating the study.
+ * @param {object} [parameters] Custom parameters if supported/required by the study.
  *
- * @param {String} studyName Study to add from the {@link CIQ.Studies.studyLibrary}
- * @param {Object} [inputs] Object containing custom inputs for instantiating the study
- * @param {Object} [outputs] Object containing custom outputs for instantiating the study
- * @param {Object} [parameters] Object containing custom parameters if supported/required by the study
  * @memberof CIQ.MobileBridge
  */
 CIQ.MobileBridge.addStudy = function (studyName, inputs, outputs, parameters) {
@@ -761,9 +1015,8 @@ CIQ.MobileBridge.addStudy = function (studyName, inputs, outputs, parameters) {
 /**
  * Removes an active study in the chart engine's layout from the chart.
  *
- * Designed to be used with mobile sample interfaces. See {@tutorial Getting Started on Mobile} for more details.
+ * @param {String} studyName The name of the study as it appears in the chart engine's layout.
  *
- * @param {String} studyName The name of the study as it appears in the chart engines layout
  * @memberof CIQ.MobileBridge
  */
 CIQ.MobileBridge.removeStudy = function (studyName) {
@@ -778,8 +1031,6 @@ CIQ.MobileBridge.removeStudy = function (studyName) {
 /**
  * Convenience function to remove all studies on the chart at once.
  *
- * Designed to be used with mobile sample interfaces. See {@tutorial Getting Started on Mobile} for more details.
- *
  * @memberof CIQ.MobileBridge
  */
 CIQ.MobileBridge.removeAllStudies = function () {
@@ -790,20 +1041,21 @@ CIQ.MobileBridge.removeAllStudies = function () {
 	}
 };
 /**
- * Returns an array of all the studies in the {@link CIQ.Studies.studyLibrary} with a shortName derived from the key.
+ * Returns an array of all the studies in the {@link CIQ.Studies.studyLibrary} with a short name
+ * derived from the key.
  *
- * Designed to be used with mobile sample interfaces. See {@tutorial Getting Started on Mobile} for more details.
+ * Used for gathering all available studies a user can access.
  *
- * Used for gathering all available studies a user can access
- * @return {Array} Array of studies with shortName of study
+ * @return {array} Array of studies with the short name of study.
+ *
  * @memberof CIQ.MobileBridge
  */
 CIQ.MobileBridge.getStudyList = function () {
 	var result = [];
 	/*
-	 * If an array is part of the study inputs then Android and iOS just transforms the object to a string when the JSON transform happens.
+	 * If an array is part of the study inputs, then Android and iOS just transform the object to a string when the JSON transform happens.
 	 * That "array" string is then passed back to the library when the study is added and the app breaks.
-	 * By default just make sure the first option in the array is chosen and sent to the client side.
+	 * By default, just make sure the first option in the array is chosen and sent to the client side.
 	 * This will not affect the study options selection inputs as that is being handled by getStudyParameters.
 	 */
 	function changeInputArray(inputs) {
@@ -826,16 +1078,16 @@ CIQ.MobileBridge.getStudyList = function () {
 /**
  * Returns the active studies in the chart engine's layout.
  *
- * Designed to be used with mobile sample interfaces. See {@tutorial Getting Started on Mobile} for more details.
+ * **Note:** For Android devices, returns a raw, unstringified array of studies.
  *
- * *Note:* For Android devices this will return a raw, unstringified, array of studies
- * @return {String} The JSON stringified list of studies
+ * @return {string|array} The JSON stringified list of studies.
+ *
  * @memberof CIQ.MobileBridge
  */
 CIQ.MobileBridge.getActiveStudies = function () {
 	var results = [];
 	// we don't need the whole study object. Just the name, type, and study options
-	// if you pass the whole study stringified back to Java don't be surprised if there are issues
+	// if you pass the whole study stringified back to Java/Kotlin don't be surprised if there are issues
 	for (var key in stxx.layout.studies) {
 		var trimObject = {};
 		var study = stxx.layout.studies[key];
@@ -889,15 +1141,16 @@ CIQ.MobileBridge.getActiveStudies = function () {
 	return joinedList;
 };
 /**
- * Given an active study name this will update the study based on key value pair you pass in to a {@link CIQ.Studies.DialogHelper}.
+ * Given an active study name, updates the study based on the key/value pair you pass into a
+ * {@link CIQ.Studies.DialogHelper}.
  *
- * Designed to be used with mobile sample interfaces. See {@tutorial Getting Started on Mobile} for more details.
+ * If the given key is not found in the dialog helper's inputs, then the key is searched for in
+ * the dialog helper's outputs, and the function tries to update the outputs instead.
  *
- * If the given key is not found in the DialogHelpers inputs then the key will be searched for in DialogHelper.outputs and try to update them instead
+ * @param {string} name Name of the study from the chart engine's layout.
+ * @param {string} key Key to set in the study's corresponding dialog helper.
+ * @param {string} value Value to set in the study's corresponding dialog helper.
  *
- * @param {String} name Name of the study from the chart engine's layout
- * @param {String} key Key to set in the studies corresponding DialogHelper
- * @param {String} value Value to set in the studies corresponding DialogHelper
  * @memberof CIQ.MobileBridge
  */
 CIQ.MobileBridge.setStudy = function (name, key, value) {
@@ -941,16 +1194,20 @@ CIQ.MobileBridge.setStudy = function (name, key, value) {
 	});
 };
 /**
- * Will return the default parameters of a study if it is not active, or actual parameters for an active study.
+ * Returns the default parameters of a study if it is not active, or the actual parameters for an
+ * active study.
  *
- * Designed to be used with mobile sample interfaces. See {@tutorial Getting Started on Mobile} for more details.
+ * **Note:** For Android devices, returns the raw, unstringified parameters.
  *
- * *Note:* For Android devices this will return the raw unstringified parameters
- * @param {string} studyName Study to get parameters for
- * @param {string} prop What to return for the study.  Valid values: "inputs", "outputs", "parameters".  Default is "outputs".
- * @returns {String} JSON stringified parameters from the DialogHelper
+ * @param {string} studyName Study to get parameters for.
+ * @param {string|boolean} [prop="outputs"] What to return for the study. Valid values: "inputs",
+ * 		"outputs", "parameters", or true (see 6.1.0 history note below).
+ * @return {string} JSON stringified parameters from {@link CIQ.Studies.DialogHelper}.
+ *
  * @memberof CIQ.MobileBridge
- * @since 6.1.0 second argument changed from boolean isInputs to string prop.  If prop==true, will return inputs, as before.
+ *
+ * @since 6.1.0 Second parameter changed from boolean `isInputs` to string or boolean `prop`
+ * 		parameter. If `prop == true`, returns inputs, as before.
  */
 CIQ.MobileBridge.getStudyParameters = function (studyName, prop) {
 	var params = { stx: stxx };
@@ -976,16 +1233,17 @@ CIQ.MobileBridge.getStudyParameters = function (studyName, prop) {
 	return JSON.stringify(parameters);
 };
 /**
- * Given an active study name this will update the study based on key value pair you pass in to a {@link CIQ.Studies.DialogHelper}.
+ * Given an active study name, updates the study based on the key/value pair you pass into a
+ * {@link CIQ.Studies.DialogHelper}.
  *
- * Designed to be used with mobile sample interfaces. See {@tutorial Getting Started on Mobile} for more details.
+ * By default, assumes that the key belongs to the dialog helper outputs unless `isInput` is
+ * true.
  *
- * By default this will assume that key belongs to DialogHelper.outputs unless `isInput` is `true`
+ * @param {string} studyName Name of the study from the chart engine's layout.
+ * @param {string} key Key to set in the study's corresponding dialog helper.
+ * @param {string} value Value to set in the study's corresponding dialog helper.
+ * @param {boolean} isInput Specifies whether to update inputs instead of outputs.
  *
- * @param {String} studyName  Name of the study from the chart engine's layout
- * @param {String} key Key to set in the studies corresponding DialogHelper
- * @param {String} value Value to set in the studies corresponding DialogHelper
- * @param {Boolean} isInput Boolean telling to update input instead of outputs
  * @memberof CIQ.MobileBridge
  */
 CIQ.MobileBridge.setStudyParameter = function (studyName, key, value, isInput) {
@@ -1013,14 +1271,15 @@ CIQ.MobileBridge.setStudyParameter = function (studyName, key, value, isInput) {
 /*** Chart Event Listeners ***/
 //////////////////////////////
 /**
- * Sets a callbackListener with a type of drawing.
+ * Sets a callback Listener with a type of "drawing".
  *
- * Designed to be used with mobile sample interfaces. See {@tutorial Getting Started on Mobile} for more details.
+ * For more information on adding event callbacks to the chart, see
+ * {@link CIQ.ChartEngine#addEventListener}.
  *
- * For more info on adding event callbacks to the chart see {@link CIQ.ChartEngine#addEventListener}.
  * @memberof CIQ.MobileBridge
  */
 CIQ.MobileBridge.addDrawingListener = function () {
+	const self = this;
 	stxx.addEventListener("drawing", function (drawingObject) {
 		var s = drawingObject.drawings;
 		var drawings = [];
@@ -1029,28 +1288,30 @@ CIQ.MobileBridge.addDrawingListener = function () {
 			drawings.push(drawing.serialize());
 		}
 		var stringifiedDrawings = JSON.stringify(drawings);
-		if (this.isAndroid) {
-			QuoteFeed.drawingChange(stringifiedDrawings);
+		if (self.isAndroid) {
+			ChartIQ.drawingChange(stringifiedDrawings);
 		} else {
 			webkit.messageHandlers.drawingHandler.postMessage(stringifiedDrawings);
 		}
 	});
 };
 /**
- * Sets a callbackListener to send the mMeasure text to the mobile client side for ease of display.
+ * Sets a callback Listener to send the `mMeasure` text to the mobile client side for ease of
+ * display.
  *
- * Designed to be used with mobile sample interfaces. See {@tutorial Getting Started on Mobile} for more details.
+ * For more information on adding event callbacks to the chart, see
+ * {@link CIQ.ChartEngine#addEventListener}.
  *
- * For more info on adding event callbacks to the chart see {@link CIQ.ChartEngine#addEventListener}.
  * @memberof CIQ.MobileBridge
  */
 CIQ.MobileBridge.addMeasureListener = function () {
+	const self = this;
 	document.addEventListener("touchend", function () {
 		let m = document.querySelector(".mMeasure");
 		m.innerText = "";
 		let measureText = JSON.stringify(m.innerText);
-		if (this.isAndroid) {
-			// tbd
+		if (self.isAndroid) {
+			ChartIQ.measureChange(measureText);
 		} else {
 			webkit.messageHandlers.measureHandler.postMessage(measureText);
 		}
@@ -1059,22 +1320,23 @@ CIQ.MobileBridge.addMeasureListener = function () {
 		let m = document.querySelector(".mMeasure");
 		if (m.innerText.length <= 0) return;
 		let measureText = JSON.stringify(m.innerText);
-		if (this.isAndroid) {
-			// tbd
+		if (self.isAndroid) {
+			ChartIQ.measureChange(measureText);
 		} else {
 			webkit.messageHandlers.measureHandler.postMessage(measureText);
 		}
 	});
 };
 /**
- * Sets a callbackListener with a type of layout.
+ * Sets a callback Listener with a type of "layout".
  *
- * Designed to be used with mobile sample interfaces. See {@tutorial Getting Started on Mobile} for more details.
+ * For more information on adding event callbacks to the chart, see
+ * {@link CIQ.ChartEngine#addEventListener}.
  *
- * For more info on adding event callbacks to the chart see {@link CIQ.ChartEngine#addEventListener}.
  * @memberof CIQ.MobileBridge
  */
 CIQ.MobileBridge.addLayoutListener = function () {
+	const self = this;
 	stxx.addEventListener("layout", function (layoutObject) {
 		// Guard against trying to serialize circular objects and filter out duplicates
 		var seen = [];
@@ -1088,8 +1350,8 @@ CIQ.MobileBridge.addLayoutListener = function () {
 			return val;
 		}
 		var stringifiedLayout = JSON.stringify(layoutObject.layout, replacer);
-		if (this.isAndroid) {
-			QuoteFeed.layoutChange(stringifiedLayout);
+		if (self.isAndroid) {
+			ChartIQ.layoutChange(stringifiedLayout);
 		} else {
 			webkit.messageHandlers.layoutHandler.postMessage(stringifiedLayout);
 		}
