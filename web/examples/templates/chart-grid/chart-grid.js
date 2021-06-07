@@ -34,6 +34,7 @@ var firstRun = true;
 function RemoveAllCharts() {
 	// Remove existing charts from the linker
 	chartLinker.innerHTML = "";
+	chartLinker.removeAll();
 	// Clear out existing chart component tags, but always keep chart0
 	Array.from(document.querySelector(".chart-grid").children).forEach(function (
 		child
@@ -310,7 +311,7 @@ function startUI(rootstxx) {
 	UIContext.setLookupDriver(new CIQ.ChartEngine.Driver.Lookup.ChartIQ());
 	UIContext.UISymbolLookup = document.querySelector(".ciq-search cq-lookup");
 	if (UIContext.UISymbolLookup)
-		UIContext.UISymbolLookup.setCallback(function (context, data) {
+		UIContext.UISymbolLookup.setCallback(function (data) {
 			let targetSymbol = data.symbol || false;
 			if (targetSymbol) {
 				// Get the market name for the target symbol
@@ -319,14 +320,9 @@ function startUI(rootstxx) {
 				if (symbolData.name === activeMarket) {
 					// If there's only one chart, there's no need to select it
 					if (chartLinker.charts.size === 1) {
-						document
-							.getElementById("chart0")
-							.context.changeSymbol(
-								document.getElementById("chart0").context,
-								data
-							);
+						document.getElementById("chart0").context.changeSymbol(data);
 					} else if (activeChart) {
-						activeChart.context.changeSymbol(activeChart.context, data);
+						activeChart.context.changeSymbol(data);
 					} else {
 						CIQ.alert(
 							"To set a chart symbol, first click on a chart to select."

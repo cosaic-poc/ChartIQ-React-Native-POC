@@ -1527,6 +1527,7 @@ declare module '../js/chartiq.js' {
       ): void
       /**
        * Animation Loop
+       *
        * Iterates through all [high performance canvas]CIQ.Marker.Performance markers and draws them on the canvas.
        *
        * See {@tutorial Markers} tutorials for additional implementation instructions.
@@ -1537,6 +1538,23 @@ declare module '../js/chartiq.js' {
        */
       drawMarkers(): void
     }
+    /**
+     * Gets the maximum number of Renko bars that can be created per quote when using automatic brick
+     * size selection.
+     *
+     * This method is used to adjust auto Renko brick size if the default algorithm set it too low,
+     * resulting in too many bars.
+     *
+     * Override this function to adjust the return value based on the expected data set per symbol,
+     * thereby avoiding very long processing time due to small brick size selection.
+     *
+     * @param [symbol] Chart symbol for which to return the maximum number of Renko
+     * 		bars per quote. If not provided, a default maximum value is returned.
+     * @return The maximum number of Renko bars per quote.
+     *
+     * @since 8.3.0
+     */
+    function getMaxRenkoBarsPerRecord(symbol?: string|object): number
     /**
      * Calculates Heikin-Ashi values. Takes some unaggregated data and returns aggregated data.
      *
@@ -1603,30 +1621,6 @@ declare module '../js/chartiq.js' {
       stx: CIQ.ChartEngine,
       newData: any[],
       pricelines: number,
-      computed: any[]
-    ): any[]
-    /**
-     * Calculates Renko bars. Takes some unaggregated data and returns aggregated data.
-     *
-     * This method is used inside CIQ.ChartEngine#createDataSet to determine the data aggregation logic and should not be called directly.
-     * Use CIQ.ChartEngine#setAggregationType instead.
-     *
-     * Renko bars use Close method only, not High/Low or ATR
-     *
-     * See the [Chart types](tutorial-Chart%20Styles%20and%20Types.html#OverridingDefaults) tutorial for details on how to override aggregation type defaults.
-     *
-     * @param stx   The chart object
-     * @param newData The data to aggregate. Normally the dataSet.
-     * @param range The brick size for the renko bars. This is typically user configurable. Defaults to a brick size so that about 300 bars worth of time are displayed; about a year for a daily chart, about 5 hours on a minute chart.
-     * @param computed Cumulative computed records from last pass through this function. Used to increase performance by reusing pre-calculated bars and only calculate missing new bars.
-     * @return        The aggregated data
-     * @since 3.0.0 Added `computed` parameter.
-     * @version ChartIQ Advanced Package
-     */
-    function calculateRenkoBars(
-      stx: CIQ.ChartEngine,
-      newData: any[],
-      range: number,
       computed: any[]
     ): any[]
     /**
@@ -1777,6 +1771,7 @@ declare module '../js/chartiq.js' {
   export namespace CIQ.Marker.Performance {
     /**
      * Animation Loop
+     *
      * Iterates through all [high performance canvas]CIQ.Marker.Performance markers and
      * draws them on the canvas.
      *

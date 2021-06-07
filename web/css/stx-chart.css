@@ -1,11 +1,6 @@
 @charset "UTF-8";
 /* CSS Document */
 
-html,body{
-	-ms-touch-action: none; /* This is necessary to allow the chart to grab windows touch events */
-	margin: 0px; /*to deal with iFraming which sets 8px by default in some browsers*/
-}
-
 .chartContainer { /* DIV that the canvas expands to. */
 	display: block;
 	font-family: Roboto, Helvetica, sans-serif;
@@ -198,22 +193,6 @@ html,body{
 	transition: transform 350ms cubic-bezier(0.770, 0.000, 0.175, 1.000), opacity 350ms linear;
 }
 
-.break-lg .chartSize{
-	-webkit-transform: scale(0.75);
-	-moz-transform: scale(0.75);
-	-ms-transform: scale(0.75);
-	transform: scale(0.75);
-}
-
-.break-lg .chartSize:hover{
-	opacity: 1;
-
-	-webkit-transform: scale(1);
-	-moz-transform: scale(1);
-	-ms-transform: scale(1);
-	transform: scale(1);
-}
-
 .chartSize span:after {/* Divider between zoom buttons */
 	content: "";
 	display: block;
@@ -251,9 +230,7 @@ html,body{
 	position:relative; /* set relative to position tooltip */
 	background:#ccc center no-repeat;
 	background-size:contain;
-	height: 19px;
-	margin-top: 3px;
-	margin-bottom: 3px;
+	height: 25px;
 	box-sizing: border-box;
 	-moz-box-sizing: border-box;
 	-webkit-box-sizing: border-box;
@@ -280,7 +257,7 @@ html,body{
 /* Full Screen button icon */
 .chartSize .stx-full-screen{
 	background:url(img/full-screen.svg) center no-repeat;
-	background-size: contain;
+	background-size: 19px;
 }
 
 /*.chartSize span:hover,*/
@@ -405,15 +382,22 @@ translate { /* so translate nodes don't affect interactivity */
 
 .stx-baseline-handle { /* used for dragging the baseline up and down */
 	background-image:url(img/stx-sprite-ui.svg);
-	background-position: -770px -28px;
-	cursor: url(img/vertical.cur), ns-resize;
+	background-position: -770px -26px;
 	display: none;
-	height: 20px;
-	opacity:.5;
+	height: 25px;
 	position: absolute;
-	width: 20px;
+	width: 25px;
 	z-index: 30;
+	background-color: #eee;
+	border: solid 1px #999;
+	border-radius: 5px;
+	transform: scale(0.75);
+	box-sizing: border-box;
 }
+.stx-baseline-handle:hover, .stx-baseline-handle:active{
+	transform: scale(1);
+}
+
 .stx_anchor_handle {
 	width: 8px;
 	position: absolute;
@@ -550,14 +534,14 @@ translate { /* so translate nodes don't affect interactivity */
 	display: block;
 	margin: 0;
 	width: 23px;
-	height: 23px;
+	height: 25px;
 	
 	overflow: hidden;
 	text-indent: 100px;
 	background: transparent;
 	
 	background-image:url(img/stx-sprite-panels.svg);
-	background-position: -401px -26px;
+	background-position: -400px -26px;
 }
 
 .overlayEdit {
@@ -715,7 +699,7 @@ translate { /* so translate nodes don't affect interactivity */
 	color: #444444;
 	}
 .stx_yaxis {/* y-axis price styles */
-	font-size: 10px;
+	font-size: 12px;
 	font-family: Helvetica, sans-serif;
 	color:#333;
 	}
@@ -1117,4 +1101,11 @@ stx-hu-tooltip-field-name:after {
 stx-hu-tooltip-field-value {
 	display:table-cell;
 	text-align:right;
+}
+
+.stx-hu-tooltip-highlight {
+	position: absolute;
+	height: 100%;
+	z-index: 10;
+	background-color: rgba(191, 191, 191, .2);
 }

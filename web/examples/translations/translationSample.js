@@ -3,22 +3,42 @@
 //
 import { CIQ, i18n } from "../../js/standard.js";
 CIQ.activateImports(i18n);
+// The default language
+CIQ.I18N.language = "en-US";
 // Supported languages object, see documentation in i18n.js
 CIQ.I18N.languages = {
-	en: "English",
-	ar: "عربى",
-	fr: "Français",
-	de: "Deutsche",
-	hu: "Magyar",
-	it: "Italiano",
-	pt: "Português",
-	ru: "русский",
-	es: "Español",
-	zh: "中文",
-	ja: "日本語"
+	"en-US": "English",
+	"ar-EG": "عربى",
+	"fr-FR": "Français",
+	"de-DE": "Deutsche",
+	"hu-HU": "Magyar",
+	"it-IT": "Italiano",
+	"pt-PT": "Português",
+	"ru-RU": "русский",
+	"es-ES": "Español",
+	"zh-CN": "中文",
+	"ja-JP": "日本語"
 };
+// Supported locale-region mapping, see documentation in i18n.js
+CIQ.I18N.langConversionMap = {
+	en: "en-US",
+	ar: "ar-EG",
+	fr: "fr-FR",
+	de: "de-DE",
+	hu: "hu-HU",
+	it: "it-IT",
+	pt: "pt-PT",
+	ru: "ru-RU",
+	es: "es-ES",
+	zh: "zh-CN",
+	ja: "ja-JP"
+};
+//Supported languages that have full months, see documentation in i18n.js
+CIQ.I18N.longMonths = { "zh-CN": true };
+// Supported languages that reverse candle color, see documentation in i18n.js
+CIQ.I18N.reverseColorsByLocale = { "zh-CN": true, "ja-JP": true };
 CIQ.I18N.csv = CIQ.I18N.hereDoc(function (f) {
-	/*!en,ar,fr,de,hu,it,pt,ru,es,zh,ja
+	/*!en-US,ar-EG,fr-FR,de-DE,hu-HU,it-IT,pt-PT,ru-RU,es-ES,zh-CN,ja-JP
 -DI,-DI,-DI,-DI,-DI,-DI,-DI,-DI,-DI,下降方向线,-DI
 -VI,-VI,-VI,-VI,-VI,-VI,-VI,-VI,-VI,负成交量指标,-VI
 (Scroll for more options),(انتقل لمزيدٍ من الخيارات),(Faites défiler pour plus d'options),(Für weitere Optionen scrollen),(További lehetőségeket a legördülő listában talál),(Scroll for more options),(Desloque para mais opções),(Прокрутить для выбора других вариантов),(Desplazar para más opciones),（滚动查看更多选项）,（スクロールして他のオプションを表示）
@@ -261,7 +281,7 @@ Choose Timezone,اختر منطقة زمنية,Choisir la plage horaire,Zeitzone
 Choppiness Index,مؤشر الاضطراب,Indice Choppiness,Choppiness-Index,Változó irányokat mutató (Choppiness) index,Indice choppiness,Índice de ondas,Индекс зыбучести,Índice de fluctuación de tendencias,翻滚度指数,チョピネス・インデックス
 Clear,مسح,Régler,Löschen,Törlés,Cancella,Limpar,Очистить,Borrar,清除,消去
 Clear All,مسح الكل,Suprimez tout,Alle löschen,Összes törlése,Cancella tutto,Limpar Todos,Очистить все,Eliminar todo,全部清除,全てをクリアする
-Clear Drawings,مسح الرسومات,Effacer les dessins,Deutliche Zeichnungen,Ábrák törlése,Cancella Disegni,Limpar desenhos,Удалить изображения,Eliminar los dibujos,清空图示,描画をクリア
+Clear All Drawings,مسح الرسومات,Effacer les dessins,Deutliche Zeichnungen,Ábrák törlése,Cancella Disegni,Limpar desenhos,Удалить изображения,Eliminar los dibujos,清空图示,描画をクリア
 Close,إغلاق,Fermer,Schließen,Bezárás,Chiudi,Fecho,Закрыть,Cerrar,关闭,閉じる
 close,إغلاق,Ferme,schließen,bezárás,Chiudi,fechar,закрыть,cerrar,关闭,閉じる
 Color,اللون,Couleur,Farbe,Szín,Colore,Cor,Цвет,Color,颜色,カラー
@@ -360,7 +380,7 @@ Enter box size and hit “Enter”,""ادخل حجم المربع واضغط ع�
 Enter name of view:,ادخل اسم العرض:,Entrez le nom de la vue,Name der Vorlage eingeben:,Adja meg a nézet nevét:,Inserisci il nome della visualizzazione,Introduzir nome da visualização:,Введите название панели:,Introducir el nombre de la vista:,输入视图名称：,ビューの名前を入力する
 Enter reversal and hit “Enter”,""ادخل انعكاس واضغط على "إدخال",Insérez l'inversion et appuyez sur « Entrer »,Stornierung eingeben und „Eingabetaste“ drücken,"Adja meg a visszatérést, majd Enter","Immetti l'inversione e premi "Inserisci"","Introduzir reverso e pressionar "Enter"",Введите точку разворота и нажмите Enter,"Introduzca retroceso y pulse "Entrar"",输入逆转并点击“回车”,反転を入力して「入力する」を押す
 Enter Symbol,أدخل رمزًا,Saisir un symbole,Symbol eingeben,Szimbólum beírása,Inserisci simbolo,Introduza símbolo,Ввести символ,Introducir símbolo,输入符号,記号を入力
-Enter value and hit “Enter”,""ادخل القيمة واضغط على "إدخال","Entrez la valeur et appuyez sur "Entrer"",Wert eingeben und „Eingabetaste“ drücken,"Adja meg az értéket, majd Enter","Immetti il valore e premi "Inserisci"","Introduzir valor e pressionar "Enter"",Введите значение и нажмите Enter,"Introduzca el valor y pulse "Entrar"Enter value and hit “Enter”",输入数值并点击“回车”,値を入力して「入力する」を押す
+Enter value and hit “Enter”,""ادخل القيمة واضغط على "إدخال","Entrez la valeur et appuyez sur "Entrer"",Wert eingeben und „Eingabetaste“ drücken,"Adja meg az értéket, majd Enter","Immetti il valore e premi "Inserisci"","Introduzir valor e pressionar "Enter"",Введите значение и нажмите Enter,"Introduzca el valor y pulse "Entrar"",输入数值并点击“回车”,値を入力して「入力する」を押す
 Events,أحداث,Événement,Ereignisse,Események,Eventi,Eventos,События,Eventos,事件,イベント
 Exit Field,حقل الخروج,Sortir du champ,Ausstiegsfeld,Kilépő mező,Campo di uscita,Sair do campo,Выйти из поля,Campo de salida,退出领域,出口フィールド
 Exponential,الآسي,Exponentiel,Exponentiell,Exponential,Esponenziale,Exponencial,Экспоненциальная,Exponencial,指数,指数

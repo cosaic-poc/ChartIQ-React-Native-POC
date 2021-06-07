@@ -197,7 +197,7 @@ cq-drawing-palette{
 			top: calc(#{$ICON_SIZE} + 5px);
 			left: 50%;
 			width: auto;
-			padding: 3px 5px;
+			padding: 2px 3px;
 			font-size: 10px;
 			line-height: 1em;
 			font-weight: 400;
@@ -240,15 +240,16 @@ cq-drawing-palette{
 	.break-lg &.grid, .break-md &.grid{
 		.ciq-tool{
 			label{
-				max-width: 64px;
-				left: 0;
+				max-width: 52px;
+				left: -5px;
 				width: auto;
+				overflow-wrap: break-word;
 			}
 		}
 		.ciq-tool.odd{
 			label{
 				left: auto;
-				right: 0;
+				right: -8px;
 			}
 		}
 	}
@@ -256,7 +257,7 @@ cq-drawing-palette{
 	////////////////////////////////////////////////////////////////////
 	// List View
 	////////////////////////////////////////////////////////////////////
-	&.list, .break-sm &{ /* always display list mode on small screens */
+	&.list, .break-sm &, .break-height-sm &{ /* always display list mode on small screens */
 
 			width: $PALETTE_MAIN_LIST_WIDTH;
 
@@ -636,7 +637,8 @@ cq-drawing-palette{
 	}
 
 	&.list .mini-widget-group.mini-widget-foot,
-	.break-sm & .mini-widget-group.mini-widget-foot{
+	.break-sm & .mini-widget-group.mini-widget-foot,
+	.break-height-sm & .mini-widget-group.mini-widget-foot{
 
 		margin: 5px 0;
     float: left;
@@ -694,7 +696,8 @@ cq-drawing-palette{
 	}
 
 	&.list .ciq-tool .fav-marker,
-	.break-sm &.grid .ciq-tool .fav-marker {
+	.break-sm &.grid .ciq-tool .fav-marker,
+	.break-height-sm &.grid .ciq-tool .fav-marker {
 		display: block;
 		bottom: auto;
 		right: 15px;
@@ -731,20 +734,23 @@ cq-drawing-settings{
 		&[hide="true"]{
 			display: none;
 
-			.break-sm &{
+			.break-sm &,
+			.break-height-sm &{
 				display: block;
 			}
 		}
 
 		.mini-widget-group {
 
-			margin: 1px 10px 0 0;
+			margin: 4px 10px 0 0;
 			float:left;
+			line-height: 16px;
 
 			.ciq-mini-widget{
 				display: inline-block;
 				position: relative;
-				height: 0;
+				height: 18px;
+				width: 18px;
 				box-sizing: border-box;
 				padding: 0;
 				border: solid 1px transparent;
@@ -752,9 +758,9 @@ cq-drawing-settings{
 				transition: none;
 				background: transparent;
 				overflow: visible;
-				width:16px;
-				margin: 0 0 4px 2px;
-				padding-bottom:16px; /* account for border when squaring off the button */
+				margin: 2px;
+				line-height: 16px;
+				padding-bottom:14px; /* account for border when squaring off the button */
 				&:hover{
 					background-color: $DEFAULT-highlight;
 					.#{$DARK} &{
@@ -765,17 +771,17 @@ cq-drawing-settings{
 				.icon{
 					display:inline-block;
 					position: relative;
-					margin: 0;
+					width: 14px;
+					height: 14px;
+					margin: 1px;
 					pointer-events: none;
 
-					background: transparent url('img/stx-sprite-drawing-tools-black.svg') top left no-repeat;
-					background-size: cover;
+					background: transparent url('img/stx-sprite-palette-miniwidgets-black.svg') top left no-repeat;
+					background-size: 14px;
 					background-position: 0 0;
-					width: 100%;
-					padding-bottom:100%;
 
 					.#{$DARK} &{
-						background-image: url('img/stx-sprite-drawing-tools-white.svg');
+						background-image: url('img/stx-sprite-palette-miniwidgets-white.svg');
 					}
 				}
 
@@ -800,7 +806,7 @@ cq-drawing-settings{
 					top: calc(#{$ICON_SIZE} + 5px);
 					left: 50%;
 					width: calc(32px);
-					padding: 3px 5px;
+					padding: 2px 3px;
 					font-size: 10px;
 					line-height: 1em;
 					font-weight: 400;
@@ -822,27 +828,24 @@ cq-drawing-settings{
 					visibility: visible;
 				}
 
-				*{
-					position: absolute;
-				}
-
-				&[cq-view="attach"],{
+				&[cq-view="attach"]{
 					display: none;
 				}
 
 			}
 
-			.break-sm &{
+			.break-sm &,
+			.break-height-sm &{
 				display:none;
 			}
 
 		}
 
 		.mini-widget-group .ciq-mini-widget[cq-view="detach"] .icon{
-			background-position: 0 -630px; /* position is set manually here because background is scaled */
+			background-position: 0 -28px; /* position is set manually here because background is scaled */
 		}
 		.mini-widget-group .ciq-mini-widget[cq-view="attach"] .icon{
-			background-position: 0 -645px; /* position is set manually here because background is scaled */
+			background-position: 0 -42px; /* position is set manually here because background is scaled */
 		}
 
 		&[docked="false"]{
@@ -878,7 +881,8 @@ cq-drawing-settings{
 			position: relative;
 			line-height: 32px;
 
-			.break-sm &{
+			.break-sm &,
+			.break-height-sm &{
 				padding-left: 0;
 				padding-bottom: 7px;
 			}
@@ -984,7 +988,8 @@ cq-drawing-settings{
 			border: none;
 		}
 
-		.break-sm cq-measure .mMeasure{
+		.break-sm cq-measure .mMeasure,
+		.break-height-sm cq-measure .mMeasure{
 			transform: translate(0,0);
 			left: auto;
 			right: 0;
@@ -1002,7 +1007,9 @@ cq-drawing-settings{
 	cq-context[ciq-mobile] & cq-line-style.ciq-active,
 	cq-context[ciq-mobile] & cq-menu.ciq-select,
 	.break-sm & cq-line-style.ciq-active,
-	.break-sm & cq-menu.ciq-select{
+	.break-sm & cq-menu.ciq-select,
+	.break-height-sm & cq-line-style.ciq-active,
+	.break-height-sm & cq-menu.ciq-select{
 		display: block;
     position: relative;
 	}
@@ -1039,7 +1046,8 @@ cq-drawing-settings{
 		border: none;
 	}
 
-	.break-sm cq-measure .mMeasure{
+	.break-sm cq-measure .mMeasure,
+	.break-height-sm cq-measure .mMeasure{
 		left: auto;
 		right: 0;
 		transform: translate(0,0);
@@ -1247,7 +1255,7 @@ cq-drawing-palette, cq-drawing-settings{
 ////////////////////////////////////////////////////////////////////
 
 cq-drawing-settings{
-	.break-sm &{
+	.break-sm &, .break-height-sm &{
 			left: 0;
 			width:100%;
 
@@ -1256,6 +1264,7 @@ cq-drawing-settings{
 
 				.ciq-mobile-palette-toggle{
 					display:initial;
+					position: relative;
 				}
 				.ciq-active-tool-label{
 					display: none;
@@ -1269,7 +1278,7 @@ cq-drawing-settings{
 
 cq-drawing-palette{
 
-	.break-sm &{
+	.break-sm &, .break-height-sm &{
 
 		z-index: 99 !important;
 		position: absolute;
@@ -1329,7 +1338,7 @@ cq-drawing-palette{
 		}
 	}
 
-	.break-sm.#{$DARK} &{
+	.break-sm.#{$DARK} &, .break-height-sm.#{$DARK} &{
 		.tool-group .ciq-tool label{
 			color: $DARK-active;
 			max-width: initial;

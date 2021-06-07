@@ -65,6 +65,7 @@ MarkersSample.prototype.createMarkers = function (label, markerType) {
 	var data = [];
 	if (!markerType) markerType = "Simple";
 	if (!ds) return;
+	while (t && !ds[t]) t--;
 	if (t >= 5)
 		data.push({
 			x: ds[t - 5].DT,
@@ -113,6 +114,10 @@ MarkersSample.prototype.createMarkers = function (label, markerType) {
 	for (var i = 0; i < data.length; i++) {
 		var datum = data[i];
 		datum.story = story;
+		// Add some additional copy to the first marker to demonstrate the scrollbar
+		if (i == 0)
+			datum.story +=
+				" <br><br> The marker can also accommodate a large amount of text and will allow scrolling if the content does not fit in the available space. Lorem ipsum dolor sit amet, consectetur adipiscing elit. In risus quam, suscipit eu imperdiet sed, finibus vitae neque. Aenean gravida erat vel arcu bibendum pharetra. Nullam arcu nibh, ullamcorper a quam quis, aliquam mollis ex. Nulla lacus ligula, sollicitudin ac lacinia a, tempus nec sem. Aliquam erat volutpat. Phasellus magna mauris, maximus eget imperdiet eu, tincidunt ut neque. Maecenas rutrum nisl sed laoreet placerat. Nunc semper eu diam eget pretium. Fusce est lectus, feugiat nec metus sed, auctor laoreet ligula. Fusce et felis ut quam finibus porttitor. Fusce mollis felis quis velit rutrum laoreet. Maecenas dignissim mattis facilisis. Aenean tempor fermentum dictum.";
 		new CIQ.Marker({
 			stx: stx,
 			label: label,

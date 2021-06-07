@@ -93,7 +93,6 @@ declare module '../js/chartiq.js' {
     /**
      * Drives the chart's relationship with the quote feed object provided to the chart.
      *
-     * @private
      * @since
      * - 5.1.1 Added `maximumTicks` to `behavior` parameter.
      * - 7.3.0 Moved `intervalTimer` property into `behavior` parameter. Added `filter` parameter.
@@ -106,7 +105,6 @@ declare module '../js/chartiq.js' {
        * @param quoteFeed A quote feed object.
        * @param [behavior] See CIQ.ChartEngine#attachQuoteFeed for object details.
        * @param [filter] See CIQ.ChartEngine#attachQuoteFeed for function details.
-       * @private
        * @since
        * - 5.1.1 Added `maximumTicks` to `behavior` parameter.
        * - 7.3.0 Moved `intervalTimer` property into `behavior` parameter. Added `filter` parameter.
@@ -139,36 +137,42 @@ declare module '../js/chartiq.js' {
      * @param [params.config] Contains configuration specifications.
      * @param [params.config.chartEngineParams] Parameters required by the
      * 		CIQ.ChartEngine constructor except for a reference to the container HTML
-     * 		element, which is provided by `params.container`.Example:
+     * 		element, which is provided by `params.container`, for example:
      * ```
-     * 		{
-     * 		  layout: {
-     * 		   "chartType": "candle",
-     * 		    "crosshair": true,
-     * 		    "candleWidth": 30,
-     * 		    "periodicity": 1,
-     * 		    "interval": 'day',
-     * 		  },
-     * 		  preferences: {
-     * 		    "currentPriceLine": true,
-     * 		    "whitespace": 100
-     * 		  },
-     * 		  chart: {
-     * 		    yAxis: {
-     * 		      position: 'left'
-     * 		    }
-     * 		  }
-     * 		}
+     * {
+     *     layout: {
+     *         "chartType": "candle",
+     *         "crosshair": true,
+     *         "candleWidth": 30,
+     *         "periodicity": 1,
+     *         "interval": 'day',
+     *     },
+     *     preferences: {
+     *         "currentPriceLine": true,
+     *         "whitespace": 100
+     *     },
+     *     chart: {
+     *         yAxis: {
+     *           position: 'left'
+     *         }
+     *     }
+     * }
      * ```
      * @param [params.config.quoteFeeds] Array of quote feed objects to attach to the chart
      * 		engine.
      * @param [params.config.marketFactory] Market factory object. When not provided,
      * 		CIQ.Market.Symbology.factory is used if available.
      * @param [params.config.addOns] Initialization properties for add-ons.
+     * @param [params.config.chartId] Identifies the chart created by the chart engine.
+     * @param [params.config.onChartReady] A callback function to call when the chart has
+     * 		been loaded.
      * @param [params.config.callbacks] Event listeners to add to the chart engine. Use this
-     * 		parameter to replace the default listeners for [layout]layoutEventListener,
-     * 		[symbolChange]symbolChangeEventListener, [drawing]drawingEventListener,
-     * 		[preferences]preferencesEventListener, and [newChart]newChartEventListener.
+     * 		parameter to replace the default listeners for
+     * 		[layout]CIQ.ChartEngine~layoutEventListener,
+     * 		[symbolChange]CIQ.ChartEngine~symbolChangeEventListener,
+     * 		[drawing]CIQ.ChartEngine~drawingEventListener,
+     * 		[preferences]CIQ.ChartEngine~preferencesEventListener, and
+     * 		[newChart]CIQ.ChartEngine~newChartEventListener.
      * 		**Note:** Other event listeners can be added to the chart engine using this parameter, but
      * 		the recommended approach for listeners other than the defaults is to use
      * 		CIQ.ChartEngine#addEventListener.
@@ -202,6 +206,8 @@ declare module '../js/chartiq.js' {
           quoteFeeds?: object,
           marketFactory?: object,
           addOns?: object,
+          chartId?: string,
+          onChartReady?: Function,
           callbacks?: {
             layout?: Function,
             symbolChange?: Function,
@@ -229,7 +235,8 @@ declare module '../js/chartiq.js' {
      * 		returned callback function does not save the chart layout.
      * @return A callback function that saves the chart layout in local storage. The
      * 		returned callback function is typically added to the chart engine as a
-     * 		layoutEventListener or symbolChangeEventListener.
+     * 		[layoutEventListener]CIQ.ChartEngine~layoutEventListener or
+     * 		[symbolChangeEventListener]CIQ.ChartEngine~symbolChangeEventListener.
      *
      * @static
      * @since
@@ -269,7 +276,8 @@ declare module '../js/chartiq.js' {
      * @param [config.restore] Indicates whether the chart drawings are restorable. If
      * 		false, the returned callback function does not save the chart drawings.
      * @return A callback function that saves the state of the chart drawings. The returned
-     * 		callback function is typically added to the chart engine as a drawingEventListener.
+     * 		callback function is typically added to the chart engine as a
+     * 		[drawingEventListener]CIQ.ChartEngine~drawingEventListener.
      *
      * @static
      * @since
@@ -310,7 +318,8 @@ declare module '../js/chartiq.js' {
      * @param [config.restore] Indicates whether the chart preferences are restorable. If
      * 		false, the returned callback function does not save the chart preferences.
      * @return A callback function that saves the chart preferences. The returned callback
-     * 		function is typically added to the chart engine as a preferencesEventListener.
+     * 		function is typically added to the chart engine as a
+     * 		[preferencesEventListener]CIQ.ChartEngine~preferencesEventListener.
      *
      * @static
      * @since
@@ -347,7 +356,8 @@ declare module '../js/chartiq.js' {
      * 		nodes can be used to invoke the radio button event listeners to turn the markers on and
      * 		off. See *js/defaultConfiguration.js* for an example of this parameter.
      * @return A callback function that restores the state of the chart markers. The
-     * 		returned function is typically assigned to newChartEventListener.
+     * 		returned function is typically assigned to
+     * 		[newChartEventListener]CIQ.ChartEngine~newChartEventListener.
      *
      * @static
      * @since
@@ -369,17 +379,26 @@ declare module '../js/chartiq.js' {
      */
     const drawingTools: object
     /**
-     * Each CIQ.ChartEngine object will clone a copy of this object template and use it to store the settings for the active drawing tool.
-     * The default settings can be changed by overriding these defaults on your own files.
-     * See {@tutorial Custom Drawing Toolbar} for details on how to use this template to replace the standard drawing toolbar.
-     * This object can be extended to support additional drawing tools (for instance note the extensive customization capabilities for fibonacci)
+     * Each CIQ.ChartEngine object clones this object template and uses the copy to store the
+     * settings for the active drawing tool. The default settings can be changed by overriding these
+     * defaults on your own files.
+     *
+     * See the [Creating a custom drawing toolbar]{@tutorial Custom Drawing Toolbar} tutorial for
+     * details on how to use this template to replace the standard drawing toolbar.
+     *
+     * This object can be extended to support additional drawing tools; for instance, note the extensive
+     * customization capabilities for
+     * <a href="CIQ.ChartEngine.html#.currentVectorParameters%5B%60fibonacci%60%5D">fibonacci</a>.
+     *
      * @static
      */
     let currentVectorParameters: {
       /**
-       *  Drawing to activate.
-       * See 'Classes' in CIQ.Drawing for available drawings.
-       * Use CIQ.ChartEngine#changeVectorType to activate.
+       * The type of drawing to activate.
+       *
+       * See the list of classes in CIQ.Drawing for available drawing types. Use
+       * CIQ.ChartEngine#changeVectorType to activate.
+       *
        */
       vectorType: string,
       /**
@@ -568,6 +587,16 @@ declare module '../js/chartiq.js' {
       	}
     }
     /**
+     * This code prevents the browser context menu from popping up when right-clicking on a drawing or overlay.
+     *
+     * See [rightClickEventListener]CIQ.ChartEngine~rightClickEventListener.
+     *
+     * @param [e=event] Event
+     * @return
+     *
+     */
+    function handleContextMenu(e?: object): boolean
+    /**
      * Defines raw html for the chart controls.
      *
      * These controls can be overridden by manually placing HTML elements in the chart container with the same ID.
@@ -597,7 +626,7 @@ declare module '../js/chartiq.js' {
       /**
        * controlID for the Trash Can button / Series delete panel (class="mSticky"). Also see CIQ.ChartEngine#displaySticky
        * @example
-       * // disable the tool tip that appears when hovering over an overlay ( drawing, line study, etc.)
+       * // Disable the tooltip that appears when hovering over an overlay (drawing, line study, etc.).
        * stxx.controls["mSticky"]=null;
        */
       mSticky: string,
@@ -681,14 +710,39 @@ declare module '../js/chartiq.js' {
        */
       notificationTray: string
     }
+  }
+
+  /**
+   * Base class for interacting with a name/value store.
+   *
+   * This base class saves to local storage, but you can create your own function overrides for
+   * remote storage as long as you maintain the same function signatures and callback requirements.
+   *
+   * See WebComponents.cq-views for an implementation example.
+   *
+   */
+  export namespace CIQ.NameValueStore {
     /**
-     * This code prevents the browser context menu from popping up when right-clicking on a drawing or overlay.
+     * A function called after a retrieval operation on the name/value store has been completed.
      *
-     * See  rightClickEventListener
-     * @param [e=event] Event
-     * @return
+     * @param error An error object or error code if data retrieval failed; null if
+     * 		data retrieval was successful.
+     * @param response The data retrieved from storage or null if retrieval failed.
+     *
+     * @callback CIQ.NameValueStore~getCallback
+     * @since 8.2.0
      */
-    function handleContextMenu(e?: object): boolean
+    type getCallback = (error: object|string, response: object|string) => void
+    /**
+     * A function called after an update of the name/value store has been completed.
+     *
+     * @param error An error object or error code if the storage update failed; null
+     * 		if the update was successful.
+     *
+     * @callback CIQ.NameValueStore~updateCallback
+     * @since 8.2.0
+     */
+    type updateCallback = (error: object|string) => void
   }
 
   /**
@@ -1420,8 +1474,8 @@ declare module '../js/chartiq.js' {
        * Called when a marker node is double-clicked.
        *
        * Override this function with your own implementation. Return a truthy value to prevent
-       * CIQ.ChartEngine#doubleClick from dispatching the `doubleClick` event and invoking
-       * the doubleClickEventListener.
+       * CIQ.ChartEngine#doubleClick from dispatching the "doubleClick" event and invoking
+       * the [doubleClickEventListener]CIQ.ChartEngine~doubleClickEventListener.
        *
        * @param params Configuration parameters.
        * @param params.cx The clientX coordinate of the double-click event.
@@ -1472,6 +1526,7 @@ declare module '../js/chartiq.js' {
      *   > You should set this to `false` if your market opening and closing times are not aligned to the beginning to each hour.
      *   > Otherwise, forcing them to do so causes the iterator to generate `previous` and `next` times that could prevent it from properly moving trough the market hours.
      * - `convertOnDaily` : A boolean. By default, daily charts are not converted for timezone. Set this to true to convert for daily charts.
+     * - `beginningDayOfWeek` : Weekday number (0-6) to optionally override CIQ.Market prototype setting of same name.
      * - `normal_daily_open`: A string defining a time in `HH:mm` format. Set this to specify the normal open time for a market.
      * - `normal_daily_close`: A string defining a time in `HH:mm` format. Set this to specify the normal close time for a market.
      *
@@ -1481,6 +1536,9 @@ declare module '../js/chartiq.js' {
      * 		name: "SAMPLE-MARKET",
      * 		market_tz: "America/Chicago",
      * 		hour_aligned: true,
+     * 		beginningDayOfWeek: 0,
+     *		normal_daily_open: "09:00",
+     *		normal_daily_close: "17:00",
      * 		rules: [
      * 				{"dayofweek": 1, "open": "09:00", "close": "17:00"}
      * 		]
@@ -1690,6 +1748,7 @@ declare module '../js/chartiq.js' {
        *   > You should set this to `false` if your market opening and closing times are not aligned to the beginning to each hour.
        *   > Otherwise, forcing them to do so causes the iterator to generate `previous` and `next` times that could prevent it from properly moving trough the market hours.
        * - `convertOnDaily` : A boolean. By default, daily charts are not converted for timezone. Set this to true to convert for daily charts.
+       * - `beginningDayOfWeek` : Weekday number (0-6) to optionally override CIQ.Market prototype setting of same name.
        * - `normal_daily_open`: A string defining a time in `HH:mm` format. Set this to specify the normal open time for a market.
        * - `normal_daily_close`: A string defining a time in `HH:mm` format. Set this to specify the normal close time for a market.
        *
@@ -1699,6 +1758,9 @@ declare module '../js/chartiq.js' {
        * 		name: "SAMPLE-MARKET",
        * 		market_tz: "America/Chicago",
        * 		hour_aligned: true,
+       * 		beginningDayOfWeek: 0,
+       *		normal_daily_open: "09:00",
+       *		normal_daily_close: "17:00",
        * 		rules: [
        * 				{"dayofweek": 1, "open": "09:00", "close": "17:00"}
        * 		]
@@ -1891,6 +1953,25 @@ declare module '../js/chartiq.js' {
        * marketSessions=stxx.chart.market.sessions
        */
       public sessions: any[]
+      /**
+       * The day on which to begin a week: 0 = Sunday, 1 = Monday, ..., 6 = Saturday.
+       *
+       * This is a global setting, but can be overridden with a market-specific setting in the market
+       * definition.
+       *
+       * @since 8.2.0
+       *
+       * @example
+       * stxx.chart.market.beginningDayOfWeek = 5;  // Start week on Friday.
+       */
+      public beginningDayOfWeek: number
+      /**
+       * Returns an array of objects containing a list of sessions and whether or not they are enabled
+       *
+       * @return String array of market session names, and corresponding status (e.g. [{ name: 'pre', enabled: false } { name: 'post', enabled: true }])
+       * @since 6.0.0
+       */
+      public getSessionNames(): any[]
       /**
        * Toggle on/off a market session by name.
        *
@@ -2137,74 +2218,103 @@ declare module '../js/chartiq.js' {
       public _convertFromMarketTZ(dt: Date, tz?: string): Date
     }
     /**
-     * Base class for interacting with a name value store.
-     * This base class saves to local storage but you can override your own for remote storage,
-     * as long as you maintain the same function signatures and call back requirements.
+     * Base class for interacting with a name/value store.
      *
-     * See WebComponents.cq-views for implementation example.
+     * This base class saves to local storage, but you can create your own function overrides for
+     * remote storage as long as you maintain the same function signatures and callback requirements.
+     *
+     * See WebComponents.cq-views for an implementation example.
      *
      */
     class NameValueStore {
       /**
-       * Base class for interacting with a name value store.
-       * This base class saves to local storage but you can override your own for remote storage,
-       * as long as you maintain the same function signatures and call back requirements.
+       * Base class for interacting with a name/value store.
        *
-       * See WebComponents.cq-views for implementation example.
+       * This base class saves to local storage, but you can create your own function overrides for
+       * remote storage as long as you maintain the same function signatures and callback requirements.
+       *
+       * See WebComponents.cq-views for an implementation example.
        *
        */
       constructor()
       /**
-       * Get a value from the name value store
-       * @param    field The field to fetch
-       * @param  cb    Callback. First field is error or null. Second field is the result.
+       * Retrieves a value from the name/value store.
+       *
+       * @param field The field for which the value is retrieved.
+       * @param cb A callback function called after the retrieval
+       * 		operation has been completed. Two arguments are provided to the callback function. The
+       * 		first argument indicates the success or failure of the operation; the second argument is
+       * 		the value returned by the operation.
+       *
+       * @since 8.2.0 Made `cb` a required parameter; changed its type to
+       * 		CIQ.NameValueStore~getCallback.
+       *
        * @example
-       * nameValueStore.get("myfield", function(err,data){
-       *    if(!err){
-       *        // do something with data
-       *        if(cb) cb(errorCode, yourViewObject);
-       *    }
+       * nameValueStore.get("myfield", function(err, data) {
+       *     if (err) {
+       *         // Do something with the error.
+       *     } else {
+       *         // Do something with the retrieved data.
+       *     }
        * });
        */
-      public get(field: string, cb: Function): void
+      public get(field: string, cb: CIQ.NameValueStore.getCallback): void
       /**
-       * Set a value to the name value store
-       * @param    field The field to fetch
-       * @param    value The value to store
-       * @param  cb    Callback
+       * Stores a value in the name/value store.
+       *
+       * @param field The name under which the value is stored.
+       * @param value The value to store.
+       * @param [cb] A callback function called after the storage
+       * 		operation has been completed. A single argument, which indicates success or failure of the
+       * 		operation, is provided to the callback function.
+       *
+       * @since 8.2.0 Changed the type of the `cb` parameter to CIQ.NameValueStore~updateCallback.
+       *
        * @example
-       * nameValueStore.set("myfield", "myValue", function(){
-       *        // do something after data has been saved
-       *        if(cb) cb(errorCode);
-       *    }
+       * nameValueStore.set("myfield", "myValue", function(err) {
+       *     if (err) {
+       *         // Do something with the error.
+       *     } else {
+       *         // Do something after the data has been stored.
+       *     }
        * });
        */
-      public set(field: string, value: string, cb: Function): void
+      public set(
+        field: string,
+        value: string|object,
+        cb?: CIQ.NameValueStore.updateCallback
+      ): void
       /**
-       * Remove a field from the name value store
-       * @param    field The field to remove
-       * @param  cb    Callback
+       * Removes a field from the name/value store.
+       *
+       * @param field The field to remove.
+       * @param [cb] A callback function called after the storage
+       * 		operation has been completed. A single argument, which indicates success or failure of the
+       * 		operation, is provided to the callback function.
+       *
+       * @since 8.2.0 Changed the type of the `cb` parameter to CIQ.NameValueStore~updateCallback.
+       *
        * @example
-       * nameValueStore.remove("myfield", function(){
-       *        // do something after data has been removed
-       *        if(cb) cb(errorCode);
-       *    }
+       * nameValueStore.remove("myfield", function(err) {
+       *     if (err) {
+       *         // Do something with the error.
+       *     } else {
+       *         // Do something after the field has been removed.
+       *     }
        * });
        */
-      public remove(field: string, cb: Function): void
+      public remove(field: string, cb?: CIQ.NameValueStore.updateCallback): void
     }
     /**
      * See tutorial [Data Integration : Quotefeeds]{@tutorial DataIntegrationQuoteFeeds} for a complete overview and
      * step by step source code for implementing a quotefeed
      *
-     * @deprecated
-     * @private
      */
     class QuoteFeed {
     }
     /**
-     * **The UI portion of this namespace is maintained for legacy implementations only (not using web components). New implementations should use functionality included in the web components (stxUI.js)**
-     * Comparison namespace
+     * Namespace for functionality related to comparison series.
+     *
      */
     class Comparison {
     }
@@ -2212,12 +2322,14 @@ declare module '../js/chartiq.js' {
      * Manages chart sharing and uploading.
      *
      * See the {@tutorial Chart Sharing} tutorial for more details.
+     *
      */
     class Share {
       /**
        * Manages chart sharing and uploading.
        *
        * See the {@tutorial Chart Sharing} tutorial for more details.
+       *
        */
       constructor()
     }
@@ -2648,6 +2760,7 @@ declare module '../js/chartiq.js' {
     interface ChartEngine {
       /**
        * Animation Loop
+       *
        * Draws a generic histogram for the chart.
        *
        * This method should rarely if ever be called directly.  Use CIQ.Renderer.Histogram or CIQ.ChartEngine#setChartType instead.
@@ -2824,15 +2937,16 @@ declare module '../js/chartiq.js' {
       removeDrawing(drawing: object): void
       /**
        * INJECTABLE
+       *
        * Stops (aborts) the current drawing. See CIQ.ChartEngine#undoLast for an actual "undo" operation.
        */
       undo(): void
       /**
-       * Creates an undo stamp for the chart's current drawing state and triggers a call to the undoStampEventListener.
+       * Creates an undo stamp for the chart's current drawing state and triggers a call to the [undoStampEventListener]CIQ.ChartEngine~undoStampEventListener.
        *
        * Every time a drawing is added or removed the CIQ.ChartEngine#undoStamps object is updated with a new entry containing the resulting set of drawings.
        * Using the corresponding CIQ.ChartEngine#undoLast method, you can revert back to the last state, one at a time.
-       * You can also use the undoStampEventListener to create your own tracker to undo or redo drawings.
+       * You can also use the [undoStampEventListener]CIQ.ChartEngine~undoStampEventListener to create your own tracker to undo or redo drawings.
        * @param before The chart's array of [serialized drawingObjects]CIQ.ChartEngine#exportDrawings before being modified.
        * @param after The chart's array of [serialized drawingObjects]CIQ.ChartEngine#exportDrawings after being modified
        * @since 7.0.0 'before' and 'after' parameters must now be an array of serialized drawings instead of an array of drawingObjects. See CIQ.ChartEngine#exportDrawings.
@@ -2868,7 +2982,8 @@ declare module '../js/chartiq.js' {
        */
       drawingClick(panel: CIQ.ChartEngine.Panel, x: number, y: number): boolean
       /**
-       * Dispatch a drawingEditEventListener event if there are any listeners. Otherwise, remove the given drawing.
+       * Dispatches a [drawingEditEventListener]CIQ.ChartEngine~drawingEditEventListener event
+       * if there are any listeners. Otherwise, removes the given drawing.
        *
        * @param drawing The vector instance to edit, normally provided by deleteHighlighted.
        * @param forceEdit skip the context menu and begin editing. Used on touch devices.
@@ -2877,6 +2992,7 @@ declare module '../js/chartiq.js' {
       rightClickDrawing(drawing: CIQ.Drawing, forceEdit: boolean): void
       /**
        * INJECTABLE
+       *
        * Calculates the magnet point for the current mouse cursor location. This is the nearest OHLC point. A small white
        * circle is drawn on the temporary canvas to indicate this location for the end user. If the user initiates a drawing then
        * the end point of the drawing will be tied to the magnet point.
@@ -2885,14 +3001,24 @@ declare module '../js/chartiq.js' {
        */
       magnetize(): void
       /**
-       * Sets the current drawing tool as described by CIQ.ChartEngine.currentVectorParameters (segment, line, etc)
-       * @param  value The name of the drawing tool to enable
+       * Sets the current drawing tool as described by CIQ.ChartEngine.currentVectorParameters
+       * (segment, line, etc.). Also triggers crosshairs to appear if they are relevant to the drawing.
+       *
+       * **Note:** The value `""` (empty string) is used for the "no tool" option, and `null` is used to
+       * turn off drawing mode entirely. If the "no tool" option is set, crosshairs will not appear even
+       * if crosshairs are toggled on.
+       *
+       * @param value The name of the drawing tool to enable.
+       *
+       *
        * @example
-       * // activates a drawing type described by currentVectorParameters
-       * stxx.changeVectorType('rectangle');
-       * // deactivates drawing mode
-       * stxx.changeVectorType('');
-       * // clears the drawings
+       * // Activates a drawing type described by currentVectorParameters.
+       * stxx.changeVectorType("rectangle");
+       *
+       * // Deactivates drawing mode.
+       * stxx.changeVectorType("");
+       *
+       * // Clears the drawings.
        * stxx.clearDrawings()
        */
       changeVectorType(value: string): void
@@ -2914,6 +3040,7 @@ declare module '../js/chartiq.js' {
       /**
        * INJECTABLE
        * <span class="animation">Animation Loop</span>
+       *
        * Draws the drawings (vectors). Each drawing is iterated and asked to draw itself. Drawings are automatically
        * clipped by their containing panel.
        */
@@ -2945,6 +3072,7 @@ declare module '../js/chartiq.js' {
       registerTouchAndMouseEvents(): void
       /**
        * INJECTABLE
+       *
        * Called when the user presses the mouse button down. This will activate dragging operations once the user moves a few pixels
        * within CIQ.ChartEngine#mousemoveinner.
        * @param  e The mouse event
@@ -2952,6 +3080,7 @@ declare module '../js/chartiq.js' {
       mousedown(e: Event): void
       /**
        * INJECTABLE
+       *
        * Handles mouse movement events. This method calls CIQ.ChartEngine#mousemoveinner which has the core logic
        * for dealing with panning and zooming. See also CIQ.ChartEngine#touchmove which is the equivalent method for touch events.
        * @param mouseEvent A mouse move event
@@ -2959,6 +3088,7 @@ declare module '../js/chartiq.js' {
       mousemove(mouseEvent: Event): void
       /**
        * INJECTABLE
+       *
        * Called whenever the user lifts the mousebutton up. This may send a click to a drawing, or cease a drag operation.
        * @param  e A mouse event
        * @since 6.3.0 baseline chart recenters itself after adjusting baseline
@@ -2967,27 +3097,29 @@ declare module '../js/chartiq.js' {
       /**
        * Handles all double-clicks on the chart container.
        *
-       * Applies a double-click event to a CIQ.Marker and dispatches the `doubleClick` event,
-       * which invokes the doubleClickEventListener.
+       * Applies a double-click event to a CIQ.Marker and dispatches the "doubleClick" event,
+       * which invokes the [doubleClickEventListener]CIQ.ChartEngine~doubleClickEventListener.
        *
        * If the return value of the marker's CIQ.Marker#doubleClick method is truthy, the
-       * `doubleClick` event is not dispatched.
+       * "doubleClick" event is not dispatched.
        *
        * @param button The button used to double-click.
-       * @param x The x-axis coordinate of the double-click.
-       * @param y The y-axis coordinate of the double-click.
+       * @param x The x-coordinate of the double-click.
+       * @param y The y-coordinate of the double-click.
        *
        * @since 8.0.0
        */
       doubleClick(button: number, x: number, y: number): void
       /**
        * INJECTABLE
+       *
        * This is called whenever the mouse leaves the chart area. Crosshairs are disabled, stickies are hidden, dragDrawings are completed.
        * @param  e The mouseout event
        */
       handleMouseOut(e: Event): void
       /**
        * INJECTABLE
+       *
        * Event handler that is called when the handle of a panel is grabbed, for resizing
        * @param  panel The panel that is being grabbed
        */
@@ -2999,6 +3131,7 @@ declare module '../js/chartiq.js' {
       grabbingHand(): void
       /**
        * INJECTABLE
+       *
        * Event handler that is called when a panel handle is released.
        */
       releaseHandle(): void
@@ -3012,6 +3145,7 @@ declare module '../js/chartiq.js' {
       findHighlights(isTap: boolean, clearOnly: boolean): void
       /**
        * INJECTABLE
+       *
        * This function is called when the user right clicks on a highlighted overlay, series or drawing.
        * Calls deleteHighlighted() which calls rightClickOverlay() for studies.
        * @example
@@ -3023,6 +3157,7 @@ declare module '../js/chartiq.js' {
       rightClickHighlighted(): void
       /**
        * INJECTABLE
+       *
        * Removes any and all highlighted overlays, series or drawings.
        *
        * @param callRightClick When true, call the right click method for the given highlight:
@@ -3053,6 +3188,7 @@ declare module '../js/chartiq.js' {
       displayDrawOK(): void
       /**
        * INJECTABLE
+       *
        * Zooms (vertical swipe / mousewheel) or pans (horizontal swipe) the chart based on a mousewheel event.
        *
        * Uses for following for zooming:
@@ -3078,10 +3214,11 @@ declare module '../js/chartiq.js' {
       /**
        * Appends additional chart controls and attaches a click event handler.
        *
-       * @param controlClass CSS class to attach to the control element
-       * @param controlLabel Descriptive name for the control; appears in tool tip
-       * @param clickHandler Called when the control is selected
-       * @return Reference to the new control element
+       * @param controlClass CSS class to attach to the control element.
+       * @param controlLabel Descriptive name for the control; appears in tooltip.
+       * @param clickHandler Called when the control is selected.
+       * @return Reference to the new control element.
+       *
        * @since 7.3.0
        */
       registerChartControl(
@@ -3091,6 +3228,7 @@ declare module '../js/chartiq.js' {
       ): Node
       /**
        * INJECTABLE
+       *
        * Zooms the chart out. The chart is zoomed incrementally by the percentage indicated each time this is called.
        * @param  e The mouse click event, if it exists (from clicking on the chart control)
        * @param  pct The percentage, **in decimal equivalent**, to zoom out the chart. Default is 1/0.7 (~1.42), to reverse the 0.7 (30%) multiplier used in CIQ.ChartEngine.ChartEngine#zoomIn
@@ -3102,6 +3240,7 @@ declare module '../js/chartiq.js' {
       zoomOut(e: Event, pct: number): void
       /**
        * INJECTABLE
+       *
        * Zooms the chart in. The chart is zoomed incrementally by the percentage indicated each time this is called.
        * @param  e The mouse click event, if it exists (from clicking on the chart control)
        * @param  pct The percentage, **in decimal equivalent**, to zoom in the chart. Default is 0.7 (30%)
@@ -3113,11 +3252,13 @@ declare module '../js/chartiq.js' {
       /**
        * INJECTABLE
        * <span class="animation">Animation Loop</span>
+       *
        * Registers mouse events for the crosshair elements (to prevent them from picking up events)
        */
       createCrosshairs(): void
       /**
        * INJECTABLE
+       *
        * Core logic for handling mouse or touch movements on the chart.
        *
        * If CIQ.ChartEngine#grabbingScreen is `true` then drag operations are performed.
@@ -3268,6 +3409,7 @@ declare module '../js/chartiq.js' {
       ): void
       /**
        * INJECTABLE
+       *
        * Adds a series of data to the chart.
        *
        * A series can be rendered (for instance like a comparison chart) or it can be hidden (for instance to drive a study).
@@ -3433,10 +3575,12 @@ declare module '../js/chartiq.js' {
        * @param [parameters.marginTop=0] <span class="injection">Rendering</span> Percentage (if less than 1) or pixels (if greater than 1) from top of panel to set the top margin for the series.<BR>**Note:** this parameter is to be used on **subsequent** series rendered on the same axis. To set margins for the first series, CIQ.ChartEngine.YAxis#initialMarginTop needs to be used.<BR>**Note:** not applicable if shareYAxis is set.
        * @param [parameters.marginBottom=0] <span class="injection">Rendering</span> Percentage (if less than 1) or pixels (if greater than 1) from the bottom of panel to set the bottom margin for the series.<BR>**Note:** this parameter is to be used on **subsequent** series rendered on the same axis. To set margins for the first series, CIQ.ChartEngine.YAxis#initialMarginBottom needs to be used.<BR>**Note:** not applicable if shareYAxis is set.
        * @param [parameters.width=1] <span class="injection">Rendering</span> Width of line in pixels
-       * @param [parameters.minimum]	 <span class="injection">Rendering</span> Minimum value for the series. Overrides CIQ.minMax result.
-       * @param [parameters.maximum]	 <span class="injection">Rendering</span> Maximum value for the series. Overrides CIQ.minMax result.
-       * @param [parameters.color] <span class="injection">Rendering</span> Color to draw line. Will cause the line to immediately render an overlay. Only applicable for default or single colors renderers. See CIQ.Renderer#attachSeries for additional color options.
-       * @param [parameters.baseColor=parameters.color] <span class="injection">Rendering</span> Color for the base of a mountain series. Defaults to `parameters.color`.
+       * @param [parameters.minimum] <span class="injection">Rendering</span> Minimum value for the series. Overrides CIQ.minMax result.
+       * @param [parameters.maximum] <span class="injection">Rendering</span> Maximum value for the series. Overrides CIQ.minMax result.
+       * @param [parameters.color] <span class="injection">Rendering</span> Color used to draw the series line. Causes the line to immediately render an overlay. Only applicable for default or single-color renderers.
+       * 		<p>Must be an RGB, RGBA, or three- or six&#8209;digit hexadecimal color number or <a href="https://developer.mozilla.org/en-US/docs/Web/CSS/color_value" target="_blank"> CSS color keyword</a>; for example, "rgb(255, 0, 0)", "rgba(255, 0, 0, 0.5)", "#f00", "#FF0000", or "red".
+       * 		<p>See CIQ.Renderer#attachSeries for additional color options.
+       * @param [parameters.baseColor=parameters.color] <span class="injection">Rendering</span> Color for the base of a mountain series.
        * @param [parameters.pattern='solid'] <span class="injection">Rendering</span> Pattern to draw line, array elements are pixels on and off, or a string e.g. "solid", "dotted", "dashed"
        * @param [parameters.fillGaps] <span class="injection">Data Loading</span> If CIQ.ChartEngine#cleanupGaps is enabled to clean gaps (not 'false'), you can use this parameter to override the global setting for this series.
        * - If `fillGaps` not present
@@ -3468,7 +3612,7 @@ declare module '../js/chartiq.js' {
        * An array of properly formatted OHLC quote object(s). [See OHLC Data Format]{@tutorial InputDataFormat}.
        * ----**Price Only:**
        * An array of objects, each one with the followng elements:
-       * @param   [parameters.data.DT] JavaScript date object or epoch representing data point (overrides Date parameter if present)
+       * @param [parameters.data.DT] JavaScript date object or epoch representing data point (overrides Date parameter if present)
        * @param [parameters.data.Date] string date representing data point ( only used if DT parameter is not present)
        * @param parameters.data.Value value of the data point ( As an alternative, you can send `parameters.data.Close` since your quote feed may already be returning the data using this element name)
        * @param [parameters.panel] <span class="injection">Rendering</span> The panel name on which the series should display. If the panel doesn't exist, one will be created. If `true` is passed, a new panel will also be created.
@@ -3476,8 +3620,9 @@ declare module '../js/chartiq.js' {
        * @param [parameters.loadData=true] <span class="injection">Data Loading</span> Include and set to false if you know the initial data is already in the masterData array or will be loaded by another method. The series will be added but no data requested. Note that if you remove this series, the data points linked to it will also be removed which may create issues if required by the chart. If that is the case, you will need to manually remove from the renderer linked to it instead of the underlying series itself.
        * @param [parameters.extendToEndOfDataSet] <span class="injection">Rendering</span> Set to true to plot any gap at the front of the chart.  Automatically done for step charts (set to false to disable) or if parameters.gapDisplayStyle are set (see CIQ.ChartEngine#addSeries)
        * @param [parameters.displayFloatingLabel=false] <span class="injection">Rendering</span> Set to false to disable the display of a Y-axis floating label for this series.
+       * @param [parameters.baseline] <span class="injection">Rendering</span> If a boolean value, indicates whether the series renderer draws a baseline. If an object, must be the equivalent of CIQ.ChartEngine.Chart#baseline.
        * @param [cb] Callback function to be executed once the fetch returns data from the quoteFeed. It will be called with an error message if the fetch failed: `cb(err);`. Only applicable if no data is provided.
-       * @return The series object
+       * @return The series object.
        *
        * @since
        * - 04-2015 If `isComparison` is true shareYAxis is automatically set to true and setComparison(true) called. createDataSet() and draw() are automatically called to immediately render the series.
@@ -3505,6 +3650,7 @@ declare module '../js/chartiq.js' {
        * - 6.3.0 If a panel name is passed into the function, a new panel will be created if one doesn't already exist.
        * - 6.3.0 Added `parameters.displayFloatingLabel`.
        * - 8.1.0 Supports custom baselines. See example.
+       * - 8.2.0 Added `parameters.baseline`.
        *
        * @example <caption>Add a series overlay and display it as a dashed line.</caption>
        * stxx.addSeries(
@@ -3740,12 +3886,14 @@ declare module '../js/chartiq.js' {
           action?: string,
           loadData?: boolean,
           extendToEndOfDataSet?: boolean,
-          displayFloatingLabel?: boolean
+          displayFloatingLabel?: boolean,
+          baseline?: boolean|object
         },
         cb?: Function
       ): object
       /**
        * INJECTABLE
+       *
        * Modifies an existing series. Any passed parameters [extend]CIQ.extend the existing parameters.
        *
        * @param descriptor Series to modify. Accepts the series object as returned by CIQ.ChartEngine#addSeries or series ID.
@@ -3782,6 +3930,7 @@ declare module '../js/chartiq.js' {
       ): Object
       /**
        * INJECTABLE
+       *
        * Detaches a series added using [addSeries]CIQ.ChartEngine#addSeries from **all associated renderers** in the chart,
        * removing the actual series data from masterData.
        *
@@ -3856,20 +4005,20 @@ declare module '../js/chartiq.js' {
        *
        * Imports a layout (panels, studies, candleWidth, etc) from a previous serialization. See CIQ.ChartEngine#exportLayout.
        *
-       * There are 3 ways to use the this method:
+       * There are three ways to use this method:
        * 1. Preset the layout object in the chart instance, but do not load any data.
-       *  - This is usually used to restore an initial 'symbol independent' general layout (chart type and studies mainly) that will then take effect when `loadChart` is subsequently called.
-       *  - In this case, exportedLayout should be called using 'withSymbols=false' and the importLayout should have 'noDataLoad=true'.
+       *    - This is usually used to restore an initial 'symbol independent' general layout (chart type and studies mainly) that will then take effect when `loadChart` is subsequently called.
+       *    - In this case, exportedLayout should be called using 'withSymbols=false' and the importLayout should have 'noDataLoad=true'.
        * 2. Load an entire new chart and its data, including primary symbol, additional series, studies, chart type, periodicity and range:
-       *  - In this case, you should not need call loadChart, setPeriodicity setSpan or setRange, addStudy, etc. since it is all restored from the previously exported layout and loaded using the attached quoteFeed.
-       *  - If you still wish to change periodicity, span or range, you must use the CB function to do so.
-       *  - In this case, exportedLayout should be called  using 'withSymbols=true' and the importLayout should have 'noDataLoad=false' and 'managePeriodicity=true'.
+       *    - In this case, you should not need call loadChart, setPeriodicity setSpan or setRange, addStudy, etc. since it is all restored from the previously exported layout and loaded using the attached quoteFeed.
+       *    - If you still wish to change periodicity, span or range, you must use the CB function to do so.
+       *    - In this case, exportedLayout should be called  using 'withSymbols=true' and the importLayout should have 'noDataLoad=false' and 'managePeriodicity=true'.
        * 3. Reset layout on an already existing chart without changing the primary symbol or adding additional symbols:
-       *  - This is used when restoring a 'view' on an already existing chart from a previous `loadChart` call. The primary symbol remains the same, no additional series are added, but periodicity, range, studies and chart type are restored from the previously serialized view.
-       *  - In this case, exportedLayout should be called  using 'withSymbols=false', and importLayout should have 'noDataLoad=false', managePeriodicity=true', and 'preserveTicksAndCandleWidth=true'.
+       *    - This is used when restoring a 'view' on an already existing chart from a previous `loadChart` call. The primary symbol remains the same, no additional series are added, but periodicity, range, studies and chart type are restored from the previously serialized view.
+       *    - In this case, exportedLayout should be called  using 'withSymbols=false', and importLayout should have 'noDataLoad=false', managePeriodicity=true', and 'preserveTicksAndCandleWidth=true'.
        *
        * **Important Notes:**
-       * - Please note that [studyOverlayEdit]studyOverlayEditEventListener and [studyPanelEdit]studyPanelEditEventListener event listeners must be set *before* you call CIQ.ChartEngine#importLayout.
+       * - Please note that [studyOverlayEdit]CIQ.ChartEngine~studyOverlayEditEventListener and [studyPanelEdit]CIQ.ChartEngine~studyPanelEditEventListener event listeners must be set *before* you call CIQ.ChartEngine#importLayout.
        * Otherwise your imported studies will not have edit capabilities.
        *
        * - When symbols are loaded, this function will set the primary symbol (first on the serialized symbol list) with CIQ.ChartEngine#loadChart
@@ -3886,18 +4035,18 @@ declare module '../js/chartiq.js' {
        * they are only imported if params.managePeriodicity is set to true and params.noDataLoad is set to false.
        * If both range and span are present, range takes precedence.
        *
-       * @param  config						A serialized layout generated by CIQ.ChartEngine#exportLayout
-       * @param  params						Parameters to dictate layout behavior
-       * @param  [params.noDataLoad=false] If true, then any automatic data loading from the quotefeed will be skipped, including setting periodicity, spans or ranges.
-       * Data can only be loaded if a quote feed is attached to the chart.
-       * @param  [params.managePeriodicity]	If true then the periodicity will be set from the layout, otherwise periodicity will remain as currently set.
-       * If the span/range was saved in the layout, it will be restored using the most optimal periodicity as determined by CIQ.ChartEngine#setSpan.
-       * Periodicity can only be managed if a quote feed is attached to the chart.
-       * Only applicable when noDataLoad=false.
-       * See CIQ.ChartEngine#setPeriodicity for additional details
-       * @param  [params.preserveTicksAndCandleWidth] If true then the current candleWidth (horizontal zoom) and scroll (assuming same periodicity) will be maintained and any spans or ranges present in the config will be ignored. Otherwise candle width and span/ranges will be taken from the config and restored.
-       * @param  [params.cb] An optional callback function to be executed once the layout has been fully restored.
-       * @param  [params.seriesCB] An optional callback function to be executed after each series is restored (to be aded to each CIQ.ChartEngine#addSeries call).
+       * @param config A serialized layout generated by CIQ.ChartEngine#exportLayout.
+       * @param [params] Layout behavior parameters.
+       * @param [params.noDataLoad] If true, then any automatic data loading from the quotefeed will be skipped, including setting periodicity, spans or ranges.
+       * 		<p>Data can only be loaded if a quote feed is attached to the chart.
+       * @param [params.managePeriodicity] If true, then the periodicity will be set from the layout, otherwise periodicity will remain as currently set.
+       * 		<p>If the span/range was saved in the layout, it will be restored using the most optimal periodicity as determined by CIQ.ChartEngine#setSpan.
+       * 		<p>Periodicity can only be managed if a quote feed is attached to the chart.
+       * 		<p>Only applicable when noDataLoad = false.
+       * 		<p>See CIQ.ChartEngine#setPeriodicity for additional details.
+       * @param [params.preserveTicksAndCandleWidth] If true then the current candleWidth (horizontal zoom) and scroll (assuming same periodicity) will be maintained and any spans or ranges present in the config will be ignored. Otherwise candle width and span/ranges will be taken from the config and restored.
+       * @param [params.cb] An optional callback function to be executed once the layout has been fully restored.
+       * @param [params.seriesCB] An optional callback function to be executed after each series is restored (to be added to each CIQ.ChartEngine#addSeries call).
        * @since
        * - 05-2016-10 Symbols are also loaded if included on the serialization.
        * - 2016-06-21 `preserveTicksAndCandleWidth` now defaults to true.
@@ -3908,7 +4057,7 @@ declare module '../js/chartiq.js' {
        */
       importLayout(
         config: object,
-        params: {
+        params?: {
           noDataLoad?: boolean,
           managePeriodicity?: boolean,
           preserveTicksAndCandleWidth?: boolean,
@@ -3969,6 +4118,7 @@ declare module '../js/chartiq.js' {
       exportPreferences(): typeof CIQ.ChartEngine.prototype.preferences
       /**
        * INJECTABLE
+       *
        * This function is called when a highlighted study overlay is right clicked. If the overlay has an edit function (as many studies do), it will be called. Otherwise it will remove the overlay
        * @param  name The name (id) of the overlay
        * @param  [forceEdit] If true then force edit menu
@@ -3976,6 +4126,7 @@ declare module '../js/chartiq.js' {
       rightClickOverlay(name: string, forceEdit?: boolean): void
       /**
        * INJECTABLE
+       *
        * Registers an activated overlay study with the chart.
        *
        * This is the recommended method for registering an overlay study, rather than directly manipulating the [stxx.overlays]CIQ.ChartEngine#overlays object.
@@ -3985,6 +4136,7 @@ declare module '../js/chartiq.js' {
       addOverlay(sd: CIQ.Studies.StudyDescriptor): void
       /**
        * INJECTABLE
+       *
        * Removes an overlay (and the associated study)
        * @param  name The name (id) of the overlay
        */
@@ -4007,6 +4159,7 @@ declare module '../js/chartiq.js' {
       setThemeSettings(settings?: object): void
       /**
        * INJECTABLE
+       *
        * This method captures a tap event (single click) on a touch device. It supports both touch and pointer events.
        * @param  finger Which finger is pressed
        * @param  x	   X location on screen of the press
@@ -4015,6 +4168,7 @@ declare module '../js/chartiq.js' {
       touchSingleClick(finger: number, x: number, y: number): void
       /**
        * INJECTABLE
+       *
        * Detects a double-tap on a touch device. Circumvents
        * CIQ.ChartEngine#touchSingleClick.
        *
@@ -4028,6 +4182,7 @@ declare module '../js/chartiq.js' {
       touchDoubleClick(finger: number, x: number, y: number): void
       /**
        * INJECTABLE
+       *
        * Handler for touch move events. This supports both touch (Apple) and pointer (Windows) style events.
        * Zooming through pinch is handled directly in this method but otherwise most movements are passed to CIQ.ChartEngine#mousemoveinner.
        * If CIQ.ChartEngine#allowThreeFingerTouch is true then a three finger movement will increment periodicity.
@@ -4036,6 +4191,7 @@ declare module '../js/chartiq.js' {
       touchmove(e: Event): void
       /**
        * INJECTABLE
+       *
        * Event callback for when the user puts a new finger on the touch device. This supports both touch (Apple) and pointer (Windows) events.
        * It is functionally equivalent to CIQ.ChartEngine#mousedown.
        * Set CIQ.ChartEngine#ignoreTouch to true to bypass all touch event handling.
@@ -4044,6 +4200,7 @@ declare module '../js/chartiq.js' {
       touchstart(e: Event): void
       /**
        * INJECTABLE
+       *
        * Event handler for when a touch ends. If this occurs within 250 ms then CIQ.ChartEngine#touchSingleClick will be called.
        * If two end events occur within 500 ms then CIQ.ChartEngine#touchDoubleClick will be called.
        * If the user moves a significant enough distance between touch start and end events within 300ms then a swipe has occurred
@@ -4081,6 +4238,7 @@ declare module '../js/chartiq.js' {
       ): CIQ.Visualization
       /**
        * Animation Loop
+       *
        * Draws a generic heatmap for the chart.
        *
        * Use CIQ.Renderer.Heatmap if the histogram is composed of multiple series, each representing a different color group.
@@ -4127,6 +4285,7 @@ declare module '../js/chartiq.js' {
       ): void
       /**
        * Animation Loop
+       *
        * This method draws either hollow or solid candles on the chart.
        *
        * It is called from within CIQ.Renderer#drawIndividualSeries if a `colorFunction` is provided.
@@ -4165,6 +4324,7 @@ declare module '../js/chartiq.js' {
       ): object
       /**
        * Animation Loop
+       *
        * This method draws the shadows (wicks) for candles on the chart.
        *
        * It is called from within CIQ.Renderer#drawIndividualSeries if a `colorFunction` is provided.
@@ -4196,6 +4356,7 @@ declare module '../js/chartiq.js' {
       ): void
       /**
        * Animation Loop
+       *
        * This method draws bars on the chart. It is called by CIQ.ChartEngine#displayChart if a custom `colorFunction` is defined.
        *
        * This method should rarely if ever be called directly.  Use CIQ.Renderer.Bars or CIQ.ChartEngine#setChartType instead.
@@ -4229,6 +4390,7 @@ declare module '../js/chartiq.js' {
       ): object
       /**
        * Animation Loop
+       *
        * Draws a "wave" chart.
        *
        * A wave chart extrapolates intraday movement from OHLC and creates 4 data points from a single
@@ -4260,6 +4422,7 @@ declare module '../js/chartiq.js' {
       ): object
       /**
        * Animation Loop
+       *
        * Draws a scatter plot on the chart.
        *
        * Use CSS style stx_scatter_chart to control the scatter chart display as follows:
@@ -4317,6 +4480,7 @@ declare module '../js/chartiq.js' {
       /**
        * INJECTABLE
        * <span class="animation">Animation Loop</span>
+       *
        * Iterates through all marker handlers, calling their corresponding custom `placementFunction` or CIQ.ChartEngine#defaultMarkerPlacement if none defined.
        */
       positionMarkers(): void
@@ -4355,9 +4519,9 @@ declare module '../js/chartiq.js' {
       defaultMarkerPlacement(
         params: {
           arr: any[],
-          panel: Object,
-          firstTick: Number,
-          lastTick: Number
+          panel: object,
+          firstTick: number,
+          lastTick: number
         }
       ): void
       /**
@@ -4390,6 +4554,7 @@ declare module '../js/chartiq.js' {
       ): any[]
       /**
        * INJECTABLE
+       *
        * Removes series data from masterData and unregisters the series from `chart.series` without removing it from any associated renderers.
        * Also updates the [quoteFeed subscriptions]quotefeed.unsubscribe.
        * **Not recommended to be called directly.**
@@ -4706,8 +4871,8 @@ declare module '../js/chartiq.js' {
       "(UTC+02:00) Amman": string,
       "(UTC+03:00) Istanbul": string,
       "(UTC+03:00) Baghdad, Kuwait, Qatar, Riyadh": string,
-      "(UTC+03:00) Minsk, Moscow, Kirov, Volgograd": string,
-      "(UTC+03:00) Simferopol": string,
+      "(UTC+03:00) Minsk, Moscow, Kirov, Simferopol": string,
+      "(UTC+03:00) Volgograd": string,
       "(UTC+03:00) Nairobi": string,
       "(UTC+03:30) Tehran": string,
       "(UTC+04:00) Baku": string,
@@ -4763,11 +4928,11 @@ declare module '../js/chartiq.js' {
      * Valid examples: 3*IBM, 4+(IBM*2), (IBM-GM)/2
      * If the equation cannot be resolved an exception is thrown.
      * @param equation The equation to compute.
-     * @param  map A map of symbols to data
-     * @return     A consolidated array of equation results
+     * @param map A map of symbols to data
+     * @return A consolidated array of equation results
      * @version ChartIQ Advanced Package
      */
-    function computeEquationChart(equation: string, map: Object): any[]
+    function computeEquationChart(equation: string, map: object): any[]
   }
 
   /**
@@ -4829,7 +4994,10 @@ declare module '../js/chartiq.js' {
        * @param  x    index of bar in dataSet (tick) or date of tick (string form)
        * @param  y    price
        * @param  [chart] Optional chart object
-       * @since 04-2015
+       * @since
+       * - 04-2015
+       * - 8.3.0 `x` tick values outside an allowable range will be replaced by values at the edge
+       * 		of the range. This is to prevent performance problems when switching periodicities.
        */
       public setPoint(
         point: number,
@@ -5467,6 +5635,18 @@ declare module '../js/chartiq.js' {
       )
     }
     /**
+     * Initializes the scroll behavior of marker expands.
+     *
+     * For proper styling, the perfect scrollbar requires elements to have been mounted on the DOM
+     * prior to initialization. As a result, this function should only be called on mounted nodes.
+     *
+     * @param node The marker that contains the expand for which scroll behavior is
+     * 		initialized.
+     *
+     * @since 8.2.0
+     */
+    function initializeScrollBehavior(node: HTMLElement): void
+    /**
      * Removes all markers with the specified label from the chart object
      * @param  stx   The chart object
      * @param  label The label
@@ -5510,6 +5690,7 @@ declare module '../js/chartiq.js' {
    *   > You should set this to `false` if your market opening and closing times are not aligned to the beginning to each hour.
    *   > Otherwise, forcing them to do so causes the iterator to generate `previous` and `next` times that could prevent it from properly moving trough the market hours.
    * - `convertOnDaily` : A boolean. By default, daily charts are not converted for timezone. Set this to true to convert for daily charts.
+   * - `beginningDayOfWeek` : Weekday number (0-6) to optionally override CIQ.Market prototype setting of same name.
    * - `normal_daily_open`: A string defining a time in `HH:mm` format. Set this to specify the normal open time for a market.
    * - `normal_daily_close`: A string defining a time in `HH:mm` format. Set this to specify the normal close time for a market.
    *
@@ -5519,6 +5700,9 @@ declare module '../js/chartiq.js' {
    * 		name: "SAMPLE-MARKET",
    * 		market_tz: "America/Chicago",
    * 		hour_aligned: true,
+   * 		beginningDayOfWeek: 0,
+   *		normal_daily_open: "09:00",
+   *		normal_daily_close: "17:00",
    * 		rules: [
    * 				{"dayofweek": 1, "open": "09:00", "close": "17:00"}
    * 		]
@@ -5884,146 +6068,6 @@ declare module '../js/chartiq.js' {
   }
 
   /**
-   * Manages chart sharing and uploading.
-   *
-   * See the {@tutorial Chart Sharing} tutorial for more details.
-   */
-  export namespace CIQ.Share {
-    /**
-     * Creates a png image or canvas of the current chart and everything inside the container associated with the chart when it was instantiated; including HTML.
-     * Elements outside the chart container will **NOT** be included.
-     *
-     * It will dynamically try to load `js/thirdparty/html2canvas.min.js` if not already loaded.
-     *
-     * This function is asynchronous and requires a callback function. The callback will be passed
-     * a data object or canvas which can be sent to a server or converted to an image.
-     *
-     * By default this method will rely on HTML2Canvas to create an image which will rely on Promises. If your browser does not implement Promises, be sure to include a polyfill to ensure HTML2Canvas works properly.
-     *
-     * **This method does not always work with React or Safari**
-     *
-     * **Canvases can only be exported if all the contents including CSS images come from the same domain,
-     * or all images have cross origin set properly and come from a server that supports CORS; which may or may not be possible with CSS images.**
-     *
-     * **Note when using the charts from `file:///` make sure to include `html2canvas` statically instead of allowing this method to load it dynamically.**
-     * Example:
-     * `<script src="js/thirdparty/html2canvas.min.js"></script>`
-     *
-     *
-     * @since 4.0.0 Addition of `params.hide`.
-     * @version ChartIQ Advanced Package plug-in
-     * @private
-     */
-    class FullChart2PNG {
-    }
-    /**
-     * Convenience function that serves as a wrapper for createImage and uploadImage.
-     * It will create an image using the default parameters. If you wish to customize the image you must use CIQ.Share.createImage separately and then call CIQ.Share.uploadImage.
-     * @param	stx Chart Object
-     * @param  [override] Parameters that overwrite the default hosting location from https://share.chartiq.com to a custom location.
-     * @param	[override.host]
-     * @param	[override.path]
-     * @param	cb Callback when the image is uploaded.
-     * @since 2015-11-01
-     * @example
-     *  // here is the exact code this convenience function is using
-     CIQ.Share.createImage(stx, {}, function(imgData){
-     var id=CIQ.uniqueID();
-     var host="https://share.chartiq.com";
-     var url= host + "/upload/" + id;
-     if(override){
-     if(override.host) host=override.host;
-     if(override.path) url=host+override.path+"/"+id;
-     }
-     var startOffset=stx.getStartDateOffset();
-     var metaData={
-     "layout": stx.exportLayout(),
-     "drawings": stx.exportDrawings(),
-     "xOffset": startOffset,
-     "startDate": stx.chart.dataSegment[startOffset].Date,
-     "endDate": stx.chart.dataSegment[stx.chart.dataSegment.length-1].Date,
-     "id": id,
-     "symbol": stx.chart.symbol
-     };
-     var payload={"id": id, "image": imgData, "config": metaData};
-     CIQ.Share.uploadImage(imgData, url, payload, function(err, response){
-     if(err!==null){
-     CIQ.alert("error sharing chart: ",err);
-     }else{
-     cb(host+response);
-     }
-     });
-     // end sample code to upload image to a server
-     });
-     *
-     */
-    function shareChart(
-      stx: object,
-      override: {host?:object,path?:object} | undefined,
-      cb: Function
-    ): void
-    /**
-     * Creates a png image of the current chart and everything inside the container associated with the chart when it was instantiated; including HTML.
-     * Elements outside the chart container will **NOT** be included.
-     *
-     * If widthPX and heightPX are passed in then the image will be scaled to the requested dimensions.
-     *
-     * It will dynamically try to load `js/thirdparty/html2canvas.min.js` if not already loaded.
-     *
-     * This function is asynchronous and requires a callback function.
-     * The callback will be passed a data object or canvas which can be sent to a server or converted to an image.
-     *
-     * Important Notes:
-     * - **This method will rely on Promises. If your browser does not implement Promises, be sure to include a polyfill.**
-     *
-     * - **This method does not always work with React or Safari**
-     *
-     * - **Canvases can only be exported if all the contents including CSS images come from the same domain,
-     * or all images have cross origin set properly and come from a server that supports CORS; which may or may not be possible with CSS images.**
-     *
-     * - **When using the charts from `file:///`, make sure to include `html2canvas` statically instead of allowing this method to load it dynamically.**
-     * Example:
-     * `<script src="js/thirdparty/html2canvas.min.js"></script>`
-     *
-     * @param    stx           Chart object
-     * @param			[params]			Parameters to describe the image.
-     * @param    [params.widthPX]       Width of image to create. If passed then params.heightPX  will adjust to maintain ratio.
-     * @param    [params.heightPX]      Height of image to create. If passed then params.widthPX will adjust to maintain ratio.
-     * @param    [params.imageType]   Specifies the file format your image will be output in. The dfault is PNG and the format must be suported by your browswer.
-     * @param 	[params.hide] Array of strings; array of the CSS selectors of the DOM elements to hide, before creating a PNG
-     * @param  cb            Callback when image is available fc(data) where data is the serialized image object
-     * @since
-     * - 3.0.0 Function signature changed to take parameters.
-     * - 4.0.0 Addition of `parameters.hide`.
-     * @version ChartIQ Advanced Package plug-in
-     */
-    function createImage(
-      stx: object,
-      params: {widthPX?:number,heightPX?:number,imageType?:string,hide?:any[]} | undefined,
-      cb: Function
-    ): void
-    /**
-     * Uploads an image to a server. The callback will take two parameters. The first parameter is an error
-     * condition (server status), or null if there is no error. The second parameter (if no error) will contain
-     * the response from the server.
-     * 'payload' is an optional object that contains meta-data for the server. If payload exists then the image will be added as a member of the payload object, otherwise an object will be created
-     * 'dataImage' should be a data representation of an image created by the call canvas.toDataURL such as is returned by CIQ.Share.createImage
-     * If you are getting a status of zero back then you are probably encountering a cross-domain ajax issue. Check your access-control-allow-origin header on the server side
-     * @param    dataImage Serialized data for image
-     * @param    url       URL to send the image
-     * @param    [payload]   Any additional data to send to the server should be sent as an object.
-     * @param  cb        Callback when image is uploaded
-     * @version ChartIQ Advanced Package plug-in
-     */
-    function uploadImage(
-      dataImage: string,
-      url: string,
-      payload: object | undefined,
-      cb: Function
-    ): void
-  }
-
-  /**
    * Namespace for functionality related to studies (aka indicators).
    *
    * See {@tutorial Using and Customizing Studies} for additional details and a general overview about studies.
@@ -6091,115 +6135,231 @@ declare module '../js/chartiq.js' {
       public undraggable(stx: CIQ.ChartEngine): boolean
     }
     /**
-     * Generates an object that can be used to create a dialog for creating or modifying a study.
+     * A helper class for adding studies to charts, modifying studies, and creating study edit dialog
+     * boxes.
      *
-     * The object will then contain arrays for inputs, outputs and parameters:
-     * - Each output will describe a color swatch that should be generated.
-     * - Each input will describe a form field that should be generated.
-     * - If a placeholder attribute of `yyyy-mm-dd` or `hh:mm:ss` is set on an input field, the
-     * dialog will display a "date" or "time" input type, instead of a string input type.
-     *   Example:
-     *   ```
-     *   "AVWAP": {
-     *       "name":   "Anchored VWAP",
-     *       "overlay": true,
-     *       "calculateFN": CIQ.Studies.calculateAnchoredVWAP,
-     *       "initializeFN": CIQ.Studies.initAnchoredVWAP,
-     *       "inputs": {"Field":"field",   "Anchor Date":"",   "Anchor Time":""},
-     *       "outputs": {"VWAP":"#FF0000"},
-     *       "attributes":{
-     *       "Anchor Date": {placeholder:"yyyy-mm-dd"},
-     *       "Anchor Time": {placeholder:"hh:mm:ss", step:1}
-     *   }
-     *   ```
-     * - Actual date/time displays are dependent on browser compatibility.
-     * - The time is expected to be entered, and will be displayed in the `displayZone`. It will
-     * converted as needed to the `dataZone` before used internally, so it always matches
-     * `masterData`. See CIQ.ChartEngine#setTimeZone.
+     * Study DialogHelpers are created from
+     * [study definitions](tutorial-Using%20and%20Customizing%20Studies%20-%20Study%20objects.html#understanding_the_study_definition)
+     * or
+     * [study descriptors](tutorial-Using%20and%20Customizing%20Studies%20-%20Study%20objects.html#understanding_the_study_descriptor_object)
+     * (see the examples below).
      *
-     * The results of the dialog would then be passed to CIQ.Studies.addStudy.
-     * The [libraryEntry]CIQ.Studies.studyLibrary is the object that defines the prototype for a study.
-     * May contain attributes which are used to help construct the input fields of the study dialog.
-     * See documentation of CIQ.Studies.studyLibrary and [DialogHelper Object](tutorial-Using%20and%20Customizing%20Studies%20-%20Advanced.html#DialogHelper).
-     * Not needed if `params.sd` is present.
-     * @example
-     * var helper=new CIQ.Studies.DialogHelper({name:"stochastics",stx:stxx});
-     * console.log('Inputs:',JSON.stringify(helper.inputs));
-     * console.log('Outputs:',JSON.stringify(helper.outputs));
-     * console.log('Parameters:',JSON.stringify(helper.parameters));
-     * @example
-     * // how to set the DialogHelper to get a list of all available panels as part of the parameters object
-     * var sd = CIQ.Studies.addStudy(stxx, "Aroon");
-     * var dialogHelper = new CIQ.Studies.DialogHelper({"stx":stxx,"sd":sd, panelSelect:true});
-     * console.log('Parameters:',JSON.stringify(dialogHelper.parameters));
+     * A DialogHelper contains the inputs, outputs, and parameters of a study. Inputs configure the
+     * study. Outputs style the lines and filled areas of the study. Parameters set chart&#8209;related
+     * aspects of the study, such as the panel that contains the study or whether the study is an
+     * underlay.
      *
-     * @example
-     * // Create a DialogHelper without an sd
-     * var dialogHelper = new CIQ.Studies.DialogHelper({"stx":stxx,"name":"ma"})
+     * For example, a DialogHelper for the Anchored VWAP study contains the following data:
+     * ```
+     * inputs: Array(8)
+     * 0: {name: "Field", heading: "Field", value: "Close", defaultInput: "Close", type: "select", …}
+     * 1: {name: "Anchor Date", heading: "Anchor Date", value: "", defaultInput: "", type: "date"}
+     * 2: {name: "Anchor Time", heading: "Anchor Time", value: "", defaultInput: "", type: "time"}
+     * 3: {name: "Display 1 Standard Deviation (1σ)", heading: "Display 1 Standard Deviation (1σ)", value: false,
+     *     defaultInput: false, type: "checkbox"}
+     * 4: {name: "Display 2 Standard Deviation (2σ)", heading: "Display 2 Standard Deviation (2σ)", value: false,
+     *     defaultInput: false, type: "checkbox"}
+     * 5: {name: "Display 3 Standard Deviation (3σ)", heading: "Display 3 Standard Deviation (3σ)", value: false,
+     *     defaultInput: false, type: "checkbox"}
+     * 6: {name: "Shading", heading: "Shading", value: false, defaultInput: false, type: "checkbox"}
+     * 7: {name: "Anchor Selector", heading: "Anchor Selector", value: true, defaultInput: true, type: "checkbox"}
+     * outputs: Array(4)
+     * 0: {name: "VWAP", heading: "VWAP", defaultOutput: "#FF0000", color: "#FF0000"}
+     * 1: {name: "1 Standard Deviation (1σ)", heading: "1 Standard Deviation (1σ)", defaultOutput: "#e1e1e1", color: "#e1e1e1"}
+     * 2: {name: "2 Standard Deviation (2σ)", heading: "2 Standard Deviation (2σ)", defaultOutput: "#85c99e", color: "#85c99e"}
+     * 3: {name: "3 Standard Deviation (3σ)", heading: "3 Standard Deviation (3σ)", defaultOutput: "#fff69e", color: "#fff69e"}
+     * parameters: Array(4)
+     * 0: {name: "panelName", heading: "Panel", defaultValue: "Auto", value: "Auto", options: {…}, …}
+     * 1: {name: "underlay", heading: "Show as Underlay", defaultValue: false, value: undefined, type: "checkbox"}
+     * 2: {name: "yaxisDisplay", heading: "Y-Axis", defaultValue: "default", value: "shared", options: {…}, …}
+     * 3: {name: "flipped", heading: "Invert Y-Axis", defaultValue: false, value: false, type: "checkbox"}
+     * ```
+     *
+     * which corresponds to the fields of the study edit dialog box:
+     *
+     * <img src="./img-AVWAP-Edit-Dialog-Box.png" alt="AVWAP study edit dialog box">
+     *
+     * DialogHelpers also contain `attributes` which specify the formatting of dialog box input
+     * fields. For example, the DialogHelper for the Anchored VWAP study contains the following:
+     * ```
+     * attributes:
+     *     Anchor Date: {placeholder: "yyyy-mm-dd"}
+     *     Anchor Time: {placeholder: "hh:mm:ss", step: 1}
+     *     flippedEnabled: {hidden: true}
+     * ```
+     *
+     * The `placeholder` property (in addition to its normal HTML function of providing placeholder
+     * text) determines the input type of date and time fields. If the property value is "yyyy-mm-dd"
+     * for a date field, the field in the edit dialog box is a date input type instead of a string
+     * input. If the value is "hh:mm:ss" for a time field, the field is a time input type instead of a
+     * string. If the `hidden` property of a field is set to true, the field is excluded from the
+     * study edit dialog box.
+     *
+     * In the Anchored VWAP edit dialog box (see above), the Anchor Date field is formatted as a date
+     * input type; Anchor Time, as a time input type. The Invert Y-Axis check box (the "flipped"
+     * parameter) is hidden.
+     *
+     * **Note:** Actual date/time displays are browser dependent. The time is displayed in the
+     * `displayZone` time zone. Time values are converted to the `dataZone` time zone before being
+     * used internally so they always match the time zone of `masterData`. See
+     * CIQ.ChartEngine#setTimeZone.
+     *
+     * For more information on DialogHelpers, see the
+     * {@tutorial Using and Customizing Studies - Advanced} tutorial.
+     *
+     * @see CIQ.Studies.addStudy to add a study to the chart using the inputs, outputs, and
+     * 		parameters of a DialogHelper.
+     * @see CIQ.Studies.DialogHelper#updateStudy to add or modify a study.
+     * @see CIQ.UI.StudyEdit to create a study edit dialog box using a DialogHelper.
+     *
+     * 		definition. Must match a name specified in the
+     * 		[study library]CIQ.Studies.studyLibrary. Ignored if `params.sd` is provided.
+     * 		DialogHelper is created. Takes precedence over `params.name`.
+     * 		includes options for positioning the study y-axis, color settings for the y-axis, and the
+     * 		Invert&nbsp;Y&#8209;Axis option.
+     * 		includes the Show as Underlay option and a list of panels in which the study can be
+     * 		placed.
      *
      * @since
-     * - 6.3.0 Added parameters `axisSelect` and `panelSelect`.
-     * - 6.3.0 If a placeholder attribute of `yyyy-mm-dd` or `hh:mm:ss` is set on an input field, the dialog will display a "date" or "time" input type, instead of a string input type.
-     * - 7.1.0 It is expected that the study dialog's parameters section is refreshed whenever the DialogHelper changes. The "signal" member should be observed to see if it has flipped.
+     * - 6.3.0 Added parameters `axisSelect` and `panelSelect`. If a placeholder attribute of
+     * 		`yyyy-mm-dd` or `hh:mm:ss` is set on an input field, the dialog displays a date or time
+     * 		input type instead of a string input type.
+     * - 7.1.0 It is expected that the study dialog's parameters section is refreshed whenever the
+     * 		DialogHelper changes. The "signal" member should be observed to see if it has flipped.
+     * - 8.2.0 Attribute property values in the study definition can now be functions. See the
+     * 		[Input Validation](tutorial-Using%20and%20Customizing%20Studies%20-%20Advanced.html#InputValidation)
+     * 		section of the {@tutorial Using and Customizing Studies - Advanced} tutorial.
+     *
+     * @example <caption>Create a DialogHelper from a study definition.</caption>
+     * let helper = new CIQ.Studies.DialogHelper({ name: "ma", stx: stxx })
+     *
+     * @example <caption>Create a DialogHelper from a study descriptor.</caption>
+     * let sd = CIQ.Studies.addStudy(stxx, "Aroon");
+     * let helper = new CIQ.Studies.DialogHelper({ sd: sd, stx: stxx });
+     *
+     * @example <caption>Display the DialogHelper inputs, outputs, parameters, and attributes.</caption>
+     * let helper = new CIQ.Studies.DialogHelper({ name: "stochastics", stx: stxx });
+     * console.log("Inputs:", JSON.stringify(helper.inputs));
+     * console.log("Outputs:", JSON.stringify(helper.outputs));
+     * console.log("Parameters:", JSON.stringify(helper.parameters));
+     * console.log("Attributes:", JSON.stringify(helper.attributes));
      */
     class DialogHelper {
       /**
-       * Generates an object that can be used to create a dialog for creating or modifying a study.
+       * A helper class for adding studies to charts, modifying studies, and creating study edit dialog
+       * boxes.
        *
-       * The object will then contain arrays for inputs, outputs and parameters:
-       * - Each output will describe a color swatch that should be generated.
-       * - Each input will describe a form field that should be generated.
-       * - If a placeholder attribute of `yyyy-mm-dd` or `hh:mm:ss` is set on an input field, the
-       * dialog will display a "date" or "time" input type, instead of a string input type.
-       *   Example:
-       *   ```
-       *   "AVWAP": {
-       *       "name":   "Anchored VWAP",
-       *       "overlay": true,
-       *       "calculateFN": CIQ.Studies.calculateAnchoredVWAP,
-       *       "initializeFN": CIQ.Studies.initAnchoredVWAP,
-       *       "inputs": {"Field":"field",   "Anchor Date":"",   "Anchor Time":""},
-       *       "outputs": {"VWAP":"#FF0000"},
-       *       "attributes":{
-       *       "Anchor Date": {placeholder:"yyyy-mm-dd"},
-       *       "Anchor Time": {placeholder:"hh:mm:ss", step:1}
-       *   }
-       *   ```
-       * - Actual date/time displays are dependent on browser compatibility.
-       * - The time is expected to be entered, and will be displayed in the `displayZone`. It will
-       * converted as needed to the `dataZone` before used internally, so it always matches
-       * `masterData`. See CIQ.ChartEngine#setTimeZone.
+       * Study DialogHelpers are created from
+       * [study definitions](tutorial-Using%20and%20Customizing%20Studies%20-%20Study%20objects.html#understanding_the_study_definition)
+       * or
+       * [study descriptors](tutorial-Using%20and%20Customizing%20Studies%20-%20Study%20objects.html#understanding_the_study_descriptor_object)
+       * (see the examples below).
        *
-       * The results of the dialog would then be passed to CIQ.Studies.addStudy.
-       * @param params Object containing the following:
-       * @param  [params.name] The libraryEntry key for the study to add.
-       * The [libraryEntry]CIQ.Studies.studyLibrary is the object that defines the prototype for a study.
-       * May contain attributes which are used to help construct the input fields of the study dialog.
-       * See documentation of CIQ.Studies.studyLibrary and [DialogHelper Object](tutorial-Using%20and%20Customizing%20Studies%20-%20Advanced.html#DialogHelper).
-       * Not needed if `params.sd` is present.
-       * @param  [params.sd] A study descriptor; when requesting values for an existing study. If present, takes precedence over `params.name`. You may set the 'panelName' parameter to "panel" (sd.parameters.panelName), and this method will provide in the parameters object an array of valid panels, which you can present to the user as options to move the study to a different panel.
-       * @param  [params.axisSelect] If set, the helper will include the axis position and color selection in the parameters section.
-       * @param  [params.panelSelect] If set, the helper will include the panel and underlay selection in the parameters section.
-       * @param  params.stx A chart object
-       * @example
-       * var helper=new CIQ.Studies.DialogHelper({name:"stochastics",stx:stxx});
-       * console.log('Inputs:',JSON.stringify(helper.inputs));
-       * console.log('Outputs:',JSON.stringify(helper.outputs));
-       * console.log('Parameters:',JSON.stringify(helper.parameters));
-       * @example
-       * // how to set the DialogHelper to get a list of all available panels as part of the parameters object
-       * var sd = CIQ.Studies.addStudy(stxx, "Aroon");
-       * var dialogHelper = new CIQ.Studies.DialogHelper({"stx":stxx,"sd":sd, panelSelect:true});
-       * console.log('Parameters:',JSON.stringify(dialogHelper.parameters));
+       * A DialogHelper contains the inputs, outputs, and parameters of a study. Inputs configure the
+       * study. Outputs style the lines and filled areas of the study. Parameters set chart&#8209;related
+       * aspects of the study, such as the panel that contains the study or whether the study is an
+       * underlay.
        *
-       * @example
-       * // Create a DialogHelper without an sd
-       * var dialogHelper = new CIQ.Studies.DialogHelper({"stx":stxx,"name":"ma"})
+       * For example, a DialogHelper for the Anchored VWAP study contains the following data:
+       * ```
+       * inputs: Array(8)
+       * 0: {name: "Field", heading: "Field", value: "Close", defaultInput: "Close", type: "select", …}
+       * 1: {name: "Anchor Date", heading: "Anchor Date", value: "", defaultInput: "", type: "date"}
+       * 2: {name: "Anchor Time", heading: "Anchor Time", value: "", defaultInput: "", type: "time"}
+       * 3: {name: "Display 1 Standard Deviation (1σ)", heading: "Display 1 Standard Deviation (1σ)", value: false,
+       *     defaultInput: false, type: "checkbox"}
+       * 4: {name: "Display 2 Standard Deviation (2σ)", heading: "Display 2 Standard Deviation (2σ)", value: false,
+       *     defaultInput: false, type: "checkbox"}
+       * 5: {name: "Display 3 Standard Deviation (3σ)", heading: "Display 3 Standard Deviation (3σ)", value: false,
+       *     defaultInput: false, type: "checkbox"}
+       * 6: {name: "Shading", heading: "Shading", value: false, defaultInput: false, type: "checkbox"}
+       * 7: {name: "Anchor Selector", heading: "Anchor Selector", value: true, defaultInput: true, type: "checkbox"}
+       * outputs: Array(4)
+       * 0: {name: "VWAP", heading: "VWAP", defaultOutput: "#FF0000", color: "#FF0000"}
+       * 1: {name: "1 Standard Deviation (1σ)", heading: "1 Standard Deviation (1σ)", defaultOutput: "#e1e1e1", color: "#e1e1e1"}
+       * 2: {name: "2 Standard Deviation (2σ)", heading: "2 Standard Deviation (2σ)", defaultOutput: "#85c99e", color: "#85c99e"}
+       * 3: {name: "3 Standard Deviation (3σ)", heading: "3 Standard Deviation (3σ)", defaultOutput: "#fff69e", color: "#fff69e"}
+       * parameters: Array(4)
+       * 0: {name: "panelName", heading: "Panel", defaultValue: "Auto", value: "Auto", options: {…}, …}
+       * 1: {name: "underlay", heading: "Show as Underlay", defaultValue: false, value: undefined, type: "checkbox"}
+       * 2: {name: "yaxisDisplay", heading: "Y-Axis", defaultValue: "default", value: "shared", options: {…}, …}
+       * 3: {name: "flipped", heading: "Invert Y-Axis", defaultValue: false, value: false, type: "checkbox"}
+       * ```
+       *
+       * which corresponds to the fields of the study edit dialog box:
+       *
+       * <img src="./img-AVWAP-Edit-Dialog-Box.png" alt="AVWAP study edit dialog box">
+       *
+       * DialogHelpers also contain `attributes` which specify the formatting of dialog box input
+       * fields. For example, the DialogHelper for the Anchored VWAP study contains the following:
+       * ```
+       * attributes:
+       *     Anchor Date: {placeholder: "yyyy-mm-dd"}
+       *     Anchor Time: {placeholder: "hh:mm:ss", step: 1}
+       *     flippedEnabled: {hidden: true}
+       * ```
+       *
+       * The `placeholder` property (in addition to its normal HTML function of providing placeholder
+       * text) determines the input type of date and time fields. If the property value is "yyyy-mm-dd"
+       * for a date field, the field in the edit dialog box is a date input type instead of a string
+       * input. If the value is "hh:mm:ss" for a time field, the field is a time input type instead of a
+       * string. If the `hidden` property of a field is set to true, the field is excluded from the
+       * study edit dialog box.
+       *
+       * In the Anchored VWAP edit dialog box (see above), the Anchor Date field is formatted as a date
+       * input type; Anchor Time, as a time input type. The Invert Y-Axis check box (the "flipped"
+       * parameter) is hidden.
+       *
+       * **Note:** Actual date/time displays are browser dependent. The time is displayed in the
+       * `displayZone` time zone. Time values are converted to the `dataZone` time zone before being
+       * used internally so they always match the time zone of `masterData`. See
+       * CIQ.ChartEngine#setTimeZone.
+       *
+       * For more information on DialogHelpers, see the
+       * {@tutorial Using and Customizing Studies - Advanced} tutorial.
+       *
+       * @see CIQ.Studies.addStudy to add a study to the chart using the inputs, outputs, and
+       * 		parameters of a DialogHelper.
+       * @see CIQ.Studies.DialogHelper#updateStudy to add or modify a study.
+       * @see CIQ.UI.StudyEdit to create a study edit dialog box using a DialogHelper.
+       *
+       * @param params Constructor parameters.
+       * @param [params.name] The name of a study. The DialogHelper is created from the study's
+       * 		definition. Must match a name specified in the
+       * 		[study library]CIQ.Studies.studyLibrary. Ignored if `params.sd` is provided.
+       * @param [params.sd] A study descriptor from which the
+       * 		DialogHelper is created. Takes precedence over `params.name`.
+       * @param [params.axisSelect] If true, the parameters property of the DialogHelper
+       * 		includes options for positioning the study y-axis, color settings for the y-axis, and the
+       * 		Invert&nbsp;Y&#8209;Axis option.
+       * @param [params.panelSelect] If true, the parameters property of the DialogHelper
+       * 		includes the Show as Underlay option and a list of panels in which the study can be
+       * 		placed.
+       * @param params.stx The chart object associated with the DialogHelper.
        *
        * @since
-       * - 6.3.0 Added parameters `axisSelect` and `panelSelect`.
-       * - 6.3.0 If a placeholder attribute of `yyyy-mm-dd` or `hh:mm:ss` is set on an input field, the dialog will display a "date" or "time" input type, instead of a string input type.
-       * - 7.1.0 It is expected that the study dialog's parameters section is refreshed whenever the DialogHelper changes. The "signal" member should be observed to see if it has flipped.
+       * - 6.3.0 Added parameters `axisSelect` and `panelSelect`. If a placeholder attribute of
+       * 		`yyyy-mm-dd` or `hh:mm:ss` is set on an input field, the dialog displays a date or time
+       * 		input type instead of a string input type.
+       * - 7.1.0 It is expected that the study dialog's parameters section is refreshed whenever the
+       * 		DialogHelper changes. The "signal" member should be observed to see if it has flipped.
+       * - 8.2.0 Attribute property values in the study definition can now be functions. See the
+       * 		[Input Validation](tutorial-Using%20and%20Customizing%20Studies%20-%20Advanced.html#InputValidation)
+       * 		section of the {@tutorial Using and Customizing Studies - Advanced} tutorial.
+       *
+       * @example <caption>Create a DialogHelper from a study definition.</caption>
+       * let helper = new CIQ.Studies.DialogHelper({ name: "ma", stx: stxx })
+       *
+       * @example <caption>Create a DialogHelper from a study descriptor.</caption>
+       * let sd = CIQ.Studies.addStudy(stxx, "Aroon");
+       * let helper = new CIQ.Studies.DialogHelper({ sd: sd, stx: stxx });
+       *
+       * @example <caption>Display the DialogHelper inputs, outputs, parameters, and attributes.</caption>
+       * let helper = new CIQ.Studies.DialogHelper({ name: "stochastics", stx: stxx });
+       * console.log("Inputs:", JSON.stringify(helper.inputs));
+       * console.log("Outputs:", JSON.stringify(helper.outputs));
+       * console.log("Parameters:", JSON.stringify(helper.parameters));
+       * console.log("Attributes:", JSON.stringify(helper.attributes));
        */
       constructor(
         params: {
@@ -6211,35 +6371,51 @@ declare module '../js/chartiq.js' {
         }
       )
       /**
-       * Update (or add) the study attached to the DialogHelper.
+       * Updates or adds the study represented by the DialogHelper.
        *
-       * Once added or modified, the new study descriptor will be stored in the `sd` object of the DialogHelper.
-       * The DialogHelper members will be updated when calling this function to reflect the changes.
-       * However, other DialogHelper instances which exist will not be refreshed;
-       * for example, options which list all panels or all fields will not contain any new records or have old records removed as a result of another helper's update.
-       * In that case, you will need to recreate the helper before reusing it.
+       * When a study has been added using this function, a study descriptor is stored in the `sd`
+       * property of the DialogHelper.
        *
-       * @param  updates If updating, it should contain an object with updates to the `inputs`, `outputs` and `parameters` object used in CIQ.Studies.addStudy.  A new study ID will be created using the default format or parameters.replaceID, if provided.
-       * @example
-       * var helper=new CIQ.Studies.DialogHelper({sd:sd, stx:stx});
-       * helper.updateStudy({inputs:{Period:60}});
-       * var updatedStudy = helper.sd;
-       * @example
-       * // add the study
-       * var initialStudy = CIQ.Studies.addStudy(stxx, "Aroon");
+       * When a study has been updated using this function, all DialogHelper properties, including `sd`,
+       * are updated to reflect the changes. However, other DialogHelper instances of the same study
+       * type are not updated. For example, the inputs, outputs, and parameters of a DialogHelper will
+       * not contain any new values as a result of another DialogHelper's update.
        *
-       * // move it to the primary (chart) panel
-       * var dialogHelper = new CIQ.Studies.DialogHelper({"stx":stxx,"sd":initialStudy});
-       * dialogHelper.updateStudy({"parameters":{"panelName":"chart"}});
+       * @param updates Contains values for the `inputs`, `outputs`, and `parameters`
+       * 		properties of the DialogHelper.
        *
-       * // move the updated study back to its own panel
-       * dialogHelper.updateStudy({"parameters":{"panelName":"New panel"}});
        *
-       * @since 6.3.0 This instance will refresh after an update; recreating it is no longer necessary.
+       * @example <caption>Add and update a study.</caption>
+       * // Add the study.
+       * let aroonSd = CIQ.Studies.addStudy(stxx, "Aroon");
+       *
+       * // Create a DialogHelper.
+       * let dialogHelper = new CIQ.Studies.DialogHelper({ stx: stxx, sd: aroonSd });
+       *
+       * // Move the study to the chart panel.
+       * dialogHelper.updateStudy({ parameters: { panelName: "chart" } });
+       *
+       * // Move the study back to its own panel.
+       * dialogHelper.updateStudy({ parameters: { panelName: "New panel" } });
+       *
+       * @example <caption>Add a customized study.</caption>
+       * let helper = new CIQ.Studies.DialogHelper({ stx: stxx, name: "AVWAP" });
+       * helper.updateStudy({ inputs: { Field: "High" },
+       *                      outputs: { VWAP: "#ff0" },
+       *                      parameters: { panelName: "New Panel" }
+       * });
+       *
+       * @example <caption>Update a study and get the updated study descriptor.</caption>
+       * let helper = new CIQ.Studies.DialogHelper({ stx: stxx, name: "Aroon" });
+       * helper.updateStudy({ inputs: { Period: 60 } });
+       * let updatedSd = helper.sd;
+       *
+       * @since 6.3.0 This DialogHelper instance is refreshed after an update; recreating it is no
+       * 		longer necessary.
        */
-      public updateStudy(updates: Object): void
+      public updateStudy(updates: object): void
       /**
-       * Adjust all date & time fields in the DialogHelper to use the display zone.
+       * Adjust all date and time fields in the DialogHelper to use the display zone.
        *
        * This function can adjust both to and from the display zone depending on the presence of the second argument.
        * When creating the DialogHelper, the second argument is null, and any date and time in the study descriptor's inputs is converted to display zone when stored in the DialogHelper's `inputs` property.
@@ -6318,15 +6494,15 @@ declare module '../js/chartiq.js' {
     /**
      * Adds or replaces a study on the chart.
      *
-     * A [layout change event]layoutEventListener is triggered when this occurs.
+     * A [layout change event]CIQ.ChartEngine~layoutEventListener is triggered when this occurs.
      *
      * See {@tutorial Using and Customizing Studies} for more details.
      *
      * <P>Example: <iframe width="100%" height="500" scrolling="no" seamless="seamless" align="top" style="float:top" src="https://jsfiddle.net/chartiq/5y4a0kry/embedded/result,js,html,css/" allowfullscreen="allowfullscreen" frameborder="1"></iframe>
      *
      * Optionally you can [define an edit event listeners]CIQ.ChartEngine#addEventListener to call a custom function that can handle initialization of a dialog box for editing studies.
-     * - Use studyPanelEditEventListener to link the cog wheel on study panels to your desired edit menu/functionality.
-     * - Use studyOverlayEditEventListener to link the right click on study overlays to your desired edit menu/functionality.
+     * - Use [studyPanelEditEventListener]CIQ.ChartEngine~studyPanelEditEventListener to link the cog wheel on study panels to your desired edit menu/functionality.
+     * - Use [studyOverlayEditEventListener]CIQ.ChartEngine~studyOverlayEditEventListener to link the right click on study overlays to your desired edit menu/functionality.
      * - All studies will use the same function set by the event listeners.
      * - If there are no event listeners set, the edit study buttons/functionality will not appear.
      * - The 'Study Edit' feature is standard functionality in the advanced sample template.
@@ -6353,8 +6529,8 @@ declare module '../js/chartiq.js' {
      * - 3.0.0 Added `study` parameter.
      * - 5.1.1 Added `parameters.display`. If this parameter is supplied, use it to form the full study name.
      * - 5.2.0 Multiple studies can be overlaid on any panel using the `panelName` parameter.
+     * - 6.3.0 `panelName` argument is deprecated but maintained for backwards compatibility. Use `parameters.panelName` instead.
      * - 7.1.0 Changed specification for a new panel in `panelName` from "Own panel" to "New panel".
-     * @deprecated Since 6.3.0 `panelName` argument is deprecated but maintained for backwards compatibility. Use `parameters.panelName` instead.
      * @example <caption>Add a volume underlay study with custom colors:</caption>
      * CIQ.Studies.addStudy(stxx, "vol undr", {}, {"Up Volume":"#8cc176","Down Volume":"#b82c0c"});
      * @example <caption>Define the edit function for study Panels:</caption>
@@ -6419,6 +6595,7 @@ declare module '../js/chartiq.js' {
     function createLibraryHash(): string
     /**
      * Animation Loop
+     *
      * This method displays all of the studies for a chart. It is called from within the chart draw() loop.
      * @param  stx The charting object
      * @param chart Which chart to display studies for
@@ -6733,8 +6910,9 @@ declare module '../js/chartiq.js' {
      * @param [panelName] Deprecated. Panel name.  Use parameters.panelName instead.
      * @param [study]	Study definition to use in lieu of the study library entry
      * @return		The newly initialized study descriptor
-     * @since 3.0.0 added study argument
-     * @deprecated Since 6.3.0 `panelName` argument is deprecated; use `parameters.panelName` instead. If neither are valid, will automatically determine default panel.
+     * @since
+     * - 3.0.0 Added `study` parameter.
+     * - 6.3.0 `panelName` argument is deprecated; use `parameters.panelName` instead. If neither are valid, will automatically determine default panel.
      */
     function initializeFN(
       stx: CIQ.ChartEngine,
@@ -7215,120 +7393,161 @@ declare module '../js/chartiq.js' {
   /**
    * Drives the chart's relationship with the quote feed object provided to the chart.
    *
-   * @private
    * @since
    * - 5.1.1 Added `maximumTicks` to `behavior` parameter.
    * - 7.3.0 Moved `intervalTimer` property into `behavior` parameter. Added `filter` parameter.
    */
   export namespace CIQ.ChartEngine.Driver {
     /**
-     * Base class that drives the lookup (Symbol Search) functionality.
+     * Base class that drives the chart symbol lookup functionality.
      *
-     * You should derive your own Driver.Lookup that interacts with your datafeed.
+     * Provides back-end search fuctionality for the [cq-lookup]WebComponents.cq-lookup
+     * web component.
      *
-     * This is used with the [cq-lookup web component]WebComponents.cq-lookup and [CIQ.UI.Context.setLookupDriver](CIQ.UI.Context.html#setLookupDriver)
+     * You should derive your own lookup driver that interacts with your data feed (see the
+     * example below; also see the "Data Integration" section of the
+     * <a href="tutorial-Web%20Component%20Interface.html" target="_blank">Web Component Interface</a>
+     * tutorial).
      *
-     * @example
-     * // sample implementation
-     * CIQ.ChartEngine.Driver.Lookup.ChartIQ=function(exchanges){
-     *	this.exchanges=exchanges;
-     *	if(!this.exchanges) this.exchanges=["XNYS","XASE","XNAS","XASX","INDCBSX","INDXASE","INDXNAS","IND_DJI","ARCX","INDARCX","forex"];
-     *	this.url="https://symbols.chartiq.com/chiq.symbolserver.SymbolLookup.service";
-     *	this.requestCounter=0;  //used to invalidate old requests
+     * 		the exchanges for symbols that match the text entered in the
+     * 		[cq-lookup]WebComponents.cq-lookup web component's input field.
+     * 		<p>**Note:** This parameter is overridden by the `cq-exchanges` attribute of
+     * 		[cq-lookup]WebComponents.cq-lookup.
+     *
+     * @since 6.0.0
+     *
+     * @see CIQ.UI.Context#setLookupDriver
+     * @see WebComponents.cq-lookup#setDriver
+     * @see CIQ.UI.Chart#initLookup
+     *
+     * @example <caption>Custom Implementation (See also the example in the
+     * 		[acceptText]CIQ.ChartEngine.Driver.Lookup#acceptText method.)</caption>
+     * CIQ.ChartEngine.Driver.Lookup.ChartIQ = function(exchanges) {
+     *     this.exchanges = exchanges;
+     *     if (!this.exchanges) this.exchanges = ["XNYS","XASE","XNAS","XASX","INDCBSX","INDXASE","INDXNAS","IND_DJI","ARCX","INDARCX","forex"];
+     *     this.url = "https://symbols.chartiq.com/chiq.symbolserver.SymbolLookup.service";
+     *     this.requestCounter = 0;  // Invalidate old requests.
      * };
      *
-     * //Inherits all of the base Lookup Driver's properties via `CIQ.inheritsFrom()`
-     * 	CIQ.inheritsFrom(CIQ.ChartEngine.Driver.Lookup.ChartIQ,CIQ.ChartEngine.Driver.Lookup);
-     * @since 6.0.0
+     * // Inherit all of the base lookup driver's properties.
+     * CIQ.inheritsFrom(CIQ.ChartEngine.Driver.Lookup.ChartIQ, CIQ.ChartEngine.Driver.Lookup);
      */
     class Lookup {
       /**
-       * Base class that drives the lookup (Symbol Search) functionality.
+       * Base class that drives the chart symbol lookup functionality.
        *
-       * You should derive your own Driver.Lookup that interacts with your datafeed.
+       * Provides back-end search fuctionality for the [cq-lookup]WebComponents.cq-lookup
+       * web component.
        *
-       * This is used with the [cq-lookup web component]WebComponents.cq-lookup and [CIQ.UI.Context.setLookupDriver](CIQ.UI.Context.html#setLookupDriver)
+       * You should derive your own lookup driver that interacts with your data feed (see the
+       * example below; also see the "Data Integration" section of the
+       * <a href="tutorial-Web%20Component%20Interface.html" target="_blank">Web Component Interface</a>
+       * tutorial).
        *
-       * @param exchanges An array of exchanges that can be searched against
-       * @example
-       * // sample implementation
-       * CIQ.ChartEngine.Driver.Lookup.ChartIQ=function(exchanges){
-       *	this.exchanges=exchanges;
-       *	if(!this.exchanges) this.exchanges=["XNYS","XASE","XNAS","XASX","INDCBSX","INDXASE","INDXNAS","IND_DJI","ARCX","INDARCX","forex"];
-       *	this.url="https://symbols.chartiq.com/chiq.symbolserver.SymbolLookup.service";
-       *	this.requestCounter=0;  //used to invalidate old requests
+       * @param exchanges Array of financial exchange names. The lookup driver searches
+       * 		the exchanges for symbols that match the text entered in the
+       * 		[cq-lookup]WebComponents.cq-lookup web component's input field.
+       * 		<p>**Note:** This parameter is overridden by the `cq-exchanges` attribute of
+       * 		[cq-lookup]WebComponents.cq-lookup.
+       *
+       * @since 6.0.0
+       *
+       * @see CIQ.UI.Context#setLookupDriver
+       * @see WebComponents.cq-lookup#setDriver
+       * @see CIQ.UI.Chart#initLookup
+       *
+       * @example <caption>Custom Implementation (See also the example in the
+       * 		[acceptText]CIQ.ChartEngine.Driver.Lookup#acceptText method.)</caption>
+       * CIQ.ChartEngine.Driver.Lookup.ChartIQ = function(exchanges) {
+       *     this.exchanges = exchanges;
+       *     if (!this.exchanges) this.exchanges = ["XNYS","XASE","XNAS","XASX","INDCBSX","INDXASE","INDXNAS","IND_DJI","ARCX","INDARCX","forex"];
+       *     this.url = "https://symbols.chartiq.com/chiq.symbolserver.SymbolLookup.service";
+       *     this.requestCounter = 0;  // Invalidate old requests.
        * };
        *
-       * //Inherits all of the base Lookup Driver's properties via `CIQ.inheritsFrom()`
-       * 	CIQ.inheritsFrom(CIQ.ChartEngine.Driver.Lookup.ChartIQ,CIQ.ChartEngine.Driver.Lookup);
-       * @since 6.0.0
+       * // Inherit all of the base lookup driver's properties.
+       * CIQ.inheritsFrom(CIQ.ChartEngine.Driver.Lookup.ChartIQ, CIQ.ChartEngine.Driver.Lookup);
        */
       constructor(exchanges: string[])
       /**
-       * **Abstract method** used to accept the selected text with optional filter and return an array of properly formatted objects.
+       * Accepts text entered by the user, searches financial exchanges for symbols that match the
+       * text, and returns an array of objects containing data that describes the matched symbols.
        *
-       * You should implement your own instance of this method to fetch results from your symbol list and return them by calling cb(your-results-array-here);
+       * You must implement this abstract method to fetch results from the exchanges you support and
+       * return the results by calling `cb(results_array)`. (See the example implementation below.)
        *
-       * Each element in the array should be of the following format:
+       * Elements in the results array should be in the following format:
+       * ```
        * {
-       * 		display:["symbol-id","Symbol Description","exchange"],
-       * 		data:{
-       * 			symbol:"symbol-id",
-       * 			name:"Symbol Description",
-       * 			exchDis:"exchange"
-       * 		}
+       *     display: ["symbol ID", "symbol description", "exchange"],
+       *     data: {
+       *         symbol: "symbol ID",
+       *         name: "symbol description",
+       *         exchDis: "exchange"
+       *     }
        * }
+       * ```
+       * (See the example results array below.)
        *
-       * @param text The text entered by the user
-       * @param [filter] The optional filter text selected by the user. This will be the innerHTML of the cq-filter element that is selected.
-       * @param maxResults Max number of results to return from the server
-       * @param cb Callback upon results
-       * @example
-       // sample implementation
-       CIQ.ChartEngine.Driver.Lookup.ChartIQ.prototype.acceptText=function(text, filter, maxResults, cb){
-       if(filter=="FX") filter="FOREX";
-       if(isNaN(parseInt(maxResults, 10))) maxResults=100;
-       var url=this.url+"?t=" + encodeURIComponent(text) + "&m="+maxResults+"&x=[";
-       if(this.exchanges){
-       url+=this.exchanges.join(",");
-       }
-       url+="]";
-       if(filter && filter.toUpperCase()!="ALL"){
-       url+="&e=" + filter;
-       }
-       var counter=++this.requestCounter;
-       var self=this;
-       function handleResponse(status, response){
-       if(counter<self.requestCounter) return;
-       if(status!=200) return;
-       try{
-       response=JSON.parse(response);
-       var symbols=response.payload.symbols;
-       var results=[];
-       for(var i=0;i<symbols.length;i++){
-       var fields=symbols[i].split('|');
-       var item={
-       symbol: fields[0],
-       name: fields[1],
-       exchDisp: fields[2]
-       };
-       results.push({
-       display:[item.symbol, item.name, item.exchDisp],
-       data:item
-       });
-       }
-       cb(results);
-       }catch(e){}
-       }
-       CIQ.postAjax({url: url, cb: handleResponse});
-       };
-       * @example
-       *  // sample response array
-       *  [
-       *  	{"display":["A","Agilent Technologies Inc","NYSE"],"data":{"symbol":"A","name":"Agilent Technologies Inc","exchDisp":"NYSE"}},
-       *  	{"display":["AA","Alcoa Corp","NYSE"],"data":{"symbol":"AA","name":"Alcoa Corp","exchDisp":"NYSE"}}
-       *  ];
+       * @param text The text entered in the lookup component's input field.
+       * @param [filter] The innerHTML of the selected cq-filter element of the
+       * 		[cq-lookup]WebComponents.cq-lookup web component connected to the lookup
+       * 		driver. Indicates which of the available exchanges should be searched for symbols that
+       * 		match the input text.
+       * @param maxResults Maximum number of results to return from the server.
+       * @param cb Callback function to call when the search has returned results. The
+       * 		results are passed to the callback function in an array (see the examples below).
+       *
+       * @abstract
        * @since 6.0.0
+       *
+       * @example <caption>Method Implementation (See also the example in
+       * 		CIQ.ChartEngine.Driver.Lookup.)</caption>
+       * CIQ.ChartEngine.Driver.Lookup.ChartIQ.prototype.acceptText = function(text, filter, maxResults, cb) {
+       *     if (filter == "FX") filter = "FOREX";
+       *     if (isNaN(parseInt(maxResults, 10))) maxResults = 100;
+       *     const url = this.url + "?t=" + encodeURIComponent(text) + "&m="+maxResults+"&x=[";
+       *     if (this.exchanges){
+       *         url += this.exchanges.join(",");
+       *     }
+       *     url += "]";
+       *     if (filter && filter.toUpperCase()! = "ALL") {
+       *         url += "&e=" + filter;
+       *     }
+       *
+       *     let counter = ++this.requestCounter;
+       *     const self = this;
+       *     function handleResponse(status, response){
+       *         if (counter < self.requestCounter) return;
+       *         if (status != 200) return;
+       *         try {
+       *             response = JSON.parse(response);
+       *             let symbols = response.payload.symbols;
+       *
+       *             let results = [];
+       *             for (let i = 0; i < symbols.length; i++) {
+       *                 let fields = symbols[i].split('|');
+       *                 let item = {
+       *                     symbol: fields[0],
+       *                     name: fields[1],
+       *                     exchDisp: fields[2]
+       *                 };
+       *                 results.push({
+       *                     display:[item.symbol, item.name, item.exchDisp],
+       *                     data:item
+       *                 });
+       *             }
+       *             cb(results);
+       *         } catch(e) {}
+       *     }
+       *     CIQ.postAjax({url: url, cb: handleResponse});
+       * };
+       *
+       * @example <caption>Sample Results Array</caption>
+       * [
+       *     { "display": ["A", "Agilent Technologies Inc", "NYSE"], "data": { "symbol": "A", "name": "Agilent Technologies Inc", "exchDisp": "NYSE" } },
+       *     { "display": ["AA", "Alcoa Corp", "NYSE"], "data": { "symbol": "AA", "name": "Alcoa Corp", "exchDisp": "NYSE" } }
+       * ];
        */
       public acceptText(
         text: string,
@@ -7337,6 +7556,386 @@ declare module '../js/chartiq.js' {
         cb: Function
       ): void
     }
+  }
+
+  /**
+   * Namespace for Internationalization API.
+   * See {@tutorial Localization} for more details.
+   */
+  export namespace CIQ.I18N {
+    /**
+     * The local language.
+     *
+     */
+    let language: string
+    /**
+     * The list of languages that don't support shortening the local representation of the month
+     * portion of the date.
+     *
+     * Customize this property by redefining the list of languages. See the example below.
+     *
+     *
+     * @example
+     * CIQ.I18N.longMonths = {
+     *     "zh-CN": true
+     * };
+     */
+    let longMonths: {
+      zh: boolean
+    }
+    /**
+     * The list of locales used by CIQ.I18N.setLocale to determine whether the up/down colors
+     * of candles should be reversed.
+     *
+     * Customize this property by redefining the list of locales. See the example below.
+     *
+     * @since 4.0.0
+     *
+     * @example
+     * CIQ.I18N.reverseColorsByLocale = {
+     *     "zh": true,
+     *     "ja": true,
+     *     "fr": true,
+     *     "de": true,
+     *     "hu": true,
+     *     "it": true,
+     *     "pt": true
+     * };
+     */
+    let reverseColorsByLocale: {
+      zh: boolean,
+      ja: boolean
+    }
+    /**
+     *  nodes that contain that word. This can then be used for translation.
+     *  Text nodes and placeholders which are found in the document tree will be wrapped by this function
+     *  within a <translate> tag for easy translation back and forth.
+     * @param  [root] root for the TreeWalker.  If omitted, document.body assumed.
+     * @return      A word list containing unique words.
+     */
+    function findAllTextNodes(root?: HTMLElement): object
+    /**
+     * CIQ.I18N.missingWordList will scan the UI by walking all the text elements. It will determine which
+     * text elements have not been translated for the given language and return those as a JSON object.
+     * @param [language] The language to search for missing words. Defaults to whatever language CIQ.I18N.language has set.
+     * @return Words that are undefined with values set to empty strings
+     * @since 4.0.0 Iterates over the studyLibrary entry name, inputs, and outputs.
+     */
+    function missingWordList(language?: string): object
+    /**
+     * A convenience function for creating a JSON object containing words from
+     * CIQ.I18N.missingWordList.
+     *
+     * @param [language=CIQ.I18N.language] The language for which words in
+     * CIQ.I18N.missingWordList are included in the JSON object.
+     * @return The list of of missing words.
+     *
+     */
+    function printableMissingWordList(language?: string): string
+    /**
+     * Passes through the UI (DOM elements) and translates all of the text for the given language.
+     *
+     * It is important to note that if you are dynamically creating UI content and adding it to the
+     * DOM after you have set the language, you must either call this function again after the new
+     * content is added or ensure your code explicitly translates the new content using
+     * CIQ.translatableTextNode or CIQ.ChartEngine#translateIf.
+     *
+     * @param [language=CIQ.I18N.language] The language into which the UI text is
+     * 		translated.
+     * @param [root=document.body] Root node for the DOM tree walker to prevent the
+     * 		entire page from being translated.
+     *
+     * @since 4.0.0 Language code for Portuguese is now "pt" (formerly "pu", which is supported for
+     * 		backward compatibility).
+     */
+    function translateUI(language?: string, root?: HTMLElement): void
+    /**
+     * Translates an individual word for a given language using CIQ.I18N.wordLists.
+     *
+     * Set `stxx.translationCallback` to this function to automatically translate all textual elements
+     * on the chart.
+     *
+     * @param word The word to translate. To be translated, the word must be a property of
+     * 		the object in CIQ.I18N.wordLists specified by `language` (see the example below).
+     * @param [language=CIQ.I18N.language] The language to which the word is
+     * 		translated. Identifies a property in CIQ.I18N.wordLists.
+     * @return The translation of `word`, or the value of `word` if no translation is found.
+     *
+     *
+     * @example <caption>Translate to Spanish</caption>
+     * CIQ.I18N.wordLists = {
+     *     "es": {
+     *         "1 D": "1 D",
+     *         "1 Hour": "1 Hora",
+     *         "1 Min": "1 Min",
+     *         "1 Mo": "1 Mes",
+     *         "1 W": "1 S",
+     *         "1 hour": "1 hora",
+     *         "1d": "1d",
+     *         "1m": "1m",
+     *         "1y": "1a",
+     *         "3m": "3m"
+     *     }
+     * };
+     * CIQ.I18N.translate("1 Hour", "es"); // "1 Hora"
+     */
+    function translate(word: string, language?: string): string
+    /**
+     * Translates a phrase which may have untranslatable parts (like a study id).
+     * The translatable pieces are delimited left and right with a non-printable character Zero-Width-Non_Joiner.
+     * @param word The word to translate
+     * @param [languageWordList] Map of words and translations in the desired language
+     * @return Translation of the given phrase
+     * @since 4.0.0
+     */
+    function translateSections(word: string, languageWordList?: object): string
+    /**
+     * Converts a 'CSV formatted' string of translations into the required JSON format and set to CIQ.I18N.wordLists
+     * You can output CIQ.I18N.wordLists to the console and paste back in if desired.
+     * @param [csv] Translation spreadsheet in csv format **as a single long string**.
+     * Make sure there are no leading tabs, trailing commas or spaces.
+     * Assumes that the header row of the CSV is the language codes and that the first column is the key language (English).
+     * Assumes non-quoted words, data is comma delimited and lines separated by '\n'. Default is CIQ.I18N.csv
+     * @example
+     var csv="en,ar,fr,de,hu,it,pt,ru,es,zh,ja\nChart,الرسم البياني,Graphique,Darstellung,Diagram,Grafico,Gráfico,График,Gráfica,图表,チャート\nChart Style,أسلوب الرسم البياني,Style de graphique,Darstellungsstil,Diagram stílusa,Stile grafico,Estilo do gráfico,Тип графика,Estilo de gráfica,图表类型,チャート形式\nCandle,الشموع,Bougie,Kerze,Gyertya,Candela,Vela,Свеча,Vela,蜡烛,ローソク足\nShape,شكل,Forme,Form,Alak,Forma,Forma,Форма,Forma,形状,パターン";
+     CIQ.I18N.convertCSV(csv);
+     */
+    function convertCSV(csv?: string): void
+    /**
+     * Convenience function to set up translation services for a chart and its surrounding GUI.
+     * Automatically sets CIQ.I18N.language, loads all translations, and translates the chart.
+     *
+     * Uses/sets (in execution order):
+     *  - CIQ.I18N.convertCSV
+     *  - CIQ.I18N.language
+     *  - CIQ.I18N.translateUI
+     *  - CIQ.I18N.translate
+     *
+     * Feel free to create your own convenience function if required to explicitly set
+     * CIQ.I18N.wordLists instead of using the `CIQ.I18N.hereDoc` copy/paste spreadsheet in
+     * *translationSample.js*.
+     *
+     * It is important to note that if you are dynamically creating UI content and adding it to the
+     * DOM after you have set the language, you must either call CIQ.I18N.translateUI after
+     * the new content is added, or ensure your code explicitly translates the new content using
+     * CIQ.translatableTextNode or CIQ.ChartEngine#translateIf.
+     *
+     * @param stx A chart object.
+     * @param language A language in your csv file. For instance "en" from
+     * 		`CIQ.I18N.csv` in *translationSample.js*.
+     * @param [translationCallback] Function to perform canvas built-in word translations.
+     * 		Default is CIQ.I18N.translate.
+     * @param [csv] Translation spreadsheet in csv format **as a single long string**. Make
+     * 		sure the string contains no leading tabs, trailing commas, or spaces. Default is
+     * 		`CIQ.I18N.csv` in *translationSample.js*. See CIQ.I18N.convertCSV for a format
+     * 		sample.
+     * @param [root] Root element from which to start translating. If the parameter is
+     * 		omitted, the chart UI context is checked for its top node before defaulting to
+     * 		`document.body`.
+     *
+     * @since
+     * - 04-2015
+     * - 3.0.0 Added `root` parameter.
+     * - 4.0.0 Language code for Portuguese is "pt" (formerly "pu"; maintained for backwards
+     * 		compatibility).
+     * - 8.2.0 If no `root` parameter, the chart UI context is checked for its top node before
+     * 		defaulting to `document.body`.
+     */
+    function setLanguage(
+      stx: CIQ.ChartEngine,
+      language: string,
+      translationCallback?: string,
+      csv?: string,
+      root?: HTMLElement
+    ): void
+    /**
+     * This method will set the chart locale and check to see if candle colors should be reversed.
+     *
+     * If set, display prices and dates will be displayed in localized format.
+     * The locale should be a valid [IANA locale](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Intl).
+     * For instance `de-AT` represents German as used in Austria.
+     *
+     * CIQ.I18N.reverseColorsByLocale  is used to determine if the candle colors should be reversed.
+     *
+     * Localization in the library is supported through the `Intl object` which is a [W3 standard](https://www.w3.org/International/articles/language-tags/)  supported by all modern browsers.
+     *
+     * Once a locale is set, `stxx.internationalizer` will be an object that will contain several Intl formatters.
+     *
+     * These are the default date and time formats:
+     * - stxx.internationalizer.hourMinute=new Intl.DateTimeFormat(this.locale, {hour:"numeric", minute:"numeric", hourCycle:"h23"});
+     * - stxx.internationalizer.hourMinuteSecond=new Intl.DateTimeFormat(this.locale, {hour:"numeric", minute:"numeric", second:"numeric", hourCycle:"h23"});
+     * - stxx.internationalizer.mdhm=new Intl.DateTimeFormat(this.locale, {year:"2-digit", month:"2-digit", day:"2-digit", hour:"2-digit", minute:"2-digit"});
+     * - stxx.internationalizer.monthDay=new Intl.DateTimeFormat(this.locale, {month:"numeric", day:"numeric"});
+     * - stxx.internationalizer.yearMonthDay=new Intl.DateTimeFormat(this.locale, {year:"numeric", month:"numeric", day:"numeric"});
+     * - stxx.internationalizer.yearMonth=new Intl.DateTimeFormat(this.locale, {year:"numeric", month:"numeric"});
+     * - stxx.internationalizer.month=new Intl.DateTimeFormat(this.locale, {month:"short"});
+     *
+     * These can be overridden manually if the specified format is not acceptable. See example.
+     * Also see [Intl.DateTimeFormat](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/DateTimeFormat) for formatting alternatives
+     *
+     * @param stx A chart object
+     * @param locale A valid [IANA locale](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Intl), for instance en-IN
+     * @param [cb] Callback when locale has been loaded. This function will be passed an error message if it cannot be loaded.
+     * @param [url] url where to fetch the locale data. Defaults to "locale-data/jsonp". Only used if not natively supported by the browser.
+     * @param [maxDecimals] maximum number of decimal places to allow on number conversions. Defaults to 5. See CIQ.ChartEngine#setLocale for more details.
+     * @since 3.0.0 Added `maxDecimals` parameter.
+     * @example
+     * CIQ.I18N.setLocale(stxx, "zh");	// set localization services -- before any UI or chart initialization is done
+     * // override time formatting to enable 12 hour clock (hour12:true)
+     * stxx.internationalizer.hourMinute=new Intl.DateTimeFormat(this.locale, {hour:"numeric", minute:"numeric", hour12:true});
+     * stxx.internationalizer.hourMinuteSecond=new Intl.DateTimeFormat(this.locale, {hour:"numeric", minute:"numeric", second:"numeric", hour12:true});
+     */
+    function setLocale(
+      stx: CIQ.ChartEngine,
+      locale: string,
+      cb?: Function,
+      url?: string,
+      maxDecimals?: number
+    ): void
+    /**
+     * Extract the name of the month from the locale. We do this by creating a
+     * localized date for the first date of each month. Then we extract the alphabetic characters.
+     * MonthLetters then becomes the first letter of the month. The arrays are stored in stx.monthAbv and stx.monthLetters which
+     * will then override the global arrays CIQ.monthAbv and CIQ.monthLetters.
+     * @param  stx       Chart object
+     * @param  formatter An Intl compatible date formatter
+     * @param  locale    A valid Intl locale, such as en-IN
+     */
+    function createMonthArrays(stx: CIQ.ChartEngine, formatter: object, locale: string): void
+    /**
+     * A convenience function that sets locale and language at once. Each of these grouped functions are called with default arguments.
+     * If you require custom parameters you will need to call each separately.
+     *
+     * It is important to note that if you are dynamically creating UI content and adding it to the DOM after you have set the language,
+     * you must either call CIQ.I18N.translateUI after the new content is added,
+     * or ensure your code explicitly translates the new content using CIQ.translatableTextNode or CIQ.ChartEngine#translateIf.
+     *
+     * Functions are called in the following order:
+     * - CIQ.I18N.setLocale
+     * - CIQ.I18N.setLanguage
+     * - CIQ.I18N.reverseCandles - Called only if colors need to be reversed.
+     *
+     * @param stx Chart object
+     * @param  locale    A valid Intl locale, such as en-IN
+     * @since 4.0.0
+     * @example
+     * CIQ.I18N.localize(stxx, "zh");	// set translation and localization services -- before any UI or chart initialization is done
+     * // override time formatting to enable 12 hour clock (hour12:true)
+     * stxx.internationalizer.hourMinute=new Intl.DateTimeFormat(this.locale, {hour:"numeric", minute:"numeric", hour12:true});
+     * stxx.internationalizer.hourMinuteSecond=new Intl.DateTimeFormat(this.locale, {hour:"numeric", minute:"numeric", second:"numeric", hour12:true});
+     */
+    function localize(stx: CIQ.ChartEngine, locale: string): void
+    /**
+     * Reverses the up/down candle colors, as preferred by some locales.
+     *
+     * Reverses the colors without changing the CSS.
+     *
+     * @param stx A reference to the chart engine.
+     *
+     * @since 4.0.0
+     */
+    function reverseCandles(stx: CIQ.ChartEngine): void
+    /**
+     * A list of word translations for one or more languages.
+     *
+     * CIQ.I18N.convertCSV assigns an object to this property based on a CSV-formatted string.
+     * You can also set a value explicitly without using CIQ.I18N.convertCSV or
+     * CIQ.I18N.setLanguage (see the example below).
+     *
+     *
+     * @example <caption>Word translations for Arabic and Spanish.</caption>
+     * // Setting explicitly without using CIQ.I18N.convertCSV or CIQ.I18N.setLanguage.
+     * CIQ.I18N.wordLists = {
+     *     "ar": {
+     *         "1 D": "1ي",
+     *         "1 Hour": "1 ساعة",
+     *         "1 Min": "1د",
+     *         "1 Mo": "1ش",
+     *         "1 W": "أ1",
+     *         "1 hour": "ساعة واحدة",
+     *         "1d": "1يوم",
+     *         "1m": "1شهر",
+     *         "1y": "1عام",
+     *         "3m": "3أشهر"
+     *     },
+     *     "es": {
+     *         "1 D": "1 D",
+     *         "1 Hour": "1 Hora",
+     *         "1 Min": "1 Min",
+     *         "1 Mo": "1 Mes",
+     *         "1 W": "1 S",
+     *         "1 hour": "1 hora",
+     *         "1d": "1d",
+     *         "1m": "1m",
+     *         "1y": "1a",
+     *         "3m": "3m"
+     *     }
+     * }
+     */
+    let wordLists: {
+      en: {}
+    }
+    /**
+     * A map of language codes to edonyms (language names in the mapped language). Can be used as a
+     * data source for UI components, such as a language picker.
+     *
+     * The following languages are predefined:
+     * - en: "English"
+     *
+     * The following additional languages are supported in the
+     * *examples/translations/translationSample.js* file:
+     * - "en-US": "English",
+     * - "ar-EG": "عربى",
+     * - "fr-FR": "Français",
+     * - "de-DE": "Deutsche",
+     * - "hu-HU": "Magyar",
+     * - "it-IT": "Italiano",
+     * - "pt-PT": "Português",
+     * - "ru-RU": "русский",
+     * - "es-ES": "Español",
+     * - "zh-CN": "中文",
+     * - "ja-JP": "日本語"
+     *
+     * You can add language mappings as follows:
+     * ```
+     * CIQ.I18N.languages.ko = "한국어";
+     * ```
+     *
+     * You can remove unsupported languages by deleting the mappings from this object or by redefining
+     * the object with only the languages you choose to support.
+     *
+     */
+    let languages: {
+      en: string
+    }
+    /**
+     * A map of language codes to language-region codes for backward compatibility.
+     *
+     * The following locale / language-region codes are supported in the
+     * *examples/translations/translationSample.js* file:
+     * - en: "en-US"
+     * - ar: "ar-EG"
+     * - fr: "fr-FR"
+     * - de: "de-DE"
+     * - hu: "hu-HU"
+     * - it: "it-IT"
+     * - pt: "pt-PT"
+     * - ru: "ru-RU"
+     * - es: "es-ES"
+     * - zh: "zh-CN"
+     * - ja: "ja-JP"
+     *
+     * You can add code mappings as follows:
+     * ```
+     * CIQ.I18N.langConversionMap.ko = "ko-KR";
+     * ```
+     *
+     * You can remove unsupported codes by deleting the mappings from this object or by redefining the
+     * object with only the languages and regions you choose to support.
+     *
+     * @since 8.3.0
+     */
+    let langConversionMap: object
   }
 
   /**
@@ -7498,8 +8097,8 @@ declare module '../js/chartiq.js' {
   }
 
   /**
-   * **The UI portion of this namespace is maintained for legacy implementations only (not using web components). New implementations should use functionality included in the web components (stxUI.js)**
-   * Comparison namespace
+   * Namespace for functionality related to comparison series.
+   *
    */
   export namespace CIQ.Comparison {
     /**
@@ -7579,6 +8178,120 @@ declare module '../js/chartiq.js' {
   }
 
   /**
+   * Manages chart sharing and uploading.
+   *
+   * See the {@tutorial Chart Sharing} tutorial for more details.
+   *
+   */
+  export namespace CIQ.Share {
+    /**
+     * Convenience function that serves as a wrapper for createImage and uploadImage.
+     * It will create an image using the default parameters. If you wish to customize the image you must use CIQ.Share.createImage separately and then call CIQ.Share.uploadImage.
+     * @param	stx Chart Object
+     * @param  [override] Parameters that overwrite the default hosting location from https://share.chartiq.com to a custom location.
+     * @param	[override.host]
+     * @param	[override.path]
+     * @param	cb Callback when the image is uploaded.
+     * @since 2015-11-01
+     * @example
+     *  // here is the exact code this convenience function is using
+     CIQ.Share.createImage(stx, {}, function(imgData){
+     var id=CIQ.uniqueID();
+     var host="https://share.chartiq.com";
+     var url= host + "/upload/" + id;
+     if(override){
+     if(override.host) host=override.host;
+     if(override.path) url=host+override.path+"/"+id;
+     }
+     var startOffset=stx.getStartDateOffset();
+     var metaData={
+     "layout": stx.exportLayout(),
+     "drawings": stx.exportDrawings(),
+     "xOffset": startOffset,
+     "startDate": stx.chart.dataSegment[startOffset].Date,
+     "endDate": stx.chart.dataSegment[stx.chart.dataSegment.length-1].Date,
+     "id": id,
+     "symbol": stx.chart.symbol
+     };
+     var payload={"id": id, "image": imgData, "config": metaData};
+     CIQ.Share.uploadImage(imgData, url, payload, function(err, response){
+     if(err!==null){
+     CIQ.alert("error sharing chart: ",err);
+     }else{
+     cb(host+response);
+     }
+     });
+     // end sample code to upload image to a server
+     });
+     *
+     */
+    function shareChart(
+      stx: object,
+      override: {host?:object,path?:object} | undefined,
+      cb: Function
+    ): void
+    /**
+     * Creates a png image of the current chart and everything inside the container associated with the chart when it was instantiated; including HTML.
+     * Elements outside the chart container will **NOT** be included.
+     *
+     * If widthPX and heightPX are passed in then the image will be scaled to the requested dimensions.
+     *
+     * It will dynamically try to load `js/thirdparty/html2canvas.min.js` if not already loaded.
+     *
+     * This function is asynchronous and requires a callback function.
+     * The callback will be passed a data object or canvas which can be sent to a server or converted to an image.
+     *
+     * Important Notes:
+     * - **This method will rely on Promises. If your browser does not implement Promises, be sure to include a polyfill.**
+     *
+     * - **This method does not always work with React or Safari**
+     *
+     * - **Canvases can only be exported if all the contents including CSS images come from the same domain,
+     * or all images have cross origin set properly and come from a server that supports CORS; which may or may not be possible with CSS images.**
+     *
+     * - **When using the charts from `file:///`, make sure to include `html2canvas` statically instead of allowing this method to load it dynamically.**
+     * Example:
+     * `<script src="js/thirdparty/html2canvas.min.js"></script>`
+     *
+     * @param    stx           Chart object
+     * @param			[params]			Parameters to describe the image.
+     * @param    [params.widthPX]       Width of image to create. If passed then params.heightPX  will adjust to maintain ratio.
+     * @param    [params.heightPX]      Height of image to create. If passed then params.widthPX will adjust to maintain ratio.
+     * @param    [params.imageType]   Specifies the file format your image will be output in. The dfault is PNG and the format must be suported by your browswer.
+     * @param 	[params.hide] Array of strings; array of the CSS selectors of the DOM elements to hide, before creating a PNG
+     * @param  cb            Callback when image is available fc(data) where data is the serialized image object
+     * @since
+     * - 3.0.0 Function signature changed to take parameters.
+     * - 4.0.0 Addition of `parameters.hide`.
+     * @version ChartIQ Advanced Package plug-in
+     */
+    function createImage(
+      stx: object,
+      params: {widthPX?:number,heightPX?:number,imageType?:string,hide?:any[]} | undefined,
+      cb: Function
+    ): void
+    /**
+     * Uploads an image to a server. The callback will take two parameters. The first parameter is an error
+     * condition (server status), or null if there is no error. The second parameter (if no error) will contain
+     * the response from the server.
+     * 'payload' is an optional object that contains meta-data for the server. If payload exists then the image will be added as a member of the payload object, otherwise an object will be created
+     * 'dataImage' should be a data representation of an image created by the call canvas.toDataURL such as is returned by CIQ.Share.createImage
+     * If you are getting a status of zero back then you are probably encountering a cross-domain ajax issue. Check your access-control-allow-origin header on the server side
+     * @param    dataImage Serialized data for image
+     * @param    url       URL to send the image
+     * @param    [payload]   Any additional data to send to the server should be sent as an object.
+     * @param  cb        Callback when image is uploaded
+     * @version ChartIQ Advanced Package plug-in
+     */
+    function uploadImage(
+      dataImage: string,
+      url: string,
+      payload: object | undefined,
+      cb: Function
+    ): void
+  }
+
+  /**
    * Creates a DOM object capable of receiving a data stream. The object changes as a result of the incoming data.
    * The constructor function takes attributes that define how and where in the HTML document the object gets created.
    * See CIQ.Visualization#setAttributes for more information on attributes.
@@ -7627,244 +8340,6 @@ declare module '../js/chartiq.js' {
      * @since 7.4.0
      */
     const object: HTMLElement
-  }
-
-  /**
-   * Namespace for Internationalization API.
-   * See {@tutorial Localization} for more details.
-   */
-  export namespace CIQ.I18N {
-    /**
-     * Must be set to the desired language. Defaults to english "en"
-     */
-    let language: string
-    /**
-     * Sets the languages that that don't support shortening
-     * Translation will print entire month from locale for these languages
-     */
-    let longMonths: Object
-    /**
-     * Maintains the list of locales used by CIQ.I18N.localize to decide if the up/down colors should be reversed and can be updated as outlined on the example.
-     *
-     * Defaults to : {"zh":true,"ja":true};
-     * @since 4.0.0
-     * @example
-     * CIQ.I18N.reverseColorsByLocale={
-     * 		"zh":true,
-     * 		"ja":true,
-     * 		"fr":true,
-     * 		"de":true,
-     * 		"hu":true,
-     * 		"it":true,
-     * 		"pt":true
-     * };
-     */
-    let reverseColorsByLocale: Object
-    /**
-     * CIQ.I18N.missingWordList will scan the UI by walking all the text elements. It will determine which
-     * text elements have not been translated for the given language and return those as a JSON object.
-     * @param [language] The language to search for missing words. Defaults to whatever language CIQ.I18N.language has set.
-     * @return Words that are undefined with values set to empty strings
-     * @since 4.0.0 Iterates over the studyLibrary entry name, inputs, and outputs.
-     */
-    function missingWordList(language?: string): object
-    /**
-     * A convenient function for creating a human readable JSON object suitable for delivery to a translator.
-     * @param [language] language. Defaults to CIQ.I18N.language.
-     * @return String of missing words.
-     */
-    function printableMissingWordList(language?: string): string
-    /**
-     * Passes through the UI (DOM elements) and translates all of the text for the given language.
-     *
-     * It is important to note that if you are dynamically creating UI content and adding it to the DOM after you have set the language,
-     * you must either call this function again after the new content is added,
-     * or ensure your code explicitly translates the new content using CIQ.translatableTextNode or CIQ.ChartEngine#translateIf.
-     *
-     * @param [language] language. Defaults to CIQ.I18N.language.
-     * @param [root] root for the TreeWalker to prevent the entire page from being translated.  If omitted, document.body assumed.
-     * @since 4.0.0 Language code for Portuguese is "pt" (formerly "pu"; maintained for backwards compatibility).
-     */
-    function translateUI(language?: string, root?: HTMLElement): void
-    /**
-     * Translates an individual word for a given language. Set stxx.translationCallback to this function
-     * in order to automatically translate all textual elements on the chart itself.
-     * @param word The word to translate
-     * @param [language] language. Defaults to CIQ.I18N.language.
-     * @return Translation of the given word, or the word itself if no translation was found.
-     */
-    function translate(word: string, language?: string): string
-    /**
-     * Translates a phrase which may have untranslatable parts (like a study id).
-     * The translatable pieces are delimited left and right with a non-printable character Zero-Width-Non_Joiner.
-     * @param word The word to translate
-     * @param [languageWordList] Map of words and translations in the desired language
-     * @return Translation of the given phrase
-     * @since 4.0.0
-     */
-    function translateSections(word: string, languageWordList?: object): string
-    /**
-     * Converts a 'CSV formatted' string of translations into the required JSON format and set to CIQ.I18N.wordLists
-     * You can output CIQ.I18N.wordLists to the console and paste back in if desired.
-     * @param [csv] Translation spreadsheet in csv format **as a single long string**.
-     * Make sure there are no leading tabs, trailing commas or spaces.
-     * Assumes that the header row of the CSV is the language codes and that the first column is the key language (English).
-     * Assumes non-quoted words, data is comma delimited and lines separated by '\n'. Default is CIQ.I18N.csv
-     * @example
-     var csv="en,ar,fr,de,hu,it,pt,ru,es,zh,ja\nChart,الرسم البياني,Graphique,Darstellung,Diagram,Grafico,Gráfico,График,Gráfica,图表,チャート\nChart Style,أسلوب الرسم البياني,Style de graphique,Darstellungsstil,Diagram stílusa,Stile grafico,Estilo do gráfico,Тип графика,Estilo de gráfica,图表类型,チャート形式\nCandle,الشموع,Bougie,Kerze,Gyertya,Candela,Vela,Свеча,Vela,蜡烛,ローソク足\nShape,شكل,Forme,Form,Alak,Forma,Forma,Форма,Forma,形状,パターン";
-     CIQ.I18N.convertCSV(csv);
-     */
-    function convertCSV(csv?: string): void
-    /**
-     * Convenience function to set up translation services for a chart and its surrounding GUI.
-     * It automatically sets CIQ.I18N.language, loads all translations and translates the chart.
-     *
-     * Uses/sets (in execution order):
-     *  - CIQ.I18N.convertCSV
-     *  - CIQ.I18N.language
-     *  - CIQ.I18N.translateUI
-     *  - CIQ.I18N.translate
-     *
-     * Feel free to create your own convenience function if required to explicitly set CIQ.I18N.wordLists instead of using the CIQ.I18N.hereDoc copy-paste spreadsheet in `translations.js`.
-     *
-     * It is important to note that if you are dynamically creating UI content and adding it to the DOM after you have set the language,
-     * you must either call CIQ.I18N.translateUI after the new content is added,
-     * or ensure your code explicitly translates the new content using CIQ.translatableTextNode or CIQ.ChartEngine#translateIf.
-     *
-     * @param stx A chart object
-     * @param language  A language in your CSV file. For instance 'en' from CIQ.I18N.csv
-     * @param [translationCallback]  Function to perform Canvas Built-in word translations . Default is CIQ.I18N.translate
-     * @param [csv] Translation spreadsheet in csv format **as a single long string**. Make sure no leading tabs, trailing commas or spaces. Default is CIQ.I18N.csv. See CIQ.I18N.convertCSV for format sample
-     * @param [root] root for the TreeWalker to prevent the entire page from being translated.  If omitted, document.body assumed.
-     * @since
-     * - 04-2015
-     * - 3.0.0 Added `root` parameter.
-     * - 4.0.0 Language code for Portuguese is "pt" (formerly "pu"; maintained for backwards compatibility).
-     */
-    function setLanguage(
-      stx: CIQ.ChartEngine,
-      language: string,
-      translationCallback?: string,
-      csv?: string,
-      root?: HTMLElement
-    ): void
-    /**
-     * This method will set the chart locale.
-     *
-     * If set, display prices and dates will be displayed in localized format.
-     * The locale should be a valid [IANA locale](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Intl).
-     * For instance `de-AT` represents German as used in Austria.
-     *
-     * Localization in the library is supported through the `Intl object` which is a [W3 standard](https://www.w3.org/International/articles/language-tags/)  supported by all modern browsers.
-     *
-     * Once a locale is set, `stxx.internationalizer` will be an object that will contain several Intl formatters.
-     *
-     * These are the default date and time formats:
-     * - stxx.internationalizer.hourMinute=new Intl.DateTimeFormat(this.locale, {hour:"numeric", minute:"numeric", hourCycle:"h23"});
-     * - stxx.internationalizer.hourMinuteSecond=new Intl.DateTimeFormat(this.locale, {hour:"numeric", minute:"numeric", second:"numeric", hourCycle:"h23"});
-     * - stxx.internationalizer.mdhm=new Intl.DateTimeFormat(this.locale, {year:"2-digit", month:"2-digit", day:"2-digit", hour:"2-digit", minute:"2-digit"});
-     * - stxx.internationalizer.monthDay=new Intl.DateTimeFormat(this.locale, {month:"numeric", day:"numeric"});
-     * - stxx.internationalizer.yearMonthDay=new Intl.DateTimeFormat(this.locale, {year:"numeric", month:"numeric", day:"numeric"});
-     * - stxx.internationalizer.yearMonth=new Intl.DateTimeFormat(this.locale, {year:"numeric", month:"numeric"});
-     * - stxx.internationalizer.month=new Intl.DateTimeFormat(this.locale, {month:"short"});
-     *
-     * These can be overridden manually if the specified format is not acceptable. See example.
-     * Also see [Intl.DateTimeFormat](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/DateTimeFormat) for formatting alternatives
-     *
-     * @param stx A chart object
-     * @param locale A valid [IANA locale](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Intl), for instance en-IN
-     * @param [cb] Callback when locale has been loaded. This function will be passed an error message if it cannot be loaded.
-     * @param [url] url where to fetch the locale data. Defaults to "locale-data/jsonp". Only used if not natively supported by the browser.
-     * @param [maxDecimals] maximum number of decimal places to allow on number conversions. Defaults to 5. See CIQ.ChartEngine#setLocale for more details.
-     * @since 3.0.0 Added `maxDecimals` parameter.
-     * @example
-     * CIQ.I18N.setLocale(stxx, "zh");	// set localization services -- before any UI or chart initialization is done
-     * // override time formatting to enable 12 hour clock (hour12:true)
-     * stxx.internationalizer.hourMinute=new Intl.DateTimeFormat(this.locale, {hour:"numeric", minute:"numeric", hour12:true});
-     * stxx.internationalizer.hourMinuteSecond=new Intl.DateTimeFormat(this.locale, {hour:"numeric", minute:"numeric", second:"numeric", hour12:true});
-     */
-    function setLocale(
-      stx: CIQ.ChartEngine,
-      locale: string,
-      cb?: Function,
-      url?: string,
-      maxDecimals?: number
-    ): void
-    /**
-     * Extract the name of the month from the locale. We do this by creating a
-     * localized date for the first date of each month. Then we extract the alphabetic characters.
-     * MonthLetters then becomes the first letter of the month. The arrays are stored in stx.monthAbv and stx.monthLetters which
-     * will then override the global arrays CIQ.monthAbv and CIQ.monthLetters.
-     * @param  stx       Chart object
-     * @param  formatter An Intl compatible date formatter
-     * @param  locale    A valid Intl locale, such as en-IN
-     */
-    function createMonthArrays(stx: CIQ.ChartEngine, formatter: object, locale: string): void
-    /**
-     * A convenience function that sets locale and language at once and checks to see if candle colors should be reversed.
-     * Each of these grouped functions are called with default arguments. If you require custom parameters you will need to call each separately.
-     *
-     * CIQ.I18N.reverseColorsByLocale  is used to determine if the colors should be reversed.
-     *
-     * It is important to note that if you are dynamically creating UI content and adding it to the DOM after you have set the language,
-     * you must either call CIQ.I18N.translateUI after the new content is added,
-     * or ensure your code explicitly translates the new content using CIQ.translatableTextNode or CIQ.ChartEngine#translateIf.
-     *
-     * Functions are called in the following order:
-     * - CIQ.I18N.setLocale
-     * - CIQ.I18N.setLanguage
-     * - CIQ.I18N.reverseCandles - Called only if colors need to be reversed.
-     *
-     * @param stx Chart object
-     * @param  locale    A valid Intl locale, such as en-IN
-     * @since 4.0.0
-     * @example
-     * CIQ.I18N.localize(stxx, "zh");	// set translation and localization services -- before any UI or chart initialization is done
-     * // override time formatting to enable 12 hour clock (hour12:true)
-     * stxx.internationalizer.hourMinute=new Intl.DateTimeFormat(this.locale, {hour:"numeric", minute:"numeric", hour12:true});
-     * stxx.internationalizer.hourMinuteSecond=new Intl.DateTimeFormat(this.locale, {hour:"numeric", minute:"numeric", second:"numeric", hour12:true});
-     */
-    function localize(stx: CIQ.ChartEngine, locale: string): void
-    /**
-     * Some locales prefer candle colors reversed. This will reverse candle colors without changing CSS.
-     * @param stx Chart object
-     * @since 4.0.0
-     */
-    function reverseCandles(stx: CIQ.ChartEngine): void
-    /**
-     * This object will be created by CIQ.I18N.convertCSV based on the provided 'CSV formatted' string,
-     * or you can set it explicitly if not using CIQ.I18N.setLanguage or CIQ.I18N.convertCSV
-     * @example
-     * // sample of object with translations for Arabic and Spanish
-     * ( when setting explicitly without using CIQ.I18N.setLanguage or CIQ.I18N.convertCSV )
-     * CIQ.I18N.wordLists={
-     * 		"ar":{
-     *			"1 D": "1ي",
-     *			"1 Hour": "1 ساعة",
-     *			"1 Min": "1د",
-     *			"1 Mo": "1ش",
-     *			"1 W": "أ1",
-     *			"1 hour": "ساعة واحدة",
-     *			"1d": "1يوم",
-     *			"1m": "1شهر",
-     *			"1y": "1عام",
-     *			"3m": "3أشهر"
-     *		},
-     * 		"es":{
-     * 			"1 D": "1 D",
-     * 			"1 Hour": "1 Hora",
-     * 			"1 Min": "1 Min",
-     * 			"1 Mo": "1 Mes",
-     * 			"1 W": "1 S",
-     * 			"1 hour": "1 hora",
-     * 			"1d": "1d",
-     * 			"1m": "1m",
-     * 			"1y": "1a",
-     * 			"3m": "3m"
-     *		}
-     * }
-     */
-    let wordLists: Object
   }
 }
 export function createEngine(_export): void

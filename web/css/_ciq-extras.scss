@@ -61,12 +61,6 @@ $nav-height: 45px !default;
 	color: transparent;
 }
 
-@mixin text-truncate {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
 @mixin opacity($opacity) {
   opacity: $opacity;
   $opacity-ie: $opacity * 100;
@@ -76,42 +70,6 @@ $nav-height: 45px !default;
     background: $color; /* The Fallback */
     background: rgba($color, $opacity);
 }
-
-@mixin border-radius($radius) {
-  -webkit-border-radius: $radius;
-     -moz-border-radius: $radius;
-      -ms-border-radius: $radius;
-          border-radius: $radius;
-}
-
-@mixin user-select($select) {
-	-webkit-user-select: $select;
-	   -moz-user-select: $select;
-	    -ms-user-select: $select;
-	        user-select: $select;
-}
-
-@mixin box-shadow($top, $left, $blur, $color, $inset:"") {
-   -webkit-box-shadow:$top $left $blur $color #{$inset};
-      -moz-box-shadow:$top $left $blur $color #{$inset};
-           box-shadow:$top $left $blur $color #{$inset};
-}
-
-
-@mixin box-sizing($box) {
-	-webkit-box-sizing: $box;
-       -moz-box-sizing: $box;
-            box-sizing: $box;
-}
-
-@mixin rotate($degrees) {
-	-webkit-transform: rotate($degrees) scale(1);  /* Saf3.1+, Chrome */
-	-moz-transform: rotate($degrees) scale(1);  /* FF3.5+ */
-	-ms-transform: rotate($degrees) scale(1);  /* IE9 */
-	-o-transform: rotate($degrees) scale(1);  /* Opera 10.5 */
-	transform: rotate($degrees) scale(1);
-}
-
 
 cq-timezone-dialog {
   width: 375px;
@@ -639,19 +597,24 @@ body .trade .stx-btn.stx-ico {
 }
 .rightclick_drawing .overlayTrashCan,
 .rightclick_study .overlayTrashCan {
-	margin-top: -4px;
 	margin-left: 39px;
+}
+
+.rightclick_drawing .overlayTrashCan,
+.rightclick_study .overlayTrashCan,
+.rightclick_series .overlayTrashCan {
+	margin-top: -4px;
 	background: transparent;
 	border:none;
 	&.stx-btn span {
 		background-color: $DEFAULT-main;
-		background-position: -250px -26px;
-		width: 24px;
+		background-position: -400px -26px;
+		width: 25px;
 		border: solid #cfcfcf 1px;
 		border-radius: 3px;
 		.#{$DARK} & {
 			background-color: $DARK-main;
-			background-position: -250px -52px;
+			background-position: -400px -52px;
 		}
 	}
 }
@@ -678,19 +641,42 @@ cq-orderbook {
 body {
 	.tfc-ui,
 	.analystviews-ui,
-	.technicalinsights-ui {
+	.technicalinsights-ui,
+	.tableview-ui {
 		display:none;
 	}
 }
 
-.cryptoiq-ui,
+.marketdepth-ui,
 .scriptiq-ui,
 .timespanevent-ui,
 .ta_markers-ui,
 .video_markers-ui,
-.termstructure-ui,
+.crosssection-ui,
 .rangeslider-ui,
 .extendedhours-ui,
-.outliers-ui {
+.shortcuts-ui,
+.outliers-ui,
+.tooltip-ui {
 	display: none;
+}
+
+/* Hide shortcuts and info toggle (if tooltip addOn has not been initiated) on mobile screens*/
+cq-context[ciq-mobile] {
+	&:not([tooltip-active]) cq-toggle[cq-member="headsUp"],
+	&[shortcuts-active] .shortcuts-ui {
+		display: none;
+	}
+}
+
+/* Enable activated addOn UI */
+body {
+	*[extendedhours-active] .extendedhours-ui,
+	*[shortcuts-active] .shortcuts-ui,
+	*[outliers-active] .outliers-ui,
+	*[rangeslider-active] .rangeslider-ui,
+	*[tableview-active] .tableview-ui,
+	*[tooltip-active] .tooltip-ui {
+		display: inherit;
+	}
 }

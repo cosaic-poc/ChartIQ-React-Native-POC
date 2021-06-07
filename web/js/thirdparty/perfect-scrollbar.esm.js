@@ -2,6 +2,9 @@
  * perfect-scrollbar v1.5.0
  * Copyright 2020 Hyunje Jun, MDBootstrap and Contributors
  * Licensed under MIT
+ * 
+ * MODIFIED FOR KB 34812: Change added by MW to line 469 
+ * Fixes overscrolling issue by ensuring the Y Rail is never positioned below the scroller content
  */
 function get(element) {
   return getComputedStyle(element);
@@ -403,6 +406,9 @@ function updateCss(element, i) {
       yRailOffset.left = i.scrollbarYLeft + element.scrollLeft;
     }
   }
+  // The following line is added by MW for KB 34812 - Based off the solution provided in this thread: https://github.com/mdbootstrap/perfect-scrollbar/issues/920#issuecomment-653908443
+  // Ensure that the element bottom resulting from the offset does not extend beyond the total content height (scrollHeight)
+  if((yRailOffset.top + yRailOffset.height) > element.scrollHeight) yRailOffset.top = element.scrollHeight - yRailOffset.height;
   set(i.scrollbarYRail, yRailOffset);
   set(i.scrollbarX, {
     left: i.scrollbarXLeft,

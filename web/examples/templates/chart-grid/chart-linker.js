@@ -93,7 +93,7 @@ class ChartLinker {
 			}
 		});
 	}
-	// Syncronizes crosshair position between charts. Adds additional fixes which caused the crosshair to flicker during mouse interaction
+	// Synchronizes crosshair position between charts. Adds additional fixes which caused the crosshair to flicker during mouse interaction
 	setCrosshair(master) {
 		const {
 			left,

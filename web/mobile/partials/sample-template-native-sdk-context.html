@@ -6,38 +6,7 @@
 				<cq-measure><span class="mMeasure" style="display:none;"></span></cq-measure>
 			<cq-undo></cq-undo>
 			<cq-redo></cq-redo>
-			<cq-comparison cq-marker>
-				<cq-menu class="cq-comparison-new">
-					<cq-comparison-add-label>
-						<cq-comparison-plus></cq-comparison-plus><span>Compare</span><span>...</span>
-					</cq-comparison-add-label>
-					<cq-comparison-add>
-						<cq-comparison-lookup-frame>
-							<cq-lookup>
-								<cq-lookup-input cq-no-close>
-									<input type="text" cq-focus spellcheck="false" autocomplete="off" autocorrect="off" autocapitalize="none" placeholder="Enter Symbol">
-								</cq-lookup-input>
-							</cq-lookup>
-						</cq-comparison-lookup-frame>
-						<cq-swatch cq-no-close></cq-swatch>
-						<span><cq-accept-btn class="stx-btn">ADD</cq-accept-btn></span>
-					</cq-comparison-add>
-				</cq-menu>
-				<cq-comparison-key>
-					<template cq-comparison-item>
-						<cq-comparison-item>
-							<cq-comparison-swatch></cq-comparison-swatch>
-							<cq-comparison-label>AAPL</cq-comparison-label>
-							<!-- cq-comparison-price displays the current price with color animation -->
-							<cq-comparison-price cq-animate></cq-comparison-price>
-							<!-- cq-comparison-tick-price displays the price for the active crosshair item -->
-							<!-- <cq-comparison-tick-price></cq-comparison-tick-price>	-->
-							<cq-comparison-loader></cq-comparison-loader>
-							<div class="stx-btn-ico ciq-close"></div>
-						</cq-comparison-item>
-					</template>
-				</cq-comparison-key>
-			</cq-comparison>
+			<cq-chart-legend></cq-chart-legend>
 		</div>
 		<!-- End Chart Container -->
 	</div>
@@ -46,6 +15,6 @@
 <cq-dialog id="simulation-warning">
 	<strong>Displayed data is simulated.</strong>
 	<br/><br/>
-	DO NOT use this data as the basis for any trades or financial decisions.
-	<div class="ciq-btn" stxtap="close()">Close</div>
+	<div>DO NOT use this data as the basis for any trades or financial decisions.</div>
+	<div class="ciq-btn clear" stxtap="close()">Close</div>
 </cq-dialog>

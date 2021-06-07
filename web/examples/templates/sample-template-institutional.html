@@ -138,6 +138,8 @@ supported devices.
 					</cq-item>
 					<cq-item stxtap="Markers.showMarkers('callout')">Callouts<span class="ciq-radio"><span></span></span>
 					</cq-item>
+					<cq-item class="ta_markers-ui" stxtap="Markers.showMarkers('trade')">Trade<span class="ciq-radio"><span></span></span>
+					</cq-item>
 					<cq-item class="video_markers-ui" stxtap="Markers.showMarkers('video')">Video<span class="ciq-radio"><span></span></span>
 					</cq-item>
 					<cq-item stxtap="Markers.showMarkers('abstract')">Abstract<span class="ciq-radio"><span></span></span>
@@ -291,7 +293,7 @@ import { CIQ } from "./js/components.js";
 //import "./plugins/analystviews/components.js";
 //import "./plugins/scriptiq/scriptiq.js";
 //import "./plugins/technicalinsights/components.js";
-//import "./plugins/timespanevent/timespanevent.js";
+import "./plugins/timespanevent/timespanevent.js";
 //import "./plugins/visualearnings/visualearnings.js";
 
 /* Template-specific imports */
@@ -306,6 +308,7 @@ import "./examples/markets/marketDefinitionsSample.js";
 import "./examples/markets/marketSymbologySample.js";
 
 import marker from "./examples/markers/markersSample.js";
+import "./examples/markers/tradeAnalyticsSample.js";
 import "./examples/markers/videoSample.js";
 
 import "./examples/translations/translationSample.js";
@@ -320,6 +323,29 @@ const config = getDefaultConfig({
 
 // Create the chart...
 		let stxx = config.createChart();
+
+		const enableEvents = (obj) => {
+			stxx.removeEventListener("newChart", enableEvents);
+			const { advertised, topNode } = obj.stx.uiContext;
+			CIQ.UI.observeProperty("TimeSpanEvent", advertised, (obj) => {
+				const { TimeSpanEvent, Markers } = advertised;
+				if (!TimeSpanEvent || !Markers) return;
+				const eventsMenu = topNode.querySelector("cq-menu.stx-markers");
+				TimeSpanEvent.showMarkers(
+					{ node: eventsMenu.querySelector("[stxtap*='Order']") },
+					"Order"
+				);
+				TimeSpanEvent.showMarkers(
+					{ node: eventsMenu.querySelector("[stxtap*='CEO']") },
+					"CEO"
+				);
+				Markers.showMarkers(
+					{ node: eventsMenu.querySelector("[stxtap*='trade']") },
+					"trade"
+				);
+			});
+		};
+		stxx.addEventListener("newChart", enableEvents);
 
 		//...then add whatever code you wish!</script>
 

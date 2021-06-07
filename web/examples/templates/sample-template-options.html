@@ -294,12 +294,14 @@ import { CIQ } from "./js/components.js";
 //import "./plugins/timespanevent/timespanevent.js";
 //import "./plugins/visualearnings/visualearnings.js";
 
+import "./js/extras/optionSentimentByStrike.js";
+import optionSimulator from "./examples/feeds/optionChainSimulator.js";
+
 /* Template-specific imports */
 import getDefaultConfig from "./js/defaultConfiguration.js";
 
 import PerfectScrollbar from "./js/thirdparty/perfect-scrollbar.esm.js";
 
-import quotefeed from "./examples/feeds/quoteFeedSimulator.js";
 import "./examples/feeds/symbolLookupChartIQ.js";
 
 import "./examples/markets/marketDefinitionsSample.js";
@@ -315,11 +317,12 @@ import "./examples/translations/translationSample.js";
 const config = getDefaultConfig({
 	markerSample: marker.MarkersSample,
 	scrollStyle: PerfectScrollbar,
-	quoteFeed: quotefeed
+	quoteFeed: optionSimulator
 });
 
 // Create the chart...
 		let stxx = config.createChart();
+		CIQ.Studies.addStudy(stxx, "Sentiment By Strike");
 
 		//...then add whatever code you wish!</script>
 

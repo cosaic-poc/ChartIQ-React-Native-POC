@@ -150,7 +150,7 @@ quoteFeed.sendAjax = function (url, cb) {
  * data is converted to an array of JavaScript objects.
  *
  * @param {string} response The data provider's response in JSON format.
- * @return {Array} The data provider response properly formatted in an array of JavaScript objects.
+ * @return {array} The data provider response properly formatted in an array of JavaScript objects.
  */
 quoteFeed.formatChartData = function (response) {
 	var data = JSON.parse(response);

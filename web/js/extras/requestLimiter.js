@@ -1,10 +1,10 @@
 /**
- *	8.1.0
- *	Generation date: 2020-11-19T23:23:22.994Z
+ *	8.3.0
+ *	Generation date: 2021-06-07T21:54:41.980Z
  *	Client name: sonyl test
  *	Package Type: Technical Analysis
  *	License type: trial
- *	Expiration date: "2020/12/19"
+ *	Expiration date: "2021/07/07"
  */
 
 /***********************************************************

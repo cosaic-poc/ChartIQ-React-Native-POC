@@ -1,40 +1,15 @@
-<!DOCTYPE html><!--
-This is a fully functional desktop-like example showing how to load a term structure chart with a
-corresponding feature-rich user interface. It is intended mainly for larger screens and may not
-render optimally on small devices.
-
-This template requires the Term Structure package or Technical Analysis package with the
-Cross Section module. If you are using a different package, some features may not work.
-
-Customize this sample template as needed to meet your use case and to fit the screen size of your
-supported devices.
---><html><head>
-
-<meta charset="utf-8">
-<meta name="viewport" content="user-scalable=no, width=device-width, initial-scale=1, maximum-scale=1">
-<link rel="stylesheet" type="text/css" href="css/normalize.css" media="screen">
-<link rel="stylesheet" type="text/css" href="css/page-defaults.css" media="screen">
-<link rel="stylesheet" type="text/css" href="css/stx-chart.css" media="screen">
-<link rel="stylesheet" type="text/css" href="css/chartiq.css" media="screen">
-<link rel="stylesheet" type="text/css" href="plugins/crosssection/sample.css">
-
-<script src="js/thirdparty/custom-elements.min.js"></script> <!-- Legacy Edge support for webcomponents -->
-
-</head>
-<body id="termStructure">
-
-<cq-context><!-- Note: This template requires the Cross Section plugin.  -->
+<!-- Note: This template requires the Cross Section plugin.  -->
 <cq-color-picker></cq-color-picker>
 
 <div class="ciq-nav">
 	<cq-menu class="ciq-search">
-		<cq-lookup cq-keystroke-claim="" cq-keystroke-default="" cq-uppercase="" cq-exchanges="futures,govt,muni,corp">
-			<cq-lookup-input cq-no-close="">
+		<cq-lookup cq-keystroke-claim cq-keystroke-default cq-uppercase cq-exchanges="futures,govt,muni,corp">
+			<cq-lookup-input cq-no-close>
 				<input type="text" spellcheck="false" autocomplete="off" autocorrect="off" autocapitalize="none" name="symbol" placeholder="">
 				<cq-lookup-icon></cq-lookup-icon>
 			</cq-lookup-input>
 			<cq-lookup-results>
-				<cq-lookup-filters cq-no-close="">
+				<cq-lookup-filters cq-no-close>
 					<cq-filter class="true">ALL</cq-filter>
 					<cq-filter>BONDS</cq-filter>
 					<cq-filter>FUTURES</cq-filter>
@@ -48,7 +23,7 @@ supported devices.
 		<div class="icon-toggles ciq-toggles ciq-datepicker-container">
 			<cq-menu class="ciq-datepicker-toggle">
 				<span class="ciq-datepicker-icon"></span>
-				<cq-datepicker nav-datepicker="">
+				<cq-datepicker nav-datepicker>
 					<div class="ciq-datepicker-btn-wrapper">
 						<div class="ciq-btn">CURRENT DATE</div>
 					</div>
@@ -66,7 +41,9 @@ supported devices.
 		</div>
 
 		<cq-info-toggle-dropdown>
-			<cq-toggle class="ciq-CH" cq-member="crosshair">
+			<cq-toggle 
+				class="ciq-CH" 
+				cq-member="crosshair">
 				<span></span>
 				<cq-tooltip>Crosshair (Alt + \)</cq-tooltip>
 			</cq-toggle>
@@ -97,7 +74,7 @@ supported devices.
 					<cq-menu-dropdown-section>
 						<cq-heading>Themes</cq-heading>
 						<cq-themes>
-							<cq-themes-builtin cq-no-close="">
+							<cq-themes-builtin cq-no-close>
 								<template>
 									<cq-item></cq-item>
 								</template>
@@ -114,11 +91,11 @@ supported devices.
 
 <div class="ciq-chart-area">
 	<div class="ciq-chart">
-		<cq-message-toaster defaultdisplaytime="10" defaulttransition="slide" defaultposition="top"></cq-message-toaster>
+		<cq-message-toaster defaultDisplayTime="10" defaultTransition="slide" defaultPosition="top"></cq-message-toaster>
 		
 		<div class="chartContainer">
 
-			<cq-chart-title cq-marker="" cq-browser-tab="">
+			<cq-chart-title cq-marker cq-browser-tab>
 				<cq-symbol></cq-symbol>
 				<cq-chart-price>
 					<cq-chart-title-date class="ciq-chart-title-date"></cq-chart-title-date>
@@ -127,7 +104,7 @@ supported devices.
 			</cq-chart-title>
 			<cq-loader></cq-loader>
 
-			<cq-curve-comparison cq-marker="" class="ciq-comparison ciq-entity-comparison">
+			<cq-curve-comparison cq-marker class="ciq-comparison ciq-entity-comparison">
 				<cq-menu class="cq-comparison-new">
 					<cq-comparison-tap-capture>
 						<cq-comparison-add-label class="ciq-no-share">
@@ -143,13 +120,13 @@ supported devices.
 
 						<cq-comparison-add>
 							<cq-comparison-lookup-frame>
-								<cq-lookup cq-keystroke-claim="" cq-keystroke-default="" cq-uppercase="" cq-exchanges="futures,govt,muni,corp">
-									<cq-lookup-input cq-no-close="">
+								<cq-lookup cq-keystroke-claim cq-keystroke-default cq-uppercase cq-exchanges="futures,govt,muni,corp">
+									<cq-lookup-input cq-no-close>
 										<input type="text" spellcheck="false" autocomplete="off" autocorrect="off" autocapitalize="none" name="symbol" placeholder="">
 										<cq-lookup-icon></cq-lookup-icon>
 									</cq-lookup-input>
 									<cq-lookup-results>
-										<cq-lookup-filters cq-no-close="">
+										<cq-lookup-filters cq-no-close>
 											<cq-filter class="true">ALL</cq-filter>
 											<cq-filter>BONDS</cq-filter>
 											<cq-filter>FUTURES</cq-filter>
@@ -158,17 +135,17 @@ supported devices.
 									</cq-lookup-results>
 								</cq-lookup>
 							</cq-comparison-lookup-frame>
-							<cq-swatch cq-no-close=""></cq-swatch>
+							<cq-swatch cq-no-close></cq-swatch>
 							<span><cq-accept-btn class="stx-btn">ADD</cq-accept-btn></span>
 						</cq-comparison-add>
 					</cq-comparison-tap-capture>
 				</cq-menu>
 			</cq-curve-comparison>
 
-			<cq-study-legend cq-marker-label="Plots" cq-clone-to-panels="Plots" cq-panel-only="" cq-marker="" cq-hovershow="" cq-content-keys="cq-label,cq-comparison-label">
+			<cq-study-legend cq-marker-label="Plots" cq-clone-to-panels="Plots" cq-panel-only cq-marker cq-hovershow cq-content-keys="cq-label,cq-comparison-label">
 				<cq-curve-comparison>
-					<cq-curve-comparison-key cq-panel-only="" cq-all-series="">
-						<template cq-comparison-item="">
+					<cq-curve-comparison-key cq-panel-only cq-all-series>
+						<template cq-comparison-item>
 							<cq-comparison-item>
 								<cq-swatch cq-overrides="auto"></cq-swatch>
 								<cq-comparison-label></cq-comparison-label>
@@ -178,7 +155,7 @@ supported devices.
 						</template>
 					</cq-curve-comparison-key>
 				</cq-curve-comparison>
-				<template cq-study-legend="">
+				<template cq-study-legend>
 					<cq-item>
 						<cq-label></cq-label>
 						<span class="ciq-edit"></span>
@@ -234,7 +211,7 @@ supported devices.
 			<cq-item stxtap="select()" cq-name="3-year">3 Years Ago<span class="ciq-radio"><span></span></span></cq-item>
 			<cq-item stxtap="select('custom')">Custom...</cq-item>
 		</div>
-		<cq-datepicker comparison-datepicker=""></cq-datepicker>
+		<cq-datepicker comparison-datepicker></cq-datepicker>
 		<div stxtap="done()" style="display:flex;justify-content:center;"><div class="ciq-btn">Done</div></div>
 	</cq-historical-comparison-dialog>
 </cq-dialog>
@@ -245,83 +222,3 @@ supported devices.
 		<div stxtap="CurveEdit.launchTimeSeries()">Launch Time Series</div>
 	</cq-curve-context>
 </cq-dialog>
-</cq-context>
-
-<script type="module" crossorigin="use-credentials">
-// This inline script acts as the entry point, without creating a separate external file.
-
-import "./js/standard.js";
-import { CIQ } from "./js/components.js";
-import "./plugins/crosssection/core.js";
-import "./plugins/crosssection/datepicker.js";
-import "./plugins/crosssection/ui.js";
-import "./plugins/crosssection/timelineDateSelector.js";
-import quoteFeed from "./examples/feeds/termstructureDataSimulator.js";
-
-/* Template-specific imports */
-import getDefaultConfig from "./js/defaultConfiguration.js";
-
-import PerfectScrollbar from "./js/thirdparty/perfect-scrollbar.esm.js";
-import "./examples/feeds/symbolLookupChartIQ.js";
-
-import "./examples/markets/marketDefinitionsSample.js";
-import "./examples/markets/marketSymbologySample.js";
-
-// Create and customize default configuration
-
-const config = getDefaultConfig({
-	scrollStyle: PerfectScrollbar,
-	quoteFeed
-});
-
-config.initialSymbol = "US-T BENCHMARK";
-config.menuYaxisField = [
-	{ type: "item", label: "Yield", cmd: "Layout.setYaxisField('yield')" },
-	{ type: "item", label: "Bid", cmd: "Layout.setYaxisField('bid')" },
-	{ type: "item", label: "Mid", cmd: "Layout.setYaxisField('mid')" },
-	{ type: "item", label: "Ask", cmd: "Layout.setYaxisField('ask')" }
-];
-config.menuChartPreferences = [
-	{ type: "checkbox", label: "Shading", cmd: "Layout.Shading()" },
-	{ type: "checkbox", label: "X-Axis Scaling", cmd: "Layout.XAxisScaling()" },
-	{
-		type: "checkbox",
-		label: "Update Animations",
-		cmd: "Layout.UpdateAnimations()"
-	},
-	{ type: "checkbox", label: "Show Update Stamp", cmd: "Layout.UpdateStamp()" },
-	{
-		type: "checkboxOptions",
-		label: "Recent Updates",
-		cmd: "Layout.FreshPoints()",
-		options: "Layout.showFreshnessEdit()"
-	},
-	{
-		type: "checkbox",
-		label: "Timeline Date Selector",
-		cmd: "Layout.TimelineDateSelector()"
-	}
-];
-
-config.plugins.crossSection.sortFunction = (l, r) => {
-	let weight = ["DY", "WK", "MO", "YR", "ST", "MT", "LT"];
-	let l1 = l.split(" "),
-		r1 = r.split(" ");
-	let diff =
-		weight.indexOf(l1[l1.length - 1]) - weight.indexOf(r1[r1.length - 1]);
-	if (diff) return diff > 0 ? 1 : -1;
-
-	if (isNaN(l1[0])) return 1;
-	if (isNaN(r1[0])) return -1;
-	if (Number(l1[0]) < Number(r1[0])) return -1;
-	if (Number(r1[0]) < Number(l1[0])) return 1;
-	return 0;
-};
-
-// Create the chart...
-		let stxx = config.createChart();
-
-		//...then add whatever code you wish!</script>
-
-
-</body></html>

@@ -3,7 +3,10 @@
     <title>Asset 6</title>
     <defs>
         <filter id="filter-1">
-            <feColorMatrix in="SourceGraphic" type="matrix" values="0 0 0 0 0.400000 0 0 0 0 0.400000 0 0 0 0 0.400000 0 0 0 1.000000 0"></feColorMatrix>
+            <feColorMatrix in="SourceGraphic" type="matrix" values="0 0 0 0 1.000000 0 0 0 0 1.000000 0 0 0 0 1.000000 0 0 0 1.000000 0"></feColorMatrix>
+        </filter>
+        <filter id="filter-2">
+            <feColorMatrix in="SourceGraphic" type="matrix" values="0 0 0 0 0.000000 0 0 0 0 0.000000 0 0 0 0 0.000000 0 0 0 1.000000 0"></feColorMatrix>
         </filter>
     </defs>
     <g id="Templates-and-Lo-Fi-Mocks" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">

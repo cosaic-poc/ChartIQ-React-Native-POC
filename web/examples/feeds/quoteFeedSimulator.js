@@ -1,5 +1,5 @@
 // -------------------------------------------------------------------------------------------
-// Copyright 2012-2017 by ChartIQ, Inc
+// Copyright 2012-2021 by ChartIQ, Inc
 // -------------------------------------------------------------------------------------------
 // SAMPLE QUOTEFEED IMPLEMENTATION -- Connects charts to ChartIQ Simulator
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -7,7 +7,7 @@ var quoteFeedSimulator = {}; // the quotefeed object
 // local, non-dependent implementation of XmlHttpRequest
 quoteFeedSimulator.postAjax = function (url, cb) {
 	var server = new XMLHttpRequest();
-	url += (url.indexOf("?") == -1 ? "?" : "&") + new Date().getTime();
+	url += (url.indexOf("?") === -1 ? "?" : "&") + new Date().getTime();
 	server.open("GET", url);
 	server.onload = function () {
 		cb(this.status, this.responseText);
@@ -27,8 +27,9 @@ quoteFeedSimulator.fetchInitialData = function (
 	params,
 	cb
 ) {
+	var self = this;
 	var queryUrl =
-		quoteFeedSimulator.url +
+		self.url +
 		"?session=" +
 		params.quoteDriverID + // add on unique sessionID required by ChartIQ simulator;
 		"&identifier=" +
@@ -43,11 +44,11 @@ quoteFeedSimulator.fetchInitialData = function (
 		params.period +
 		"&extended=" +
 		(params.extended ? 1 : 0); // using filter:true for after hours
-	quoteFeedSimulator.postAjax(queryUrl, function (status, response) {
+	self.postAjax(queryUrl, function (status, response) {
 		// process the HTTP response from the datafeed
-		if (status == 200) {
+		if (status === 200) {
 			// if successful response from datafeed
-			var newQuotes = quoteFeedSimulator.formatChartData(response, symbol);
+			var newQuotes = self.formatChartData(response, symbol);
 			cb({
 				quotes: newQuotes,
 				moreAvailable: true,
@@ -61,8 +62,9 @@ quoteFeedSimulator.fetchInitialData = function (
 };
 // called by chart to fetch update data
 quoteFeedSimulator.fetchUpdateData = function (symbol, startDate, params, cb) {
+	var self = this;
 	var queryUrl =
-		quoteFeedSimulator.url +
+		self.url +
 		"?session=" +
 		params.quoteDriverID + // add on unique sessionID required by ChartIQ simulator;
 		"&identifier=" +
@@ -75,11 +77,11 @@ quoteFeedSimulator.fetchUpdateData = function (symbol, startDate, params, cb) {
 		params.period +
 		"&extended=" +
 		(params.extended ? 1 : 0); // using filter:true for after hours
-	quoteFeedSimulator.postAjax(queryUrl, function (status, response) {
+	self.postAjax(queryUrl, function (status, response) {
 		// process the HTTP response from the datafeed
-		if (status == 200) {
+		if (status === 200) {
 			// if successful response from datafeed
-			var newQuotes = quoteFeedSimulator.formatChartData(response, symbol);
+			var newQuotes = self.formatChartData(response, symbol);
 			cb({
 				quotes: newQuotes,
 				attribution: { source: "simulator", exchange: "RANDOM" }
@@ -98,8 +100,9 @@ quoteFeedSimulator.fetchPaginationData = function (
 	params,
 	cb
 ) {
+	var self = this;
 	var queryUrl =
-		quoteFeedSimulator.url +
+		self.url +
 		"?session=" +
 		params.quoteDriverID + // add on unique sessionID required by ChartIQ simulator;
 		"&identifier=" +
@@ -114,11 +117,11 @@ quoteFeedSimulator.fetchPaginationData = function (
 		params.period +
 		"&extended=" +
 		(params.extended ? 1 : 0); // using filter:true for after hours
-	quoteFeedSimulator.postAjax(queryUrl, function (status, response) {
+	self.postAjax(queryUrl, function (status, response) {
 		// process the HTTP response from the datafeed
-		if (status == 200) {
+		if (status === 200) {
 			// if successful response from datafeed
-			var newQuotes = quoteFeedSimulator.formatChartData(response, symbol);
+			var newQuotes = self.formatChartData(response, symbol);
 			cb({
 				quotes: newQuotes,
 				moreAvailable: suggestedStartDate.getTime() > 0,
