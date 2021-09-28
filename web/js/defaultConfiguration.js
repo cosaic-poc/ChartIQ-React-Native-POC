@@ -49,7 +49,7 @@ import {CIQ} from "../js/chartiq.js";
 				rangeSlider: true,
 				shortcuts: true,
 				tableView: true,
-				tooltip: true
+				tooltip: false
 			},
 			onNewSymbolLoad: {
 				// if available called for each series in chart to test if it needs to be removed
@@ -62,7 +62,7 @@ import {CIQ} from "../js/chartiq.js";
 				}
 			},
 			// save and restore layout, preferences and drawings.
-			restore: true,
+			restore: false,
 			// language: "de", // Optionally set a language for the UI, after it has been initialized, and translate.
 			// default lookup driver is defined in examples/feeds/symbolLookupChartIQ.js, it needs to be loaded to be available
 			lookupDriver: CIQ.ChartEngine.Driver.Lookup.ChartIQ,

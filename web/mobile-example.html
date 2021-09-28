@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<!--
+This file is intended to be used with the iOS and Android GitHub sample projects. Do not load the
+file directly as a web page.
+
+The file is a simple HTML application that can be put into a mobile WebView to interface with
+ChartIQ's JavaScript bridge library, nativeSdkBridge.js (in the mobile/js folder).
+
+To use this template, move or copy it to the root folder of your library.
+-->
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="user-scalable=no, width=device-width, initial-scale=1, maximum-scale=1"
+    />
+    <link
+      rel="stylesheet"
+      type="text/css"
+      href="css/normalize.css"
+      media="screen"
+    />
+    <link
+      rel="stylesheet"
+      type="text/css"
+      href="css/page-defaults.css"
+      media="screen"
+    />
+    <link
+      rel="stylesheet"
+      type="text/css"
+      href="css/stx-chart.css"
+      media="screen"
+    />
+    <link
+      rel="stylesheet"
+      type="text/css"
+      href="css/chartiq.css"
+      media="screen"
+    />
+    <link
+      rel="stylesheet"
+      type="text/css"
+      href="mobile/css/ciq-mobile.css"
+      media="screen"
+    />
+    <style>
+      .chartContainer {
+        background-color: black;
+      }
+      .stx_mountain_chart {
+        background-color: green;
+        border-top-color: rgb(74, 190, 74);
+        width: 3px;
+      }
+      .myEvents {
+        position: absolute;
+        text-align: center;
+        width: 20px;
+        height: 20px;
+        line-height: 20px;
+        color: white;
+      }
+
+      /*style dividents to be a blue circle*/
+
+      .myEvents.Buy {
+        background-color: blue;
+        -webkit-border-radius: 50%;
+        -moz-border-radius: 50%;
+        -ms-border-radius: 50%;
+        border-radius: 50%;
+        color: black;
+      }
+
+      /*style news to be a small red square*/
+
+      .myEvents.Sell {
+        background-color: red;
+        -webkit-border-radius: 50%;
+        -moz-border-radius: 50%;
+        -ms-border-radius: 50%;
+        border-radius: 50%;
+        color: black
+      }
+
+      
+    </style>
+  </head>
+
+  <body>
+    <cq-context>
+      <div class="ciq-chart-area">
+        <div class="ciq-chart">
+          <div class="chartContainer"></div>
+          <!-- End Chart Container -->
+        </div>
+        <div id="stxEventPrototype" class="myEvents"></div>
+        <!-- End Chart Box -->
+      </div>
+    </cq-context>
+    <script src="mobile/thirdparty/hammer.js"></script>
+    <script type="module" crossorigin="use-credentials">
+      // This inline script acts as the entry point, without creating a separate external file.
+      import './js/advanced.js';
+      import {CIQ} from './js/components.js';
+      import './js/addOns.js';
+      import quoteFeedSimulator from './examples/feeds/quoteFeedSimulator.js';
+
+      /* Template-specific imports */
+      import getDefaultConfig from './js/defaultConfiguration.js';
+      import PerfectScrollbar from './js/thirdparty/perfect-scrollbar.esm.js';
+      import './examples/markets/marketDefinitionsSample.js';
+      import './examples/markets/marketSymbologySample.js';
+      import './examples/translations/translationSample.js';
+      import './mobile/js/nativeSdkAccessibility.js';
+      import marker from './examples/markers/markersSample.js';
+
+      // Create and customize default configuration
+
+      // This variable triggers display of the simulated data disclaimer necessary when
+      // using data from the ChartIQ data simulator. Set to false when displaying your
+      // production data.
+      const displayDataDisclaimer = false;
+
+      CIQ.MobileBridge.determineOs();
+      const quoteFeedNativeBridge = {
+        fetch: function (parameters, cb) {
+          function completion(cb) {
+            return function (err, results) {
+              if (err) {
+                cb({error: err});
+              } else {
+                cb(results);
+              }
+            };
+          }
+          // This should call the native ios or android interface.
+          // For sample app, instantiate an interface that connects to the simulator.
+          // Call the completion closure with a completionHandler (or other mechanism).
+          // Make sure this is done asynchronously so the UI doesn't hang.
+          // Completion assumes the results are in correct JSON format.
+          // CIQ.MobileBridge.nativeQuoteFeed(parameters, cb);
+        },
+        fetchInitialData: function (
+          symbol,
+          suggestedStartDate,
+          suggestedEndDate,
+          params,
+          cb,
+        ) {
+          const parameters = {
+            func: 'pullInitialData',
+            symbol: symbol,
+            period: params.period,
+            timeUnit: params.interval,
+            start: suggestedStartDate,
+            end: suggestedEndDate,
+          };
+          this.fetch(parameters, cb);
+        },
+        fetchUpdateData: function (symbol, startDate, params, cb) {
+          const parameters = {
+            func: 'pullUpdate',
+            symbol: symbol,
+            period: params.period,
+            timeUnit: params.interval,
+            start: startDate,
+          };
+          this.fetch(parameters, cb);
+        },
+        fetchPaginationData: function (
+          symbol,
+          suggestedStartDate,
+          endDate,
+          params,
+          cb,
+        ) {
+          const parameters = {
+            func: 'pullPagination',
+            symbol: symbol,
+            period: params.period,
+            timeUnit: params.interval,
+            start: suggestedStartDate,
+            end: endDate,
+          };
+          this.fetch(parameters, cb);
+        },
+      };
+
+      // NOTE: if you are using a push mechanism for your data, comment out or remove the setQuoteFeedInBridge function call and
+      // quotefeed field in the config object below. Then set the dataMethod to 'push' in the native client side code.
+      // CIQ.MobileBridge.setQuoteFeedInBridge(quoteFeedNativeBridge);
+      const config = getDefaultConfig({
+        scrollStyle: PerfectScrollbar,
+        quoteFeed: quoteFeedSimulator,
+      });
+
+      // NOTE: if you want to change the quotefeed refreshInterval you can run the following and set the refreshInterval to any interval in seconds.
+      // Object.assign(config.quoteFeeds[0].behavior, { refreshInterval: 5 });
+      // If you want to modify anything in the config directly please do so in chartiq/js/defaultConfiguration.js
+      Object.assign(config.enabledAddOns, {
+        fullScreen: false,
+        rangeSlider: false,
+      });
+
+      // Create the chart...
+      let stxx = config.createChart();
+
+      // set some settings for the mobile template
+      if (stxx) {
+        stxx.callbackListeners.drawingEdit = []; // turn off edit mode for drawing mSticky
+        stxx.callbackListeners.studyOverlayEdit = []; // turn off edit mode for study mSticky
+        stxx.callbackListeners.studyPanelEdit = []; // turn off edit mode for study panel
+        stxx.extendedHours.set(false); // default state so it doesn't mess with the native toggle option
+        CIQ.MobileBridge.setChartEngineInBridge(stxx); // set the chart engine instance for the nativeSdkBridge scripts
+        CIQ.MobileBridge.setChartAvailable(true); // lets the mobile bridge know that the chart is finished loading
+      }
+
+      stxx.attachQuoteFeed(quoteFeedSimulator, {
+        refreshInterval: 1,
+      });
+
+      stxx.chart.xAxis.displayGridLines = false;
+      stxx.xaxisHeight = 0;
+      stxx.chart.xAxis.minimumLabelWidth = 0;
+
+      stxx.chart.yAxis.displayGridLines = false;
+      stxx.chart.yAxis.noDraw = true;
+      stxx.chart.yAxis.minimumLabelWidth = 0;
+      stxx.chart.yAxis.bottomOffset = 0;
+      stxx.chart.allowScrollFuture = false;
+      stxx.yTolerance = 1000;
+
+      stxx.crosshairYOffset = 0;
+      stxx.crosshairXOffset = 0;
+
+      stxx.controls.chartControls.style.display = 'none';
+      stxx.controls.chartControls = null;
+      stxx.setChartType('mountain');
+      stxx.setSpan({
+        multiplier: 1,
+        base: 'day',
+      });
+      stxx.loadChart('AAPL');
+      stxx.addEventListener('newChart', () => {
+        window.ReactNativeWebView.postMessage(
+          JSON.stringify({
+            dataSegment: stxx.getDataSegment(),
+          }),
+        );
+        CIQ.Marker.removeByLabel(stxx, "events");
+        // Load sample trade markers
+        const markerTypes = ['Buy', 'Sell'];
+        let newNode;
+
+        for (let i = 0; i < stxx.masterData.length - 10; i += 40) {
+          let r = Math.floor(Math.random() * (markerTypes.length + 1));
+          if (r == markerTypes.length) continue; // randomize
+          newNode = document
+            .querySelector('#stxEventPrototype')
+            .cloneNode(true);
+          newNode.id = null;
+          newNode.innerHTML = markerTypes[r].toUpperCase().charAt(0);
+          newNode.classList.add(markerTypes[r]);
+          new CIQ.Marker({
+            stx: stxx,
+            xPositioner: 'date',
+            yPositioner: markerTypes[r] == 'dividend' ? 'under_candle' : null,
+            x: stxx.masterData[i].DT,
+            label: 'events',
+            node: newNode,
+          });
+        }
+      });
+
+      CIQ.ChartEngine.prototype.append('headsUpHR', () => {
+        if (CIQ.MobileBridge.getHudDetails() && stxx.layout.crosshair)
+          window.ReactNativeWebView.postMessage(
+            JSON.stringify({
+              hud: CIQ.MobileBridge.getHudDetails(),
+              dataSegment: stxx.getDataSegment(),
+            }),
+          );
+      });
+
+      CIQ.ChartEngine.prototype.append(
+        'positionCrosshairsAtPointer',
+        function () {
+          if (this.currentVectorParameters.vectorType) return; // don't override if drawing
+          var chart = this.chart,
+            panel = chart.panel,
+            yAxis = panel.yAxis,
+            bar = this.barFromPixel(this.cx);
+          if (this.chart.dataSegment[bar]) {
+            this.crossYActualPos = this.pixelFromPrice(
+              this.chart.dataSegment[bar].Close,
+              panel,
+            );
+            if (yAxis.bottom < this.crossYActualPos)
+              this.crossYActualPos = yAxis.bottom;
+            this.controls.crossY.style.top = this.crossYActualPos + 'px';
+          }
+        },
+      );
+
+      enableCrosshairViaLongTouch(stxx);
+
+      function enableCrosshairViaLongTouch(stx, options) {
+        var layout = stx.layout;
+        var enable = (options && options.enable) || 300;
+        var disable = (options && options.disable) || 0;
+        var enableTimer = null;
+        var disableTimer = null;
+
+        var enableCrosshairs = function (touchevent) {
+          layout.crosshair = true;
+          stx.doDisplayCrosshairs();
+          stx.touchstart(touchevent);
+          stx.positionCrosshairsAtPointer();
+        };
+        var disableCrosshairs = function () {
+          layout.crosshair = false;
+          stx.undisplayCrosshairs();
+        };
+
+        stx.addEventListener('move', function () {
+          if (enableTimer === null) return;
+
+          clearTimeout(enableTimer);
+          enableTimer = null;
+        });
+
+        stx.prepend('touchstart', function (e) {
+          if (layout.crosshair) {
+            if (disableTimer !== null) {
+              clearTimeout(disableTimer);
+              disableTimer = null;
+            }
+          } else if (e.touches.length === 1) {
+            enableTimer = setTimeout(enableCrosshairs, enable, e);
+          }
+        });
+
+        stx.append('touchend', function () {
+          if (layout.crosshair) {
+            disableTimer = setTimeout(disableCrosshairs, disable);
+          }
+
+          // gesture may end before timer
+          if (enableTimer !== null) {
+            clearTimeout(enableTimer);
+            enableTimer = null;
+          }
+        });
+      }
+    </script>
+  </body>
+</html>

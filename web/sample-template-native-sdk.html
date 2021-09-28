@@ -210,13 +210,13 @@ To use this template, move or copy it to the root folder of your library.
 			timeUnit: 'second'
 		})
 		stxx.loadChart("AAPL");
-
+		stxx.doDisplayCrosshairs();
 		CIQ.ChartEngine.prototype.append("draw", () => {
-			const chart = CIQ.MobileBridge.getEngineProperty('chart')
-			const symbol = chart.symbol
-			const dataSet = chart.dataSet
+			// const chart = CIQ.MobileBridge.getEngineProperty('chart')
+			// const symbol = chart.symbol
+			// const dataSet = chart.dataSet
 
-			window.ReactNativeWebView.postMessage(JSON.stringify({hud: CIQ.MobileBridge.getHudDetails(), symbol, dataSet}))
+			window.ReactNativeWebView.postMessage(JSON.stringify({hud: CIQ.MobileBridge.getHudDetails()}))
 		})
 	</script>
 
