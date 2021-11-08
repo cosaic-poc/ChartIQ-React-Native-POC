@@ -56,8 +56,8 @@ module.exports = {
 								// if folder named "images", asset is loaded outside of css.
 								return (
 									"./" +
-									(/images/.test(resourcePath) ? "" : "css/") +
-									"img/" +
+									(/images/.test(resourcePath) ? "" : "css") +
+									"/img/" +
 									url
 								);
 							},

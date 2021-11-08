@@ -13,10 +13,10 @@
     "chartiq": "cd web && npm start & npm run ios"
   },
   "dependencies": {
-    "@expo/vector-icons": "^12.0.0",
+    "@expo/vector-icons": "^12.0.5",
     "@unimodules/core": "^7.1.2",
     "@unimodules/react-native-adapter": "^6.3.6",
-    "expo": "^42.0.3",
+    "expo": "^43.0.2",
     "expo-asset": "^8.3.3",
     "expo-file-system": "~11.1.3",
     "expo-linear-gradient": "^9.2.0",

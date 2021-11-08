@@ -1,11 +1,11 @@
 /**
- *	8.3.0
- *	Generation date: 2021-09-08T03:57:27.183Z
- *	Client name: sofi
+ *	8.4.0
+ *	Generation date: 2021-11-02T14:04:28.074Z
+ *	Client name: sonyl test
  *	Package Type: Technical Analysis
- *	License type: trial
- *	Expiration date: "2021/10/08"
- *	iFrame lock: true
+ *	License type: annual
+ *	Expiration date: "2022/01/31"
+ *	Domain lock: ["127.0.0.1","localhost","demo.chartiq.com","10.0.2.2"]
  */
 
 /***********************************************************
@@ -43,13 +43,14 @@ import {CIQ} from "../js/chartiq.js";
 			// List of addons which are enabled and will be started when chart is created
 			// Either override or supplement this list before creating chart to modify.
 			enabledAddOns: {
+				dataLoader:true,
 				extendedHours: true,
 				fullScreen: true,
 				inactivityTimer: true,
 				rangeSlider: true,
 				shortcuts: true,
 				tableView: true,
-				tooltip: false
+				tooltip: true
 			},
 			onNewSymbolLoad: {
 				// if available called for each series in chart to test if it needs to be removed
@@ -62,7 +63,7 @@ import {CIQ} from "../js/chartiq.js";
 				}
 			},
 			// save and restore layout, preferences and drawings.
-			restore: false,
+			restore: true,
 			// language: "de", // Optionally set a language for the UI, after it has been initialized, and translate.
 			// default lookup driver is defined in examples/feeds/symbolLookupChartIQ.js, it needs to be loaded to be available
 			lookupDriver: CIQ.ChartEngine.Driver.Lookup.ChartIQ,
@@ -122,6 +123,7 @@ import {CIQ} from "../js/chartiq.js";
 					{ label: "Outliers", action: "outliers", commands: ["Shift+Alt+KeyO"], extension: "outliers" },
 					{ label: "Market Depth", action: "marketDepth", commands: ["Shift+Alt+KeyD"], extension: "marketDepth" },
 					{ label: "L2 Heat Map", action: "l2HeatMap", commands: ["Shift+Alt+KeyM"], extension: "marketDepth" },
+					{ label: "Import Data", action: "dataLoader", commands: ["Alt+KeyI"], extension: "dataLoader" },
 					{ label: "Trade From Chart", action: "tfc", commands: ["Shift+Alt+KeyP"], extension: "tfc" }
 				],
 				// Keys events captured by the chart normally trigger on keyup. Specify which keys will trigger on keydown,
@@ -201,23 +203,23 @@ import {CIQ} from "../js/chartiq.js";
 			},
 			// menu items
 			menuPeriodicity: [
-				{ type: "item", label: "1 D", cmd: "Layout.setPeriodicity(1,1,'day')" },
-				{ type: "item", label: "1 W", cmd: "Layout.setPeriodicity(1,1,'week')" },
-				{ type: "item", label: "1 Mo", cmd: "Layout.setPeriodicity(1,1,'month')" },
+				{ type: "item", label: "1 D", cmd: "Layout.setPeriodicity(1,1,'day')", value: { period: 1, interval: 1, timeUnit: 'day'} },
+				{ type: "item", label: "1 W", cmd: "Layout.setPeriodicity(1,1,'week')", value: { period: 1, interval: 1, timeUnit: 'week' } },
+				{ type: "item", label: "1 Mo", cmd: "Layout.setPeriodicity(1,1,'month')", value: { period: 1, interval: 1, 'timeUnit': 'month' } },
 				{ type: "separator", },
-				{ type: "item", label: "1 Min", cmd: "Layout.setPeriodicity(1,1,'minute')" },
-				{ type: "item", label: "5 Min", cmd: "Layout.setPeriodicity(1,5,'minute')" },
-				{ type: "item", label: "10 Min", cmd: "Layout.setPeriodicity(1,10,'minute')" },
-				{ type: "item", label: "15 Min", cmd: "Layout.setPeriodicity(3,5,'minute')" },
-				{ type: "item", label: "30 Min", cmd: "Layout.setPeriodicity(1,30,'minute')" },
-				{ type: "item", label: "1 Hour", cmd: "Layout.setPeriodicity(2,30,'minute')" },
-				{ type: "item", label: "4 Hour", cmd: "Layout.setPeriodicity(8,30,'minute')" },
+				{ type: "item", label: "1 Min", cmd: "Layout.setPeriodicity(1,1,'minute')", value: { period: 1, interval: 1, timeUnit: 'minute' } },
+				{ type: "item", label: "5 Min", cmd: "Layout.setPeriodicity(1,5,'minute')", value: { period: 1, interval: 5, timeUnit: 'minute' } },
+				{ type: "item", label: "10 Min", cmd: "Layout.setPeriodicity(1,10,'minute')", value: { period: 1, interval: 10, timeUnit: 'minute' } },
+				{ type: "item", label: "15 Min", cmd: "Layout.setPeriodicity(3,5,'minute')", value: { period: 1, interval: 1, timeUnit: 'minute' } },
+				{ type: "item", label: "30 Min", cmd: "Layout.setPeriodicity(1,30,'minute')", value: { period: 1, interval: 30, timeUnit: 'minute' } },
+				{ type: "item", label: "1 Hour", cmd: "Layout.setPeriodicity(2,30,'minute')", value: { period: 2, interval: 30, timeUnit: 'minute' } },
+				{ type: "item", label: "4 Hour", cmd: "Layout.setPeriodicity(8,30,'minute')", value: { period: 8, interval: 30, timeUnit: 'minute' } },
 				{ type: "separator", },
-				{ type: "item", label: "1 Sec", cmd: "Layout.setPeriodicity(1,1,'second')" },
-				{ type: "item", label: "10 Sec", cmd: "Layout.setPeriodicity(1,10,'second')" },
-				{ type: "item", label: "30 Sec", cmd: "Layout.setPeriodicity(1,30,'second')" },
+				{ type: "item", label: "1 Sec", cmd: "Layout.setPeriodicity(1,1,'second')", value: { period: 1, interval: 1, timeUnit: 'second' } },
+				{ type: "item", label: "10 Sec", cmd: "Layout.setPeriodicity(1,10,'second')", value: { period: 1, interval: 10, timeUnit: 'second' } },
+				{ type: "item", label: "30 Sec", cmd: "Layout.setPeriodicity(1,30,'second')", value: { period: 1, interval: 30, timeUnit: 'second' } },
 				{ type: "separator", },
-				{ type: "item", label: "250 MSec", cmd: "Layout.setPeriodicity(1,250,'millisecond')" }
+				{ type: "item", label: "250 MSec", cmd: "Layout.setPeriodicity(1,250,'millisecond')", value: { period: 1, interval: 250, timeUnit: 'millisecond' } }
 			],
 			menuChartStyle: [
 				{ type: "radio", label: "Candle", cmd: "Layout.ChartType('candle')" },
@@ -246,6 +248,7 @@ import {CIQ} from "../js/chartiq.js";
 			menuChartPreferences: [
 				{ type: "checkbox", label: "Range Selector", cmd: "Layout.RangeSlider()", cls: "rangeslider-ui" },
 				{ type: "checkbox", label: "Extended Hours", cmd: "Layout.ExtendedHours()", cls: "extendedhours-ui" },
+				{ type: "checkbox", label: "Animation", cmd: "Layout.Animation()", cls: "animation-ui" },
 				{ type: "checkbox", label: "Hide Outliers", cmd: "Layout.Outliers()", cls: "outliers-ui" },
 				{ type: "checkbox", label: "Market Depth", cmd: "Layout.MarketDepth()", cls: "marketdepth-ui" },
 				{ type: "checkbox", label: "L2 Heat Map", cmd: "Layout.L2Heatmap()", cls: "marketdepth-ui" },
@@ -261,9 +264,13 @@ import {CIQ} from "../js/chartiq.js";
 				excludedStudies: {
 					"stochastics": true, // Remove simple stochastics, replaced with Stochastics
 				},   // list of studies to exclude
-				alwaysDisplayDialog: { ma: true, AVWAP: true },
+				alwaysDisplayDialog: { ma: true },
 	 			/*dialogBeforeAddingStudy: {"rsi": true} // here's how to always show a dialog before adding the study*/
 			},
+			menuAddOns: [
+				{ type: "item", label: "Shortcuts / Hotkeys", cmd: "Layout.showShortcuts(true)", cls: "shortcuts-ui" },
+				{ type: "item", label: "Import Data", cmd: "Channel.write('dataLoader', true)", cls: "dataLoader-ui"}
+			],
 			rangeMenu: [
 				{ type: "range", label: "1D", cmd: "set(1,'today')" },
 				{ type: "range", label: "5D", cmd: "set(5,'day',30,2,'minute')" },
@@ -283,35 +290,36 @@ import {CIQ} from "../js/chartiq.js";
 				{ type: "dt", tool: "vertical", group: "lines", label: "Vertical", shortcut: "p" },
 				{ type: "dt", tool: "rectangle", group: "markings", label: "Rectangle", shortcut: "r" },
 				{ type: "dt", tool: "segment", group: "lines", label: "Segment" },
-				{ type: "dt", tool: "callout", group: "text", label: "Callout" },
 				{ type: "dt", tool: "average", group: "statistics", label: "Average Line" },
+				{ type: "dt", tool: "callout", group: "text", label: "Callout" },
 				{ type: "dt", tool: "channel", group: "lines", label: "Channel" },
+				{ type: "dt", tool: "check", group: "markings", label: "Check" },
 				{ type: "dt", tool: "continuous", group: "lines", label: "Continuous" },
 				{ type: "dt", tool: "crossline", group: "lines", label: "Crossline" },
-				{ type: "dt", tool: "freeform", group: "lines", label: "Doodle" },
 				{ type: "dt", tool: "elliottwave", group: "technicals", label: "Elliott Wave"},
 				{ type: "dt", tool: "ellipse", group: "markings", label: "Ellipse", shortcut: "e" },
-				{ type: "dt", tool: "retracement", group: "fibonacci", label: "Fib Retracement" },
+				{ type: "dt", tool: "freeform", group: "lines", label: "Doodle" },
 				{ type: "dt", tool: "fibprojection", group: "fibonacci", label: "Fib Projection" },
 				{ type: "dt", tool: "fibarc", group: "fibonacci", label: "Fib Arc" },
 				{ type: "dt", tool: "fibfan", group: "fibonacci", label: "Fib Fan" },
 				{ type: "dt", tool: "fibtimezone", group: "fibonacci", label: "Fib Time Zone" },
+				{ type: "dt", tool: "focusarrow", group: "markings", label: "Focus" },
 				{ type: "dt", tool: "gannfan", group: "technicals", label: "Gann Fan" },
 				{ type: "dt", tool: "gartley", group: "technicals", label: "Gartley" },
+				{ type: "dt", tool: "heart", group: "markings", label: "Heart" },
 				{ type: "dt", tool: "pitchfork", group: "technicals", label: "Pitchfork" },
 				{ type: "dt", tool: "quadrant", group: "statistics", label: "Quadrant Lines" },
 				{ type: "dt", tool: "ray", group: "lines", label: "Ray" },
 				{ type: "dt", tool: "regression", group: "statistics", label: "Regression Line" },
-				{ type: "dt", tool: "check", group: "markings", label: "Check" },
-				{ type: "dt", tool: "xcross", group: "markings", label: "Cross" },
-				{ type: "dt", tool: "focusarrow", group: "markings", label: "Focus" },
-				{ type: "dt", tool: "heart", group: "markings", label: "Heart" },
+				{ type: "dt", tool: "retracement", group: "fibonacci", label: "Fib Retracement" },
 				{ type: "dt", tool: "star", group: "markings", label: "Star" },
 				{ type: "dt", tool: "speedarc", group: "technicals", label: "Speed Resistance Arc" },
 				{ type: "dt", tool: "speedline", group: "technicals", label: "Speed Resistance Line" },
 				{ type: "dt", tool: "timecycle", group: "technicals", label: "Time Cycle" },
 				{ type: "dt", tool: "tirone", group: "statistics", label: "Tirone Levels" },
 				{ type: "dt", tool: "trendline", group: "text", label: "Trend Line" },
+				{ type: "dt", tool: "volumeprofile", group: "statistics", label: "Volume Profile" },
+				{ type: "dt", tool: "xcross", group: "markings", label: "Cross" },
 			],
 			drawingToolGrouping: [
 				"All",
@@ -326,8 +334,8 @@ import {CIQ} from "../js/chartiq.js";
 			menuRendering: {
 				separator: () => `
 					<cq-separator></cq-separator>`,
-				item: ({ label, cmd }) => `
-					<cq-item stxtap="${cmd}">${label}</cq-item>`,
+				item: ({ label, cmd, cls }) => `
+					<cq-item ${cls ? `class="${cls}"` : "" } stxtap="${cmd}">${label}</cq-item>`,
 				radio: ({ label, cmd, cls }) => `
 					<cq-item
 						${cls ? `class="${cls}"` : ""}
@@ -356,8 +364,7 @@ import {CIQ} from "../js/chartiq.js";
 				range: ({ label, cmd, cls }) => `
 					<div ${cls ? `class="${cls}"` : ""} stxtap="${cmd}">${label}</div>
 				`,
-				dt: ({ tool, group, label, shortcut }) => `
-					<cq-item
+				dt: ({ tool, group, label, shortcut }) => `<cq-item
 						class="ciq-tool"
 						cq-tool="${tool}"
 						${shortcut ? `cq-tool-shortcut="${shortcut}"` : ""}
@@ -366,6 +373,7 @@ import {CIQ} from "../js/chartiq.js";
 					>
 						<span class="icon ${tool}"></span>
 						<label>${label}</label>
+						<cq-help help-id="drawing_palette_${tool}"></cq-help>
 					</cq-item>
 				`
 			},
@@ -431,6 +439,8 @@ import {CIQ} from "../js/chartiq.js";
 				outliers: {},
 				// TableView
 				tableView: {},
+				// DataLoader
+				dataLoader: {},
 				// Shortcuts
 				shortcuts: {}
 			},
@@ -454,13 +464,14 @@ import {CIQ} from "../js/chartiq.js";
 					record: true,
 					height: "50%",
 					orderbook: true,
-					allowUIZoom: true
+					interaction: true
 				},
 				// Trade From Chart (TFC)
 				// set account key to your custom account class, or leave as undefined to default to CIQ.Account.Demo constructor
-				// import plugins/tfc/tfc-demo.js to make CIQ.Account.Demo available for sample account creation
+				// import plugins/tfc/tfc-demo.js or set loadSample=true to make CIQ.Account.Demo available for sample account creation
 				tfc: {
 					moduleName: "TFC",
+					loadSample: true,
 					// account: undefined,  // Account instance object or a constructor
 					/**
 					 * By default if a constructor is provided in account the first created instance is shared with all tfc instances
@@ -513,11 +524,13 @@ import {CIQ} from "../js/chartiq.js";
 				tc: "channel.tc",
 				analystviews: "channel.analystviews",
 				technicalinsights: "channel.technicalinsights",
+				dataLoader: "channel.dataLoader",
 				dialog: "channel.dialog",
 				keyboardNavigation: "channel.keyboardNavigation"
 			},
 			// dialogs
 			dialogs: {
+				dataLoader: { tag: "cq-data-dialog" },
 				view: { tag: "cq-view-dialog" },
 				aggregation: { tag: "cq-aggregation-dialog" },
 				timezone: { tag: "cq-timezone-dialog" },
@@ -531,6 +544,7 @@ import {CIQ} from "../js/chartiq.js";
 					}
 				},
 				fibSettings: { tag: "cq-fib-settings-dialog" },
+				volumeprofileSettings: { tag: "cq-volumeprofile-settings-dialog" },
 				share: { tag: "cq-share-dialog" }
 			},
 			// Event Markers implementation
@@ -557,6 +571,34 @@ import {CIQ} from "../js/chartiq.js";
 				let config = this;
 				if(CIQ.UI) return (new CIQ.UI.Chart()).createChartAndUI({ container, config }).stx;
 				return CIQ.ChartEngine.create({ container, config });
+			},
+			// Function to create multiple charts with shared footer and header
+			// For use with the sample-template-advanced-multi.html template
+			createCharts: function({ container, charts }) {
+				if (!container) container = document.querySelector("cq-context");
+				const wrappers = Array.from(container.querySelectorAll("cq-context-wrapper"));
+				if (!wrappers.length) {
+					throw "cq-context-wrapper element is required for multichart template setup";
+				}
+				const wrapperContent = wrappers[0].outerHTML;
+				// replicate template for additional charts that
+				charts.slice(0, charts.length - wrappers.length).forEach(() => {
+					wrappers[0].parentElement.insertAdjacentHTML("beforeend", wrapperContent);
+				});
+				const contexts = container.querySelectorAll("cq-context");
+				// reset config root
+				this.root = null;
+				const stxArr = charts.map(({ symbol, chartId }, i) => {
+					// clone parent configuration for each chart
+					const chartConfig = CIQ.clone(this);
+					chartConfig.initialSymbol = typeof symbol !== undefined ? symbol : chartConfig.initialSymbol;
+					chartConfig.chartId = chartId || (this.chartId || "") + "_c" + i;
+					chartConfig.root = contexts[i];
+					const stx = chartConfig.createChart(contexts[i]);
+					return stx;
+				});
+				this.createChart(container);
+				return stxArr;
 			}
 		};
 		if(!resources.quoteFeed) config.quoteFeeds.length=0;

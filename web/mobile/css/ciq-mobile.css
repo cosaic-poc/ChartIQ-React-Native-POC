@@ -1,7 +1,7 @@
 .ciq-chart-area {
   padding: 0;
   top: 0;
-  bottom: 0;
+  bottom: 0; 
 }
 
 cq-dialog#simulation-warning {

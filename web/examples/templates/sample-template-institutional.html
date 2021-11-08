@@ -28,7 +28,7 @@ supported devices.
 			<cq-tooltip>More</cq-tooltip>
 		</cq-toggle>
 	</div>
-	
+
 	<cq-menu class="ciq-search">
 		<cq-lookup cq-keystroke-claim="" cq-uppercase=""></cq-lookup>
 	</cq-menu>
@@ -36,7 +36,7 @@ supported devices.
 	<!-- any entry in this div will be shown in the side navigation bar in break-sm mode -->
 	<cq-side-nav cq-on="sidenavOn">
 		<div class="icon-toggles ciq-toggles">
-			<cq-toggle class="ciq-draw" cq-member="drawing"><span></span><cq-tooltip>Draw</cq-tooltip></cq-toggle>
+			<cq-toggle class="ciq-draw" cq-member="drawing"><cq-help help-id="drawing_tools_toggle"></cq-help><span></span><cq-tooltip>Draw</cq-tooltip></cq-toggle>
 
 			<cq-info-toggle-dropdown>
 				<cq-toggle class="ciq-CH" cq-member="crosshair">
@@ -69,6 +69,7 @@ supported devices.
 			</cq-info-toggle-dropdown>
 
 			<cq-toggle class="ciq-DT tableview-ui" cq-member="tableView"><span></span><cq-tooltip>Table View</cq-tooltip></cq-toggle>
+
 		</div>
 	</cq-side-nav>
 
@@ -170,6 +171,11 @@ supported devices.
 						<cq-menu-container cq-name="menuYAxisPreferences"></cq-menu-container>
 						<cq-separator></cq-separator>
 					</cq-menu-dropdown-section>
+					<cq-menu-dropdown-section class="chart-addons">
+						<cq-heading>Additional Features</cq-heading>
+						<cq-menu-container cq-name="menuAddOns"></cq-menu-container>
+						<cq-separator></cq-separator>
+					</cq-menu-dropdown-section>
 					<cq-menu-dropdown-section class="chart-theme">
 						<cq-heading>Themes</cq-heading>
 						<cq-themes></cq-themes>
@@ -177,13 +183,11 @@ supported devices.
 					</cq-menu-dropdown-section>
 					<cq-menu-dropdown-section class="chart-locale">
 						<cq-heading>Locale</cq-heading>
-						<cq-item><cq-clickable cq-selector="cq-timezone-dialog" cq-method="open">Change Timezone</cq-clickable></cq-item>
-						<cq-item stxsetget="Layout.Language()"><cq-flag></cq-flag><cq-language-name>Change Language</cq-language-name></cq-item>
-					</cq-menu-dropdown-section>
-					<cq-menu-dropdown-section class="shortcuts-ui">
-						<cq-separator></cq-separator>
-						<cq-heading>Shortcuts</cq-heading>
-						<cq-item stxtap="Layout.showShortcuts(true)">Shortcuts / Hotkeys</cq-item>
+						<cq-item keyboard-selectable="false"><cq-clickable cq-selector="cq-timezone-dialog" cq-method="open" keyboard-selectable="true">Change Timezone</cq-clickable></cq-item>
+						<cq-item stxsetget="Layout.Language()">
+							<cq-flag></cq-flag>
+							<cq-language-name>Change Language</cq-language-name>
+						</cq-item>
 					</cq-menu-dropdown-section>
 				</cq-menu-dropdown>
 			</cq-menu>
@@ -205,7 +209,7 @@ supported devices.
 <cq-analystviews class="analystviews-ui" token="eZOrIVNU3KR1f0cf6PTUYg==" partner="1000" disabled=""></cq-analystviews>
 
 <!-- custom tag for technicalinsights only works when plugin is loaded -->
-<cq-technicalinsights uid="" lang="en" disabled=""></cq-technicalinsights> 
+<cq-technicalinsights uid="" lang="en" disabled=""></cq-technicalinsights>
 
 <div class="ciq-chart-area">
 	<div class="ciq-chart">
@@ -260,7 +264,8 @@ supported devices.
 
 <div class="ciq-footer full-screen-hide">
 	<cq-share-button></cq-share-button>
-	<div class="shortcuts-ui ciq-shortcut-button" stxtap="Layout.showShortcuts()" title="Toggle shortcut legend"></div>
+	<div class="shortcuts-ui ciq-shortcut-button" stxtap="Layout.showShortcuts()" title="Toggle Shortcut Legend"></div>
+	<div class="help-ui ciq-help-button" stxtap="Layout.toggleHelp()" title="Toggle Interactive Help"></div>
 	<cq-show-range></cq-show-range>
 </div>
 
@@ -270,7 +275,7 @@ supported devices.
 	<cq-dialog>
 		<cq-drawing-context></cq-drawing-context>
 	</cq-dialog>
-	
+
 	<cq-dialog>
 		<cq-study-context></cq-study-context>
 	</cq-dialog>
@@ -298,6 +303,8 @@ import "./plugins/timespanevent/timespanevent.js";
 
 /* Template-specific imports */
 import getDefaultConfig from "./js/defaultConfiguration.js";
+
+//import "./examples/help/helpContent.js";
 
 import PerfectScrollbar from "./js/thirdparty/perfect-scrollbar.esm.js";
 

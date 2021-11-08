@@ -5,10 +5,8 @@ import "chartiq/css/stx-chart.css";
 import "chartiq/css/chartiq.scss";
 /* Support for webcomponents on Legacy Edge */
 import "chartiq/js/thirdparty/custom-elements.min.js";
-import { CIQ } from "chartiq/js/chartiq";
 import "chartiq/webpack-example/src/importActivation"; /* activates modules when using license-generated bundles such as standard.js */
-import "chartiq/webpack-example/src/importActivationAdvanced"; /* activates advanced modules */
-
+import { CIQ } from "chartiq/js/chartiq";
 /* Uncomment to enable the deprecated functions.  Update your calls to functions in here to employ current usage. */
 //import "chartiq/js/deprecated";
 
