@@ -2052,6 +2052,13 @@ declare module '../js/chartiq.js' {
    */
   export class TableViewBuilder {
   }
+  interface DataLoader {
+    /**
+     * Registers and cleans up warnings about when data will be removed on users actions
+     * @param series When true adds tear downs for series.
+     */
+    registerDataWarnings(series: boolean): void
+  }
 
   /**
    * Namespace for CIQ.TableView creation–related properties and functions.
@@ -2322,6 +2329,7 @@ declare module '../js/chartiq.js' {
     function getSeriesDataNames(stx: CIQ.ChartEngine): string[]
   }
 }
+export function dataLoader(_export): void
 export function extendedHours(_export): void
 export function fullScreen(_export): void
 export function inactivityTimer(_export): void

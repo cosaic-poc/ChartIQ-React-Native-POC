@@ -21,7 +21,7 @@ CIQ.ChartEngine.Driver.Lookup.ChartIQ = function (exchanges) {
 			"XASE",
 			"XNAS",
 			"XASX",
-			"INDCBSX",
+			"IND_CBOM",
 			"INDXASE",
 			"INDXNAS",
 			"IND_DJI",

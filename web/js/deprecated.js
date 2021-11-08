@@ -1,10 +1,11 @@
 /**
- *	8.3.0
- *	Generation date: 2021-06-07T21:54:41.980Z
+ *	8.4.0
+ *	Generation date: 2021-11-02T14:04:28.074Z
  *	Client name: sonyl test
  *	Package Type: Technical Analysis
- *	License type: trial
- *	Expiration date: "2021/07/07"
+ *	License type: annual
+ *	Expiration date: "2022/01/31"
+ *	Domain lock: ["127.0.0.1","localhost","demo.chartiq.com","10.0.2.2"]
  */
 
 /***********************************************************
@@ -33,7 +34,7 @@ import {CIQ} from "../js/chartiq.js";
 
 
 /*
-	Deprecated functions - lite
+	Deprecated functions - core
 */
 
 var WARN_INTERVAL = 10000;
@@ -62,6 +63,7 @@ CIQ.deprecationWarning = function (message) {
 };
 
 var log = CIQ.deprecationWarning;
+var logAggressive = function () {}; // log;
 
 /* Function.ciqInheritsFrom, Function.stxInheritsFrom */
 if (!Function.prototype.ciqInheritsFrom) {
@@ -687,8 +689,9 @@ CIQ.toggleClassName = function (node, className) {
 	}
 
 	function objectLoad(e) {
-		this.contentDocument.defaultView.__resizeTrigger__ = this.__resizeElement__;
-		this.contentDocument.defaultView.addEventListener("resize", resizeListener);
+		var obj = this;
+		obj.contentDocument.defaultView.__resizeTrigger__ = obj.__resizeElement__;
+		obj.contentDocument.defaultView.addEventListener("resize", resizeListener);
 	}
 
 	/**
@@ -720,9 +723,8 @@ CIQ.toggleClassName = function (node, className) {
 				element.attachEvent("onresize", resizeListener);
 			} else {
 				//if (!getComputedStyle(element) || getComputedStyle(element).position == 'static') element.style.position = 'relative';
-				var obj = (element.__resizeTrigger__ = document.createElement(
-					"object"
-				));
+				var obj = (element.__resizeTrigger__ =
+					document.createElement("object"));
 				obj.setAttribute(
 					"style",
 					"visibility:hidden; display: block; position: absolute; top: 0; left: 0; height: 100%; width: 100%; overflow: hidden; pointer-events: none; z-index: -1; border:0px;"
@@ -1280,6 +1282,503 @@ CIQ.ChartEngine.prototype.setPeriodicityV2 = function (
 	this.runAppend("setPeriodicityV2", arguments);
 };
 
+/**
+ * Draws date based x-axis.
+ *
+ * This method is algorithmically designed to create an x-axis that is responsive to various degrees of user panning, zooming, and periodicity selection.
+ * It will print different versions of dates or times depending on those factors, attempting to prevent overlaps and evenly spacing labels.
+ * If a locale is set, then internationalized dates will be used.
+ *
+ * The algorithm is also market hours aware. See {@link CIQ.Market} for details on how to set market hours for the different exchanges.
+ *
+ * {@link CIQ.ChartEngine.XAxis#timeUnit} and {@link CIQ.ChartEngine.XAxis#timeUnitMultiplier} can be hard set to override the algorithm (See {@tutorial Custom X-Axis} for additional details).
+ *
+ * This method sets the CIQ.ChartEngine.chart.xaxis array which is a representation of the complete x-axis including future dates.
+ * Each array entry contains an object:<br>
+ * DT – The date/time displayed on the x-axis<br>
+ * date – yyyymmddhhmm string representation of the date<br>
+ * data – If the xaxis coordinate is in the past, then a reference to the chart data element for that date<br>
+ *
+ * @param  {object} [chart] The chart to print the xaxis
+ * @return {CIQ.ChartEngine.XAxisLabel[]}			axisRepresentation that can be passed in to {@link CIQ.ChartEngine#drawXAxis}
+ * @memberof CIQ.ChartEngine
+ * @since 3.0.0 Using x axis formatter now is available for year and month boundaries.
+ * @deprecated As of 8.4.0.  Use {@link CIQ.ChartEngine#createSpacedDateXAxis}.
+ */
+CIQ.ChartEngine.prototype.createTickXAxisWithDates = function (chart) {
+	logAggressive(
+		"CIQ.ChartEngine.prototype.createTickXAxisWithDates has been deprecated. Use CIQ.ChartEngine.prototype.createSpacedDateXAxis instead."
+	);
+	if (!chart) chart = this.chart;
+	chart.xaxis = [];
+	// These are all the possible time intervals. Not so easy to come up with a formula since time based switches
+	// from 10 to 60 to 24 to 365
+	var timeIntervalMap,
+		context = chart.context;
+	var timePossibilities = [
+		CIQ.MILLISECOND,
+		CIQ.SECOND,
+		CIQ.MINUTE,
+		CIQ.HOUR,
+		CIQ.DAY,
+		CIQ.MONTH,
+		CIQ.YEAR
+	];
+	if (!this.timeIntervalMap) {
+		var measure = context.measureText.bind(context);
+		timeIntervalMap = {};
+		timeIntervalMap[CIQ.MILLISECOND] = {
+			arr: [1, 2, 5, 10, 20, 50, 100, 250, 500],
+			minTimeUnit: 0,
+			maxTimeUnit: 1000,
+			measurement: measure("10:00:00.000")
+		};
+		timeIntervalMap[CIQ.SECOND] = {
+			arr: [1, 2, 3, 4, 5, 6, 10, 12, 15, 20, 30],
+			minTimeUnit: 0,
+			maxTimeUnit: 60,
+			measurement: measure("10:00:00")
+		};
+		timeIntervalMap[CIQ.MINUTE] = {
+			arr: [1, 2, 3, 4, 5, 6, 10, 12, 15, 20, 30],
+			minTimeUnit: 0,
+			maxTimeUnit: 60,
+			measurement: measure("10:00")
+		};
+		timeIntervalMap[CIQ.HOUR] = {
+			arr: [1, 2, 3, 4, 6, 12],
+			minTimeUnit: 0,
+			maxTimeUnit: 24,
+			measurement: measure("10:00")
+		};
+		timeIntervalMap[CIQ.DAY] = {
+			arr: [1, 2, 7, 14],
+			minTimeUnit: 1,
+			maxTimeUnit: 32,
+			measurement: measure("30")
+		};
+		timeIntervalMap[CIQ.MONTH] = {
+			arr: [1, 2, 3, 6],
+			minTimeUnit: 1,
+			maxTimeUnit: 13,
+			measurement: measure("Mar")
+		};
+		timeIntervalMap[CIQ.YEAR] = {
+			arr: [1, 2, 3, 5],
+			minTimeUnit: 1,
+			maxTimeUnit: 20000000,
+			measurement: measure("2000")
+		};
+		timeIntervalMap[CIQ.DECADE] = {
+			arr: [10],
+			minTimeUnit: 0,
+			maxTimeUnit: 2000000,
+			measurement: measure("2000")
+		};
+		this.timeIntervalMap = timeIntervalMap;
+	}
+	timeIntervalMap = this.timeIntervalMap;
+	var daysInMonth = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+
+	var periodicity = this.layout.periodicity,
+		interval = this.layout.interval,
+		maxTicks = chart.maxTicks;
+
+	/* This section computes at which time interval we set the labels.*/
+	var dataSegment = chart.dataSegment,
+		xAxis = chart.xAxis,
+		dataSegmentLength = dataSegment.length;
+	var idealTickSizePixels =
+		xAxis.idealTickSizePixels || xAxis.autoComputedTickSizePixels;
+
+	var idealNumberGridLines = this.chart.width / idealTickSizePixels;
+	for (var x = 0; x < dataSegmentLength; x++) if (dataSegment[x]) break; // find first valid bar in dataSegment
+	if (x == dataSegmentLength) return [];
+
+	// timeRange is the aggregate amount of time in milliseconds across the dataSegment
+	var timeRange = 0;
+	var tu = this.layout.timeUnit || "minute";
+	if (isNaN(interval)) {
+		tu = interval;
+		interval = 1;
+	}
+	var ms = 0;
+	switch (tu) {
+		case "millisecond":
+			ms = 1;
+			break;
+		case "second":
+			ms = 1000;
+			timePossibilities.splice(0, 1);
+			break;
+		case "minute":
+			ms = 60000;
+			timePossibilities.splice(0, 2);
+			break;
+		case "day":
+			ms = 86400000;
+			timePossibilities.splice(0, 4);
+			break;
+		case "week":
+			ms = 86400000 * 7;
+			timePossibilities.splice(0, 4);
+			break;
+		case "month":
+			ms = 86400000 * 30;
+			timePossibilities.splice(0, 5);
+			break;
+	}
+	var aggregationType = this.layout.aggregationType;
+	if (
+		ms &&
+		(!aggregationType ||
+			aggregationType == "ohlc" ||
+			aggregationType == "heikinashi")
+	) {
+		timeRange = interval * periodicity * ms * dataSegmentLength; // computes actual amount of time taken up by dataSegment, taking into consideration market open/close gaps
+	} else {
+		timeRange =
+			dataSegment[dataSegmentLength - 1].DT.getTime() -
+			dataSegment[x].DT.getTime(); // simple calc used for daily charts
+	}
+	if (timeRange === 0) {
+		if (chart.market) {
+			// get previous open
+			var iter2 = chart.market.newIterator({
+				begin: new Date(),
+				interval: "day",
+				periodicity: 1
+			});
+			iter2.next();
+			var dt1 = iter2.previous();
+			// tick forward one tick
+			iter2 = this.standardMarketIterator(dt1, null, chart);
+			var dt2 = iter2.next();
+			timeRange = (dt2.getTime() - dt1.getTime()) * maxTicks; // If zero or one ticks displayed
+		} else {
+			timeRange = 24 * 60 * 60 * 1000 * maxTicks; // no market, assume 24x7
+		}
+	} else {
+		timeRange = (timeRange / dataSegmentLength) * maxTicks; // adjust timeRange in case dataSegment doesn't span entire chart (blank bars left or right of chart)
+	}
+	var msPerGridLine = timeRange / idealNumberGridLines;
+
+	var i;
+	// Find 1) the timePossibility which gives us the base time unit to iterate (for instance, SECONDS)
+	// 2) Which timeIntervalMap. For instance the SECOND map allows 1,2,3,4,5,6,10,12,15,20,30 second increments
+	for (i = 0; i < timePossibilities.length; i++) {
+		if (timePossibilities[i] > msPerGridLine + 0.001) break; // add the micro amount to allow .999... to be 1
+	}
+	if (msPerGridLine < 1) {
+		console.log(
+			"createTickXAxisWithDates: Assertion error. msPerGridLine < 1. Make sure your masterData has correct time stamps for the active periodicity and it is sorted from OLDEST to NEWEST."
+		);
+	}
+	if (i == timePossibilities.length) {
+		// In either of these cases, msPerGridLine will float through as simply timeRange/idealNumberGridLines
+		i--;
+	} else if (i > 0) {
+		var prevUnit = timePossibilities[i - 1];
+		var prevArr = timeIntervalMap[prevUnit].arr;
+		var prevMultiplier = prevArr[prevArr.length - 1];
+		// Find the *closest* time possibility
+		if (
+			msPerGridLine - prevUnit * prevMultiplier <
+			timePossibilities[i] - msPerGridLine
+		)
+			i--;
+	}
+
+	var timeUnit = xAxis.timeUnit || timePossibilities[i];
+	xAxis.activeTimeUnit = timeUnit; // for reference when drawing the floating label. So we know the precision we need to display.
+
+	var timeInterval = timeIntervalMap[timeUnit],
+		arr = timeInterval.arr;
+
+	// Now, find the right time unit multiplier
+	for (i = 0; i < arr.length; i++) {
+		if (arr[i] * timeUnit > msPerGridLine) break;
+	}
+	if (i == arr.length) {
+		i--;
+	} else {
+		// Find the *closest* interval
+		if (
+			msPerGridLine - arr[i - 1] * timeUnit <
+			arr[i] * timeUnit - msPerGridLine
+		)
+			i--;
+	}
+
+	if (timeInterval.measurement.width * 2 < this.layout.candleWidth) i = 0; // display everything
+	var timeUnitMultiplier = xAxis.timeUnitMultiplier || arr[i];
+
+	var axisRepresentation = [];
+	var candleWidth = this.layout.candleWidth;
+
+	// Find first location on x-axis that contains a bar, remember that there may be nulls in dataSegment if the user has scrolled past the end of the chart
+	for (i = 0; i <= maxTicks; i++) {
+		if (dataSegment[i]) break;
+	}
+	var iter1;
+	if (i > 0 && i < maxTicks) {
+		// prior ticks needs a market to compute now
+		if (chart.market)
+			iter1 = this.standardMarketIterator(
+				dataSegment[i].DT,
+				xAxis.adjustTimeZone ? this.displayZone : null
+			);
+		for (var j = i; j > 0; j--) {
+			// we insert an empty element just to preserve spacing
+			// otherwise big processing due to market class iterations
+			// as a result no dates will be shown on x axis floater for the empty section leading to chart data.
+			var axisObj = {};
+			if (iter1 && !(chart.lineApproximation && candleWidth < 1)) {
+				axisObj.DT = iter1.previous();
+			}
+			chart.xaxis.unshift(axisObj);
+		}
+	}
+
+	var dtShifted = 0;
+	var nextTimeUnit = timeInterval.minTimeUnit;
+	var previousTimeUnitLarge = -1; // this will be used to keep track of when the next time unit up loops over
+	var firstTick = true;
+
+	function getCurrentTimeUnits(dtShifted) {
+		var currentTimeUnit, currentTimeUnitLarge;
+		if (timeUnit == CIQ.MILLISECOND) {
+			currentTimeUnit = dtShifted.getMilliseconds();
+			currentTimeUnitLarge = dtShifted.getSeconds();
+		} else if (timeUnit == CIQ.SECOND) {
+			currentTimeUnit = dtShifted.getSeconds();
+			currentTimeUnitLarge = dtShifted.getMinutes();
+		} else if (timeUnit == CIQ.MINUTE) {
+			currentTimeUnit = dtShifted.getMinutes();
+			currentTimeUnitLarge = dtShifted.getHours();
+		} else if (timeUnit == CIQ.HOUR) {
+			currentTimeUnit = dtShifted.getHours() + dtShifted.getMinutes() / 60;
+			currentTimeUnitLarge = dtShifted.getDate();
+		} else if (timeUnit == CIQ.DAY) {
+			currentTimeUnit = dtShifted.getDate();
+			currentTimeUnitLarge = dtShifted.getMonth() + 1;
+		} else if (timeUnit == CIQ.MONTH) {
+			currentTimeUnit = dtShifted.getMonth() + 1;
+			currentTimeUnitLarge = dtShifted.getFullYear();
+		} else if (timeUnit == CIQ.YEAR) {
+			currentTimeUnit = dtShifted.getFullYear();
+			currentTimeUnitLarge = dtShifted.getFullYear() + 1000;
+		} else {
+			currentTimeUnit = dtShifted.getFullYear();
+			currentTimeUnitLarge = 0;
+		}
+		return [currentTimeUnit, currentTimeUnitLarge];
+	}
+
+	var currents = getCurrentTimeUnits(dataSegment[i].DT),
+		last,
+		periodsBack = 0,
+		periodsForward = 0,
+		tick = dataSegment[i].tick;
+	for (periodsBack; periodsBack < tick; periodsBack++) {
+		last = getCurrentTimeUnits(this.chart.dataSet[tick - periodsBack].DT);
+		if (last[1] != currents[1]) break;
+		currents = last;
+	}
+	for (
+		periodsForward;
+		periodsForward < this.chart.dataSet.length - tick;
+		periodsForward++
+	) {
+		last = getCurrentTimeUnits(this.chart.dataSet[tick + periodsForward].DT);
+		if (last[1] != currents[1]) break;
+		currents = last;
+	}
+
+	var iter = null;
+	for (i = 0; i < maxTicks + periodsForward; i++) {
+		var mySegment = dataSegment[i];
+		if (!mySegment) mySegment = chart.xaxis[i];
+		else if (periodsBack)
+			mySegment = chart.dataSet[mySegment.tick - periodsBack];
+
+		if (i < dataSegmentLength) {
+			var prices = mySegment;
+			if (prices.displayDate && xAxis.adjustTimeZone /* && timeUnit<CIQ.DAY*/) {
+				dtShifted = prices.displayDate;
+			} else {
+				dtShifted = prices.DT;
+			}
+			if (i && !periodsBack && chart.segmentImage) {
+				var image = chart.segmentImage[i];
+				candleWidth = (image.leftOffset - image.candleWidth / 2) / i;
+			}
+		} else if (chart.market) {
+			// future ticks, requires a market to compute now
+			if (this.layout.interval == "tick" && !xAxis.futureTicksInterval) break;
+			if (chart.lineApproximation && candleWidth < 1) break; //otherwise big processing
+			if (!xAxis.futureTicks) break;
+			if (!iter) {
+				iter = this.standardMarketIterator(
+					dataSegment[dataSegmentLength - 1].DT,
+					xAxis.adjustTimeZone ? this.displayZone : null
+				);
+			}
+			dtShifted = iter.next();
+		}
+		if (!dtShifted) continue;
+
+		var text = null,
+			hz,
+			candles = i - periodsBack;
+
+		var obj = {
+			DT: dtShifted
+			//Date: CIQ.yyyymmddhhmmssmmm(dtShifted) // Can't think of reason we need this inefficiency
+		};
+		if (i < dataSegmentLength) obj.data = mySegment;
+		// xaxis should have reference to data to generate a heads up
+		else obj.data = null;
+		if (periodsBack) {
+			periodsBack--;
+			i--;
+		} else if (!chart.xaxis[i] && i < maxTicks) {
+			chart.xaxis.push(obj);
+		}
+
+		currents = getCurrentTimeUnits(dtShifted);
+		var currentTimeUnit = currents[0],
+			currentTimeUnitLarge = currents[1];
+
+		if (previousTimeUnitLarge != currentTimeUnitLarge) {
+			if (currentTimeUnit <= nextTimeUnit) {
+				// case where we skipped ahead to the next large time unit
+				nextTimeUnit = timeInterval.minTimeUnit;
+			}
+			// print a boundary
+			hz = chart.left + candles * candleWidth - 1;
+			text = null;
+			if (
+				timeUnit == CIQ.HOUR ||
+				(timeUnit == CIQ.MINUTE && previousTimeUnitLarge > currentTimeUnitLarge)
+			) {
+				if (this.internationalizer) {
+					text = this.internationalizer.monthDay.format(dtShifted);
+				} else {
+					text = dtShifted.getMonth() + 1 + "/" + dtShifted.getDate();
+				}
+				if (xAxis.formatter) {
+					text = xAxis.formatter(dtShifted, "boundary", CIQ.DAY, 1, text);
+				}
+			} else if (timeUnit == CIQ.DAY) {
+				if (previousTimeUnitLarge > currentTimeUnitLarge) {
+					// year shift
+					text = dtShifted.getFullYear();
+					if (xAxis.formatter) {
+						text = xAxis.formatter(dtShifted, "boundary", CIQ.YEAR, 1, text);
+					}
+				} else {
+					text = CIQ.monthAsDisplay(dtShifted.getMonth(), false, this);
+					if (xAxis.formatter) {
+						text = xAxis.formatter(dtShifted, "boundary", CIQ.MONTH, 1, text);
+					}
+				}
+			} else if (timeUnit == CIQ.MONTH) {
+				text = dtShifted.getFullYear();
+				if (xAxis.formatter) {
+					text = xAxis.formatter(dtShifted, "boundary", CIQ.YEAR, 1, text);
+				}
+			}
+			if (text && previousTimeUnitLarge != -1) {
+				axisRepresentation.push(
+					new CIQ.ChartEngine.XAxisLabel(hz, "boundary", text)
+				);
+			}
+		}
+
+		if (currentTimeUnit >= nextTimeUnit) {
+			//passed the next expected axis label so let's print the label
+			if (nextTimeUnit == timeInterval.minTimeUnit) {
+				if (currentTimeUnitLarge == previousTimeUnitLarge) continue; // we haven't looped back to zero yet
+			}
+
+			var labelDate = new Date(+dtShifted);
+			hz = chart.left + ((2 * candles + 1) * candleWidth) / 2 - 1;
+			var boundaryTimeUnit =
+				Math.floor(currentTimeUnit / timeUnitMultiplier) * timeUnitMultiplier;
+			if (boundaryTimeUnit < currentTimeUnit) {
+				if (this.layout.interval == "week") boundaryTimeUnit = currentTimeUnit;
+				else hz -= candleWidth / 2; // if we don't land on a label then position the label to the left of the bar; could be more accurate
+			}
+			// And print the boundary label rather than the actual date
+			if (timeUnit == CIQ.MILLISECOND) {
+				labelDate.setMilliseconds(boundaryTimeUnit);
+			} else if (timeUnit == CIQ.SECOND) {
+				labelDate.setMilliseconds(0);
+				labelDate.setSeconds(boundaryTimeUnit);
+			} else if (timeUnit == CIQ.MINUTE) {
+				labelDate.setMilliseconds(0);
+				labelDate.setSeconds(0);
+				labelDate.setMinutes(boundaryTimeUnit);
+			} else if (timeUnit == CIQ.HOUR) {
+				labelDate.setMilliseconds(0);
+				labelDate.setSeconds(0);
+				labelDate.setMinutes(0);
+				labelDate.setHours(boundaryTimeUnit);
+			} else if (timeUnit == CIQ.DAY) {
+				labelDate.setDate(Math.max(1, boundaryTimeUnit));
+			} else if (timeUnit == CIQ.MONTH) {
+				labelDate.setDate(1);
+				labelDate.setMonth(boundaryTimeUnit - 1);
+			} else if (timeUnit == CIQ.YEAR) {
+				labelDate.setDate(1);
+				labelDate.setMonth(0);
+			} else {
+				labelDate.setDate(1);
+				labelDate.setMonth(0);
+			}
+			//console.log(labelDate + " boundary=" + boundaryTimeUnit);
+
+			// figure the next expected axis label position
+			nextTimeUnit = boundaryTimeUnit + timeUnitMultiplier;
+			if (timeUnit == CIQ.DAY)
+				timeInterval.maxTimeUnit = daysInMonth[labelDate.getMonth()] + 1; // DAY is the only unit with a variable max
+			if (nextTimeUnit >= timeInterval.maxTimeUnit)
+				nextTimeUnit = timeInterval.minTimeUnit;
+			previousTimeUnitLarge = currentTimeUnitLarge;
+
+			// Don't print the first label unless it lands exactly on a boundary(left edge of the chart). Otherwise the default logic assumes
+			// that the boundary was skipped.
+			if (firstTick && boundaryTimeUnit < currentTimeUnit) {
+				firstTick = false;
+				continue;
+			}
+
+			// format the label
+			if (timeUnit == CIQ.DAY) {
+				text = labelDate.getDate();
+			} else if (timeUnit == CIQ.MONTH) {
+				text = CIQ.monthAsDisplay(labelDate.getMonth(), false, this);
+			} else if (timeUnit == CIQ.YEAR || timeUnit == CIQ.DECADE) {
+				text = labelDate.getFullYear();
+			} else {
+				text = CIQ.timeAsDisplay(labelDate, this, timeUnit);
+			}
+			if (xAxis.formatter) {
+				text = xAxis.formatter(
+					labelDate,
+					"line",
+					timeUnit,
+					timeUnitMultiplier,
+					text
+				);
+			}
+			axisRepresentation.push(new CIQ.ChartEngine.XAxisLabel(hz, "line", text));
+		}
+	}
+	return axisRepresentation;
+};
+
 //Unused
 CIQ.ChartEngine.prototype.addChart = function (name, chart) {
 	log(
@@ -1343,8 +1842,12 @@ CIQ.ChartEngine.prototype.construct = function () {
 			enumerable: true,
 			get: (function (stx) {
 				return function () {
-					//log("CIQ.ChartEngine.prototype.changeCallback has been deprecated.  Use CIQ.ChartEngine.prototype.addEventListener instead.");
-					return getValue(this, "changeCallback", null);
+					var val = getValue(this, "changeCallback", null);
+					if (val !== null)
+						log(
+							"CIQ.ChartEngine.prototype.changeCallback has been deprecated.  Use CIQ.ChartEngine.prototype.addEventListener instead."
+						);
+					return val;
 				};
 			})(this),
 			set: (function (stx) {
@@ -1810,6 +2313,117 @@ CIQ.ChartEngine.prototype.construct = function () {
 					);
 					setValue(this, "calculateTradingDecimalPlaces", func);
 					stx.chart.calculateTradingDecimalPlaces = func;
+				};
+			})(this)
+		}
+	});
+
+	Object.defineProperties(this.chart.xAxis, {
+		/**
+		 * Ideal space between x-axis labels in pixels.
+		 * If null then the chart will attempt a tick size and time unit in proportion to the chart.
+		 * Please note that if `stxx.chart.yAxis.goldenRatioYAxis` is set to `true`, this setting will also affect the spacing between y-axis labels.
+		 * Please note that this setting will be overwritten at rendering time if too small to prevent labels from covering each other.
+		 * Not applicable if {@link CIQ.ChartEngine.XAxis#timeUnit} is manually set.
+		 * See {@tutorial Custom X-Axis} for additional details.
+		 * @type number
+		 * @default
+		 * @memberof CIQ.ChartEngine.XAxis#
+		 * @deprecated As of 8.4.0.
+		 */
+		idealTickSizePixels: {
+			enumerable: true,
+			get: (function (stx) {
+				return function () {
+					var val = getValue(this, "idealTickSizePixels", null);
+					if (val !== null)
+						logAggressive(
+							"CIQ.ChartEngine.prototype.XAxis.idealTickSizePixels has been deprecated.  There is no suggested alternative."
+						);
+					return val;
+				};
+			})(this),
+			set: (function (stx) {
+				return function (val) {
+					logAggressive(
+						"CIQ.ChartEngine.prototype.XAxis.idealTickSizePixels has been deprecated.  There is no suggested alternative."
+					);
+					setValue(this, "idealTickSizePixels", val);
+				};
+			})(this)
+		},
+		/**
+		 * Overrides default used in {@link CIQ.ChartEngine#createTickXAxisWithDates}
+		 * <br>Allowable values:
+		 * - CIQ.MILLISECOND,
+		 * - CIQ.SECOND
+		 * - CIQ.MINUTE
+		 * - CIQ.HOUR
+		 * - CIQ.DAY
+		 * - CIQ.WEEK
+		 * - CIQ.MONTH
+		 * - CIQ.YEAR
+		 * - CIQ.DECADE
+		 *
+		 * Visual Reference for sample code below (draw a label every 5 seconds using 1 second periodicity ) :<br>
+		 * ![xAxis.timeUnit](xAxis.timeUnit.png "xAxis.timeUnit")
+		 * @type number
+		 * @default
+		 * @memberof CIQ.ChartEngine.XAxis#
+		 * @example
+		 * // The following will cause the default implementation of createTickXAxisWithDates to print labels in seconds every 5 seconds.
+		 * // masterData is in 1 second intervals for this particular example.
+		 * stxx.chart.xAxis.timeUnit = CIQ.SECOND;
+		 * stxx.chart.xAxis.timeUnitMultiplier = 5;
+		 * @deprecated As of 8.4.0.
+		 */
+		timeUnit: {
+			enumerable: true,
+			get: (function (stx) {
+				return function () {
+					logAggressive(
+						"CIQ.ChartEngine.prototype.XAxis.timeUnit has been deprecated.  There is no suggested alternative."
+					);
+					return getValue(this, "timeUnit", null);
+				};
+			})(this),
+			set: (function (stx) {
+				return function (val) {
+					logAggressive(
+						"CIQ.ChartEngine.prototype.XAxis.timeUnit has been deprecated.  There is no suggested alternative."
+					);
+					setValue(this, "timeUnit", val);
+				};
+			})(this)
+		},
+		/**
+		 * Overrides default used in {@link CIQ.ChartEngine#createTickXAxisWithDates}
+		 * @type number
+		 * @default
+		 * @memberof CIQ.ChartEngine.XAxis#
+		 * @example
+		 * // The following will cause the default implementation of createTickXAxisWithDates to print labels in seconds every 5 seconds.
+		 * // masterData is in 1 second intervals for this particular example.
+		 * stxx.chart.xAxis.timeUnit = CIQ.SECOND;
+		 * stxx.chart.xAxis.timeUnitMultiplier = 5;
+		 * @deprecated As of 8.4.0.
+		 */
+		timeUnitMultiplier: {
+			enumerable: true,
+			get: (function (stx) {
+				return function () {
+					logAggressive(
+						"CIQ.ChartEngine.prototype.XAxis.timeUnitMultiplier has been deprecated.  There is no suggested alternative."
+					);
+					return getValue(this, "timeUnitMultiplier", null);
+				};
+			})(this),
+			set: (function (stx) {
+				return function (val) {
+					logAggressive(
+						"CIQ.ChartEngine.prototype.XAxis.timeUnitMultiplier has been deprecated.  There is no suggested alternative."
+					);
+					setValue(this, "timeUnitMultiplier", val);
 				};
 			})(this)
 		}

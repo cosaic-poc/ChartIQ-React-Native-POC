@@ -59,6 +59,9 @@ declare module '../js/chartiq.js' {
        * @param [obj.d1] Date (string form) for the outside point
        * @param [obj.tzo0] Offset of UTC from d0 in minutes
        * @param [obj.tzo1] Offset of UTC from d1 in minutes
+       * @param [obj.fld] Field which drawing is associated with
+       *
+       * @since 8.4.0 Added `fld` property to `obj` parameter.
        */
       public reconstruct(
         stx: CIQ.ChartEngine,
@@ -73,7 +76,8 @@ declare module '../js/chartiq.js' {
           d0?: number,
           d1?: number,
           tzo0?: number,
-          tzo1?: number
+          tzo1?: number,
+          fld?: string
         }
       ): void
     }
@@ -107,6 +111,9 @@ declare module '../js/chartiq.js' {
        * @param [obj.d1] Date (string form) for the second point
        * @param [obj.tzo0] Offset of UTC from d0 in minutes
        * @param [obj.tzo1] Offset of UTC from d1 in minutes
+       * @param [obj.fld] Field which drawing is associated with
+       *
+       * @since 8.4.0 Added `fld` property to `obj` parameter.
        */
       public reconstruct(
         stx: CIQ.ChartEngine,
@@ -122,7 +129,8 @@ declare module '../js/chartiq.js' {
           d0?: number,
           d1?: number,
           tzo0?: number,
-          tzo1?: number
+          tzo1?: number,
+          fld?: string
         }
       ): void
     }
@@ -157,6 +165,9 @@ declare module '../js/chartiq.js' {
        * @param [obj.tzo0] Offset of UTC from d0 in minutes
        * @param [obj.tzo1] Offset of UTC from d1 in minutes
        * @param [obj.tzo2] Offset of UTC from d2 in minutes
+       * @param [obj.fld] Field which drawing is associated with
+       *
+       * @since 8.4.0 Added `fld` property to `obj` parameter.
        */
       public reconstruct(
         stx: CIQ.ChartEngine,
@@ -173,7 +184,8 @@ declare module '../js/chartiq.js' {
           d2?: number,
           tzo0?: number,
           tzo1?: number,
-          tzo2?: number
+          tzo2?: number,
+          fld?: string
         }
       ): void
     }
@@ -210,7 +222,10 @@ declare module '../js/chartiq.js' {
        * @param [obj.d1] Date (string form) for the last point
        * @param [obj.tzo0] Offset of UTC from d0 in minutes
        * @param [obj.tzo1] Offset of UTC from d1 in minutes
+       * @param [obj.fld] Field which drawing is associated with
        * @param [obj.pts] a serialized list of dates,offsets,values for the 3 intermediate points of the gartley (should be 9 items in list)
+       *
+       * @since 8.4.0 Added `fld` property to `obj` parameter.
        */
       public reconstruct(
         stx: CIQ.ChartEngine,
@@ -226,6 +241,7 @@ declare module '../js/chartiq.js' {
           d1?: number,
           tzo0?: number,
           tzo1?: number,
+          fld?: string,
           pts?: number
         }
       ): void
@@ -262,6 +278,9 @@ declare module '../js/chartiq.js' {
        * @param [obj.pd] Periodicity from original drawing
        * @param [obj.tzo0] Offset of UTC from d0 in minutes
        * @param [obj.nodes] An array of nodes in form [x0a,x0b,y0a,y0b, x1a, x1b, y1a, y1b, ....]
+       * @param [obj.fld] Field which drawing is associated with
+       *
+       * @since 8.4.0 Added `fld` property to `obj` parameter.
        */
       public reconstruct(
         stx: CIQ.ChartEngine,
@@ -277,7 +296,8 @@ declare module '../js/chartiq.js' {
           int?: number,
           pd?: number,
           tzo0?: number,
-          nodes?: any[]
+          nodes?: any[],
+          fld?: string
         }
       ): void
     }
@@ -337,6 +357,7 @@ declare module '../js/chartiq.js' {
        * @param [obj.tzo0] Offset of UTC from d0 in minutes
        * @param [obj.tzo1] Offset of UTC from d1 in minutes
        * @param [obj.tzo2] Offset of UTC from d2 in minutes (if used)
+       * @param [obj.fld] Field which drawing is associated with
        * @param [obj.parameters] Configuration parameters
        * @param [obj.parameters.trend] Describes the trend line
        * @param [obj.parameters.trend.color] The color for the trend line (Defaults to "auto")
@@ -345,6 +366,8 @@ declare module '../js/chartiq.js' {
        * @param [obj.parameters.extendLeft] True to extend the fib lines to the left of the screen. Defaults to false.
        * @param [obj.parameters.printLevels] True (default) to print text for each percentage level
        * @param [obj.parameters.printValues] True to print text for each price level
+       *
+       * @since 8.4.0 Added `fld` property to `obj` parameter.
        */
       public reconstruct(
         stx: CIQ.ChartEngine,
@@ -361,6 +384,7 @@ declare module '../js/chartiq.js' {
           tzo0?: number,
           tzo1?: number,
           tzo2?: number,
+          fld?: string,
           parameters?: {
             trend?: {
               color?: string,
@@ -628,6 +652,23 @@ declare module '../js/chartiq.js' {
       constructor()
     }
     /**
+     * Volume profile drawing tool.
+     *
+     * It inherits its properties from CIQ.Drawing.regression
+     * @since 8.4.0
+     * @version ChartIQ Advanced Package
+     */
+    class volumeprofile {
+      /**
+       * Volume profile drawing tool.
+       *
+       * It inherits its properties from CIQ.Drawing.regression
+       * @since 8.4.0
+       * @version ChartIQ Advanced Package
+       */
+      constructor()
+    }
+    /**
      * Creates the Elliott Wave drawing tool.
      *
      * 		a point and the (x, y) annotation origin point.
@@ -778,7 +819,9 @@ declare module '../js/chartiq.js' {
        *
        * @param stx A reference to the chart engine.
        * @param obj The object that contains the serialized drawing.
+       *
        * @since 7.4.0
+       * @since 8.4.0 Added `fld` property to `obj` parameter.
        */
       public reconstruct(stx: CIQ.ChartEngine, obj: object): void
     }
