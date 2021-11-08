@@ -1,11 +1,10 @@
 /**
- *	8.4.0
- *	Generation date: 2021-11-02T14:04:28.074Z
+ *	8.3.0
+ *	Generation date: 2021-06-07T21:54:41.980Z
  *	Client name: sonyl test
  *	Package Type: Technical Analysis
- *	License type: annual
- *	Expiration date: "2022/01/31"
- *	Domain lock: ["127.0.0.1","localhost","demo.chartiq.com","10.0.2.2"]
+ *	License type: trial
+ *	Expiration date: "2021/07/07"
  */
 
 /***********************************************************
@@ -229,7 +228,7 @@ const OptionsAnalysis = {
 		Array.from(root.querySelectorAll("cq-lookup")).forEach((el) => {
 			el.setAttribute(
 				"cq-exchanges",
-				"XNYS,XASE,XNAS,XASX,IND_CBOM,INDXASE,INDXNAS,IND_DJI,ARCX,INDARCX"
+				"XNYS,XASE,XNAS,XASX,INDCBSX,INDXASE,INDXNAS,IND_DJI,ARCX,INDARCX"
 			);
 		});
 		const histPrice = document.createElement("cq-chart-title-date");

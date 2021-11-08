@@ -4,21 +4,20 @@
 // Usage: new MarkersSample(stxx);
 //
 import { CIQ, markers } from "../../js/standard.js";
+var _css;
 if (
 	typeof define === "undefined" &&
 	typeof module === "object" &&
 	typeof require === "function"
-) {
-	require("../../examples/markers/markersSample.css");
-} else if (typeof define === "function" && define.amd) {
-	define(["../../examples/markers/markersSample.css"], () => {});
-} else if (typeof window !== "undefined") {
-	const _css = new URL(
-		"../../examples/markers/markersSample.css",
-		import.meta.url
-	);
-	if (import.meta.webpack === undefined) CIQ.loadStylesheet(_css.href);
-}
+)
+	_css = require("../../examples/markers/markersSample.css");
+else if (typeof define === "function" && define.amd)
+	define(["../../examples/markers/markersSample.css"], function (m) {
+		_css = m;
+	});
+else if (typeof window !== "undefined")
+	CIQ.loadStylesheet("examples/markers/markersSample.css");
+if (_css) CIQ.addInternalStylesheet(_css, "markersSample.css");
 CIQ.activateImports(markers);
 var MarkersSample = function (stx) {
 	this.stx = stx;

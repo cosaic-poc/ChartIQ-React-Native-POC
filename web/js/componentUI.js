@@ -1,11 +1,10 @@
 /**
- *	8.4.0
- *	Generation date: 2021-11-02T14:04:28.074Z
+ *	8.3.0
+ *	Generation date: 2021-06-07T21:54:41.980Z
  *	Client name: sonyl test
  *	Package Type: Technical Analysis
- *	License type: annual
- *	Expiration date: "2022/01/31"
- *	Domain lock: ["127.0.0.1","localhost","demo.chartiq.com","10.0.2.2"]
+ *	License type: trial
+ *	Expiration date: "2021/07/07"
  */
 
 /***********************************************************
@@ -342,7 +341,6 @@ CIQ.UI.observeProperty = function (property, obj, listener) {
 	listener({ obj: obj, property: property, value: found.value });
 	Object.defineProperty(obj, property, {
 		enumerable: true,
-		configurable: true,
 		get: function () {
 			return found.value;
 		},
@@ -406,17 +404,11 @@ CIQ.UI.unobserveProperty = function (property, obj, listener) {
  * `cq-context`. If no context can be found then returns null.
  *
  * @param {HTMLElement} me The element for which to get the context.
- * @param {boolean} preferContextNode If true, use context from closest cq-context node before using element's context member
  * @return {CIQ.UI.Context} The context or null if none found.
  *
  * @memberof CIQ.UI
- *
- * @since 8.4.0
  */
-CIQ.UI.getMyContext = function (me, preferContextNode) {
-	if (preferContextNode) {
-		me = me.closest("cq-context, *[cq-context]") || me;
-	}
+CIQ.UI.getMyContext = function (me) {
 	while (me) {
 		if (me.context) return me.context;
 		if (me.CIQ && me.CIQ.UI) return me.CIQ.UI.context;
@@ -518,14 +510,6 @@ CIQ.UI.activatePluginUI = function (stx, pluginName) {
 	if (topNode) topNode.setAttribute(pluginName.toLowerCase() + "-active", "");
 };
 /**
- * List of webcomponents being used.
- *
- * @memberof CIQ.UI
- * @private
- * @since 7.5.0
- */
-CIQ.UI._webcomponents = { list: {} };
-/**
  * Adds a web component definition to the list of web components.
  *
  * The component is ultimately registered as a custom element by
@@ -545,7 +529,9 @@ CIQ.UI._webcomponents = { list: {} };
  */
 CIQ.UI.addComponentDefinition = function (customTagName, classDefinition) {
 	const registered = !!CIQ.UI.registerComponentsImmediately;
-	CIQ.ensureDefaults(CIQ.UI._webcomponents, { registered });
+	if (!CIQ.UI._webcomponents) {
+		CIQ.UI._webcomponents = { list: {}, registered };
+	}
 	CIQ.UI._webcomponents.list[customTagName] = {
 		tag: customTagName,
 		classDefinition,
@@ -566,6 +552,7 @@ CIQ.UI.addComponentDefinition = function (customTagName, classDefinition) {
  * @since 7.5.0
  */
 CIQ.UI.registerComponents = function ({ except = [] } = {}) {
+	if (!CIQ.UI._webcomponents) return;
 	const { exceptions = {} } = CIQ.UI._webcomponents;
 	except.forEach((name) => (exceptions[name] = true));
 	CIQ.UI._webcomponents.exceptions = exceptions;
@@ -589,7 +576,7 @@ CIQ.UI.registerComponents = function ({ except = [] } = {}) {
  * @see {@link CIQ.UI.registerComponents}
  */
 CIQ.UI.ensureComponentsRegistered = function () {
-	CIQ.UI.registerComponents();
+	if (CIQ.UI._webcomponents) CIQ.UI.registerComponents();
 };
 /**
  * Gets an array of components from the list of registered components.
@@ -687,7 +674,7 @@ CIQ.UI.componentMarkup = function (identifier, markup) {
  *                           "cq-menu-dropdown"],
  *         cq-theme-dialog: ["cq-close", "cq-scroll", "cq-swatch", "cq-theme-piece"],
  *         cq-themes: ["cq-close"],
- *         cq-timezone-dialog: ["cq-close", "cq-scroll"],
+ *         cq-timezone-dialog: ["cq-close"],
  *         cq-views: ["cq-heading"],
  *         cq-drawing-palette: ["cq-menu", "cq-redo", "cq-scroll", "cq-toggle", "cq-undo", "cq-menu-dropdown"],
  *         cq-drawing-settings: ["cq-clickable", "cq-cvp-controller", "cq-menu", "cq-wave-parameters", "cq-menu-dropdown"]
@@ -1325,7 +1312,7 @@ class BaseComponent extends HTMLElement {
 				}
 				return null;
 			}
-			helper = CIQ.UI.getMyContext(node, true).getAdvertised(helperName);
+			helper = context.getAdvertised(helperName);
 		} else {
 			// bind to nearest web component // chart()
 			var f = binding.substring(0, paren);
@@ -1560,10 +1547,7 @@ class BaseComponent extends HTMLElement {
 	 * @memberof CIQ.UI.BaseComponent.prototype
 	 */
 	addClaim(helper) {
-		let found = claims.find((claim) => {
-			if (claim.helper == helper) return true;
-		});
-		if (!found) claims.push({ helper: helper });
+		claims.push({ helper: helper });
 	}
 	/**
 	 * Remove a claim on keystrokes.
@@ -1757,22 +1741,6 @@ class BaseComponent extends HTMLElement {
 		);
 	}
 	/**
-	 * Finds the elements in `items` that have a `cq-keyboard-active` attribute.
-	 *
-	 * @param {NodeList} items A list of elements that are selectable via keyboard navigation
-	 * @return {Array} The elements in `items` that have a `cq-keyboard-active` attribute, or an
-	 * 		empty array if no elements are found.
-	 *
-	 * @memberof CIQ.UI.BaseComponent
-	 * @alias findKeyboardActive
-	 * @since 8.4.0
-	 */
-	findKeyboardActive(items) {
-		return Array.from(items).filter((item) =>
-			item.matches("[cq-keyboard-active]")
-		);
-	}
-	/**
 	 * Focuses the next item in the tab order.
 	 *
 	 * Locates the first element in `items` that has a `cq-focused` attribute. If an element is
@@ -1782,62 +1750,43 @@ class BaseComponent extends HTMLElement {
 	 * If no elements are found with the `cq-focused` attribute, the attribute is applied to the
 	 * first element in `items` (last element if `reverse` is true). If the last element in `items`
 	 * (first element if `reverse` is true) is found to have the `cq-focused` attribute, focus
-	 * remains on that element. Unless `loop` is set to true, then focus is applied to first element.
+	 * remains on that element.
 	 *
 	 * @param {NodeList} items A list of elements that are selectable via keyboard navigation.
 	 * @param {boolean} [reverse] If true, the operation is performed in reverse order; that is,
 	 * 		from the last element in `items` to the first.
-	 * @param {boolean} [loop] Loops back to the first item if the last element in `items` is selected.
-	 * @return {HTMLElement|boolean} The newly focused element if a `cq-focused` attribute has changed, false if nothing has changed.
+	 * @return {boolean} true if a `cq-focused` attribute has changed, false if nothing has changed.
 	 *
 	 * @memberof CIQ.UI.BaseComponent#
 	 * @alias focusNextItem
 	 * @since 8.3.0
-	 * @since 8.4.0 Added loop parameter. Return element, instead of true, if focus is changed.
 	 *
 	 * @see [focusItem]{@link CIQ.UI.BaseComponent#focusItem}
 	 */
-	focusNextItem(items, reverse, loop) {
+	focusNextItem(items, reverse) {
 		const focused = this.findFocused(items);
 		let i = -1;
 		if (focused.length) {
 			// find our location in the list of items
 			for (i = 0; i < items.length; i++) if (items[i] === focused[0]) break;
 		}
-		const startPoint = i;
 		if (reverse) {
 			// Find the previous available item
 			do {
 				i--;
-				// Handle the end of the item array
-				if (i < 0)
-					if (loop) i = items.length - 1;
-					else break;
-				// Stop if the loop circles back to the original element
-				if (i == startPoint) break;
-			} while (
-				!CIQ.trulyVisible(items[i]) ||
-				items[i].getAttribute("keyboard-selectable") === "false"
-			);
+				if (i < 0) break;
+			} while (!CIQ.trulyVisible(items[i]));
 		} else {
 			// Find the next available item
 			do {
 				i++;
-				// Handle the end of the item array
-				if (i >= items.length)
-					if (loop) i = 0;
-					else break;
-				// Stop if the loop circles back to the original element
-				if (i == startPoint) break;
-			} while (
-				!CIQ.trulyVisible(items[i]) ||
-				items[i].getAttribute("keyboard-selectable") === "false"
-			);
+				if (i >= items.length) break;
+			} while (!CIQ.trulyVisible(items[i]));
 		}
 		if (i > -1 && i < items.length && items[i] !== focused[0]) {
 			this.removeFocused(items);
 			this.focusItem(items[i]);
-			return items[i];
+			return true;
 		}
 		return false;
 	}
@@ -1853,8 +1802,6 @@ class BaseComponent extends HTMLElement {
 	focusItem(item) {
 		item.setAttribute("cq-focused", "true");
 		this.highlightItem(item);
-		// Automatically select input elements to eliminate the need for pressing enter twice
-		if (item.tagName == "INPUT") this.clickItem(item);
 	}
 	/**
 	 * Removes the `cq-focused` attribute from all elements in `items`.
@@ -1866,11 +1813,7 @@ class BaseComponent extends HTMLElement {
 	 * @since 8.3.0
 	 */
 	removeFocused(items) {
-		if (!items) items = this.querySelectorAll("[cq-focused]");
-		items.forEach((item) => {
-			item.removeAttribute("cq-focused");
-			item.blur();
-		});
+		items.forEach((item) => item.removeAttribute("cq-focused"));
 	}
 	/**
 	 * Sets the navigation highlight DOM element to the size and position of the provided element
@@ -1915,7 +1858,6 @@ class BaseComponent extends HTMLElement {
 	 *
 	 * @param {HTMLElement} item Element to click.
 	 * @param {Event} e The keystroke event.
-	 * @param {HTMLElement} originationElement The keyboard active element which initiated the click.
 	 * @return {boolean} true if the element received the simulated clicked; otherwise, false.
 	 *
 	 * @memberof CIQ.UI.BaseComponent#
@@ -1923,33 +1865,16 @@ class BaseComponent extends HTMLElement {
 	 * @private
 	 * @since 8.3.0
 	 */
-	clickItem(item, e, originationElement) {
+	clickItem(item, e) {
 		if (!item) return;
 		if (item.selectFC) {
 			item.selectFC.call(item, e);
 		} else {
-			item.focus();
-			item.setAttribute("cq-keyboard-active", "true");
-			if (originationElement)
-				item.keyboardOriginationElement = originationElement;
 			// Simulate a click
 			item.dispatchEvent(new Event("pointerdown"));
 			item.dispatchEvent(new Event("pointerup"));
 		}
 		return true;
-	}
-	/**
-	 * Blurs and removes the `cq-keyboard-active` attribute from `item`.
-	 *
-	 * @param {HTMLElement} item
-	 *
-	 * @memberof CIQ.UI.BaseComponent
-	 * @alias deactivateItem
-	 * @since 8.4.0
-	 */
-	deactivateItem(item) {
-		item.blur();
-		item.removeAttribute("cq-keyboard-active");
 	}
 	/**
 	 * Selects (clicks) the first element in `items` that has a `cq-focused` attribute.
@@ -2235,66 +2160,6 @@ class DialogContentTag extends BaseComponent {
 }
 CIQ.UI.DialogContentTag = DialogContentTag;
 /**
- * Default colors codes used by the {@link WebComponents.cq-color-picker}.
- * @memberof CIQ.UI
- * @since 8.4.0
- */
-CIQ.UI.defaultSwatchColors = [
-	"#8ec648",
-	"#00afed",
-	"#ee652e",
-	"#912a8e",
-	"#fff126",
-	"#e9088c",
-	"#ea1d2c",
-	"#00a553",
-	"#00a99c",
-	"#0056a4",
-	"#f4932f",
-	"#0073ba",
-	"#66308f",
-	"#323390"
-];
-/**
- * Associates a cq-swatch component with given node.
- * Keeps track of which colors have been used for the node so they are not repeated.
- *
- * @param {HTMLElement} node
- * @param {HTMLElement} swatch Swatch web component to associate with the node
- * @memberof CIQ.UI
- * @since 8.4.0
- */
-CIQ.UI.pickSwatchColor = function (node, swatch) {
-	if (!node.context) return;
-	if (!swatch) return;
-	const { stx } = node.context;
-	const { chart, crossSection } = stx;
-	const usedColors = new Set();
-	let currentColor = swatch.style.backgroundColor;
-	if (crossSection) {
-		for (const c in crossSection.curves) {
-			let curve = crossSection.curves[c];
-			usedColors.add(CIQ.convertToNativeColor(curve.color));
-		}
-	} else {
-		for (const s in chart.series) {
-			var series = chart.series[s];
-			if (!series.parameters.isComparison) continue;
-			usedColors.add(CIQ.convertToNativeColor(series.parameters.color));
-		}
-	}
-	if (currentColor !== "" && !usedColors.has(currentColor)) return; // Currently picked color not in use then allow it
-	for (var i = 0; i < node.swatchColors.length; i++) {
-		// find first unused color from available colors
-		const swatchColor = node.swatchColors[i];
-		if (!usedColors.has(swatchColor)) {
-			swatch.style.backgroundColor = swatchColor;
-			swatch.value = swatchColor;
-			return;
-		}
-	}
-};
-/**
  * Abstract class for UI Helpers.
  *
  * Designed to be used as a helper method for the included {@link WebComponents}. A full tutorial on how to work with and customize the web components can be found here: {@tutorial Web Component Interface}
@@ -2307,6 +2172,7 @@ CIQ.UI.pickSwatchColor = function (node, swatch) {
 CIQ.UI.Helper = function (node, context) {
 	this.node = node;
 	this.context = context;
+	this.injections = []; // To keep track of injections for later removal
 };
 /**
  * Adds an injection. These will be automatically destroyed if the helper object is destroyed.
@@ -2319,84 +2185,20 @@ CIQ.UI.Helper = function (node, context) {
  * @memberof CIQ.UI.Helper
  */
 CIQ.UI.Helper.prototype.addInjection = function (position, injection, code) {
-	this.injections = this.injections || [];
 	this.injections.push(this.context.stx[position](injection, code));
 };
 /**
- * Adds listener as an observer and saves it in the list allowing it to reconnect to
- * a different observable.
- *
- * Designed to be used as a helper method for the included {@link WebComponents}. A full tutorial on how to work with and customize the web components can be found here: {@tutorial Web Component Interface}
- *
- * @param {object} params Object holding parameter properties
- * @param {object} params.base Observable object
- * @param {string} params.path Path to the property to observe
- * @param {function} params.listener The function to invoke when the property changes
- *
- * @memberof CIQ.UI.Helper
- * @since 8.4.0
- */
-CIQ.UI.Helper.prototype.addObserver = function ({ base, path, listener }) {
-	const { obj, member } = CIQ.deriveFromObjectChain(base, path);
-	CIQ.UI.observeProperty(member, obj, listener);
-	this.observers = this.observers || [];
-	this.observers.push({
-		base,
-		path,
-		listener,
-		isEngine: base instanceof CIQ.ChartEngine
-	});
-};
-/**
- * Changes helper context updates references and listeners
- *
- * Designed to be used as a helper method for the included {@link WebComponents}. A full tutorial on how to work with and customize the web components can be found here: {@tutorial Web Component Interface}
- *
- * @param {object} newContext The new context for the helper
- *
- * @memberof CIQ.UI.Helper
- * @since 8.4.0
- */
-CIQ.UI.Helper.prototype.changeContext = function (newContext) {
-	if (this.stx) this.stx = newContext.stx;
-	if (this.context) this.context = newContext;
-	if (this.implementation && this.implementation.stx)
-		this.implementation.stx = newContext.stx;
-	(this.observers || []).forEach((observer) => {
-		const { path, listener, isEngine } = observer;
-		remove(observer.base, path, listener);
-		add(isEngine ? newContext.stx : newContext, path, listener);
-	});
-	if (this.stx) this.stx = newContext.stx;
-	if (this.context) this.context = newContext;
-	function remove(base, path, listener) {
-		let { obj, member } = CIQ.deriveFromObjectChain(base, path);
-		CIQ.UI.unobserveProperty(member, obj, listener);
-	}
-	function add(base, path, listener) {
-		let { obj, member } = CIQ.deriveFromObjectChain(base, path);
-		CIQ.UI.observeProperty(member, obj, listener);
-	}
-};
-/**
- * Removes injections from the ChartEngine and helper created observers
+ * Removes injections from the ChartEngine
  *
  * Designed to be used as a helper method for the included {@link WebComponents}. A full tutorial on how to work with and customize the web components can be found here: {@tutorial Web Component Interface}
  *
  * @memberof CIQ.UI.Helper
  */
 CIQ.UI.Helper.prototype.destroy = function () {
-	if (this.injections) {
-		for (var i = 0; i < this.injections.length; i++) {
-			this.context.stx.removeInjection(this.injections[i]);
-		}
+	for (var i = 0; i < this.injections.length; i++) {
+		this.context.stx.removeInjection(this.injections[i]);
 	}
 	this.injections = [];
-	(this.observers || []).forEach(({ base, path, listener }) => {
-		const { obj, member } = CIQ.deriveFromObjectChain(base, path);
-		CIQ.UI.unobserveProperty(member, obj, listener);
-	});
-	this.observers = [];
 };
 /**
  * UI Helper that keeps the heads up display operating.
@@ -2964,26 +2766,25 @@ DrawingEdit.prototype.showToolbar = function (drawing) {
 			pattern = drawing.parameters.fibs[0].parameters.pattern;
 		}
 		this.tool(activator, drawing.name);
-		this.sync(
-			Object.assign({}, drawing, {
-				lineWidth: lineWidth,
-				pattern: pattern,
-				annotation: {
-					font: drawing.font ? CIQ.clone(drawing.font) : {}
-				},
-				currentColor: drawing.color
-			})
-		);
+		this.sync({
+			lineWidth: lineWidth,
+			pattern: pattern,
+			annotation: {
+				font: drawing.font ? CIQ.clone(drawing.font) : {}
+			},
+			fillColor: drawing.fillColor,
+			currentColor: drawing.color,
+			axisLabel: drawing.axisLabel
+		});
+		self.cvpController.each(function () {
+			this.sync(drawing);
+		});
 		this.dirty(false);
 		// tool called the drawing initializeParameters method, so we now need to override the defaults
 		if (isFib) {
 			this.context.stx.currentVectorParameters.fibonacci = CIQ.clone(
 				drawing.parameters
 			);
-		}
-		if (drawing.name === "volumeprofile") {
-			this.context.stx.currentVectorParameters.volumeProfile.priceBuckets =
-				drawing.priceBuckets;
 		}
 	});
 };
@@ -3126,8 +2927,8 @@ DrawingEdit.prototype.edit = function () {
 		// Get the closest context in case there is more than one on the page
 		var localContext = CIQ.UI.getMyContext(drawing.stx.container).topNode;
 		// The drawing context menu element is created outside of any instant chart so query the document
-		var contextContainer =
-			document.querySelector("cq-drawing-context").parentNode;
+		var contextContainer = document.querySelector("cq-drawing-context")
+			.parentNode;
 		var settingsPalette = localContext.querySelector("cq-drawing-settings");
 		var contextLocation = {
 			left: contextContainer.offsetLeft,
@@ -3463,12 +3264,8 @@ CIQ.UI.Layout.prototype.getChartType = function (node, chartType) {
 			}
 		}
 	};
-	this.addObserver({ base: stx, path: "layout.chartType", listener });
-	this.addObserver({
-		base: stx,
-		path: "layout.aggregationType",
-		listener
-	});
+	CIQ.UI.observeProperty("chartType", stx.layout, listener);
+	CIQ.UI.observeProperty("aggregationType", stx.layout, listener);
 };
 /**
  * Convenience function to set the chart style or aggregation type from the Display drop-down
@@ -3520,7 +3317,7 @@ CIQ.UI.Layout.prototype.getChartScale = function (node, chartScale) {
 		if (obj.value == chartScale) node.classList.add(className);
 		else node.classList.remove(className);
 	};
-	this.addObserver({ base: stx, path: "layout.chartScale", listener });
+	CIQ.UI.observeProperty("chartScale", stx.layout, listener);
 };
 /**
  * Convenience function to set the chart scale from the Display drop-down menu.
@@ -3564,7 +3361,7 @@ CIQ.UI.Layout.prototype.getFlippedChart = function (node) {
 		if (obj.value) node.classList.add(className);
 		else node.classList.remove(className);
 	};
-	this.addObserver({ base: stx, path: "layout.flipped", listener });
+	CIQ.UI.observeProperty("flipped", stx.layout, listener);
 };
 /**
  * Convenience function to set the inverted y-axis mode from the Display drop-down menu.
@@ -3600,7 +3397,7 @@ CIQ.UI.Layout.prototype.getExtendedHours = function (node) {
 		if (obj.value) node.classList.add(className);
 		else node.classList.remove(className);
 	};
-	this.addObserver({ base: stx, path: "layout.extended", listener });
+	CIQ.UI.observeProperty("extended", stx.layout, listener);
 };
 /**
  * Convenience function to set extended hours mode from the Display drop-down menu.
@@ -3636,43 +3433,6 @@ CIQ.UI.Layout.prototype.setExtendedHours = function (node) {
 	}
 };
 /**
- * Activates the animation control on the Display drop-down menu.
- *
- * @param {HTMLElement} node The user interface element that enables users to enable and
- * 		disable animation.
- *
- * @memberof CIQ.UI.Layout
- * @private
- * @since 8.4.0
- */
-CIQ.UI.Layout.prototype.getAnimation = function (node) {
-	var stx = this.context.stx,
-		className = this.params.activeClassName;
-	var listener = function (obj) {
-		if (obj.value) node.classList.add(className);
-		else node.classList.remove(className);
-	};
-	CIQ.UI.observeProperty("animation", stx.layout, listener);
-};
-/**
- * Convenience function to set animation mode from the Display drop-down menu.
- *
- * Designed to be used as a helper method for the included {@link WebComponents}. A full
- * tutorial on how to work with and customize the web components can be found here:
- * {@tutorial Web Component Interface}
- *
- * @param {HTMLElement} [node] The user interface element that enables users to enable and
- * 		disable animation.
- *
- * @memberof CIQ.UI.Layout
- * @since 8.4.0
- */
-CIQ.UI.Layout.prototype.setAnimation = function (node) {
-	const { stx } = this.context;
-	stx.layout.animation = !stx.layout.animation;
-	stx.changeOccurred("layout");
-};
-/**
  * Activates the range selector control on the Display drop-down menu.
  *
  * @param {HTMLElement} node The user interface element that enables users to enable and
@@ -3688,7 +3448,7 @@ CIQ.UI.Layout.prototype.getRangeSlider = function (node) {
 		if (obj.value) node.classList.add(className);
 		else node.classList.remove(className);
 	};
-	this.addObserver({ base: stx, path: "layout.rangeSlider", listener });
+	CIQ.UI.observeProperty("rangeSlider", stx.layout, listener);
 };
 /**
  * Convenience function to toggle the range slider mode from the Display drop-down menu.
@@ -3729,7 +3489,7 @@ CIQ.UI.Layout.prototype.getOutliers = function (node) {
 		if (obj.value) node.classList.add(className);
 		else node.classList.remove(className);
 	};
-	this.addObserver({ base: stx, path: "layout.outliers", listener });
+	CIQ.UI.observeProperty("outliers", stx.layout, listener);
 };
 /**
  * Convenience function that toggles the outliers layout property between on and off (true
@@ -3764,11 +3524,7 @@ CIQ.UI.Layout.prototype.getAggregationType = function (node, aggregationType) {
 		if (obj.value == aggregationType) node.classList.add(className);
 		else node.classList.remove(className);
 	};
-	this.addObserver({
-		base: stx,
-		path: "layout.aggregationType",
-		listener
-	});
+	CIQ.UI.observeProperty("aggregationType", stx.layout, listener);
 };
 /**
  * Convenience function to set the aggregation type from the Display drop-down menu.
@@ -3814,11 +3570,7 @@ CIQ.UI.Layout.prototype.getAggregationEdit = function (node, field) {
 			node.value = value;
 		}
 	};
-	this.addObserver({
-		base: stx,
-		path: "layout." + tuple.member,
-		listener
-	});
+	CIQ.UI.observeProperty(tuple.member, tuple.obj, listener);
 };
 /**
  * Updates settings for the aggregation type specified by `field`.
@@ -3982,13 +3734,14 @@ CIQ.UI.Layout.prototype.showPeriodicity = function (stx, params) {
 	params.selector.appendChild(CIQ.translatableTextNode(stx, text));
 };
 CIQ.UI.Layout.prototype.periodicity = function (node) {
-	const { stx: base } = this.context;
-	const listener = () => {
-		this.showPeriodicity(this.context.stx, { selector: node });
+	var self = this,
+		stx = this.context.stx;
+	var listener = function (obj) {
+		self.showPeriodicity(stx, { selector: node });
 	};
-	this.addObserver({ base, path: "layout.interval", listener });
-	this.addObserver({ base, path: "layout.periodicity", listener });
-	this.addObserver({ base, path: "layout.timeUnit", listener });
+	CIQ.UI.observeProperty("interval", stx.layout, listener);
+	CIQ.UI.observeProperty("periodicity", stx.layout, listener);
+	CIQ.UI.observeProperty("timeUnit", stx.layout, listener);
 };
 /**
  * Populates and displays the language widget.
@@ -4034,46 +3787,6 @@ CIQ.UI.Layout.prototype.getLanguage = function (node) {
 		}
 	};
 	CIQ.UI.observeProperty("language", CIQ.I18N, listener);
-};
-class Channel extends CIQ.UI.Helper {
-	constructor(context) {
-		super();
-		this.context = context;
-		context.advertiseAs(this, "Channel");
-	}
-	write(node, channel, message) {
-		BaseComponent.prototype.channelWrite(
-			`channel.${channel}`,
-			message,
-			this.context.stx
-		);
-	}
-}
-CIQ.UI.Channel = Channel;
-/**
- * Toggles help-active attribute in context element, enabling display of cq-help components.
- *
- * @memberof CIQ.UI.Layout
- * @since 8.4.0
- */
-CIQ.UI.Layout.prototype.toggleHelp = function () {
-	let { topNode, stx } = this.context;
-	const className = "ciq-show-help";
-	if (topNode.classList.contains(className)) {
-		topNode.classList.remove(className);
-		return;
-	}
-	topNode
-		.querySelectorAll("cq-help")
-		.forEach((helpEl) => helpEl.verifyHelpContent());
-	topNode.classList.add(className);
-	if (!CIQ.Help.MessageShown) {
-		stx.dispatch("notification", {
-			message: CIQ.Help.Message,
-			displayTime: 10,
-			position: "bottom"
-		});
-	}
 };
 /**
  * UI Helper for managing the 'Events' menu drop down for showing markers on the chart.
@@ -4151,11 +3864,6 @@ CIQ.inheritsFrom(CIQ.UI.Markers, CIQ.UI.Helper);
 CIQ.UI.Markers.prototype.showMarkers = function (node, type, markerType) {
 	var activeClassName = this.activeClassName;
 	var topNode = this.context.topNode;
-	if (!topNode.parentElement) {
-		// context container has been removed from the dom
-		return;
-	}
-	topNode = topNode.parentElement.closest("cq-context") || topNode;
 	var implementation = this.implementation;
 	if (!implementation) {
 		return;
@@ -4434,22 +4142,29 @@ CIQ.UI.KeystrokeHub = function (node, context, params) {
 		"cq-chartcontrol-group cq-toggle",
 		".chartControls .chartSize span",
 		"cq-show-range div",
-		"cq-share-button",
-		"ciq-data-table-container button",
 		"[keyboard-navigation='true']"
 	];
 	// The element that the highlight will position over, as well as its position. An object of the following type is expected:
 	// {element: HTMLElement, {x: number, y: number, width: number, height: number}}
 	// This can be set by keyboard navigable components so the element isn't necessarily in the tabOrder array.
 	this.tabActiveElement = null;
-	// An array of modal elements presently active on screen. When a modal is active, main tab navigation deferrs to the modal
-	// for all keays except Escape.
-	this.tabActiveModals = [];
 	// A reference to a component that has been handed control for internal navigation by setting its keyboardNavigation
 	// property equal to a reference to this object.
 	this.keyControlElement = null;
 	// A reference to the highlight rectangle element
 	this.highlightElement = null;
+	// Halt keyboard navigation if the mouse button is used anywhere else.
+	this.context.topNode.addEventListener("pointerdown", () =>
+		this.tabOrderDeselect()
+	);
+	// Reenable the mouse pointer when the mouse is moved
+	this.context.topNode.addEventListener("pointermove", () =>
+		this.context.topNode.classList.remove("disable-mouse-pointer")
+	);
+	// Update the highlight position on resize
+	this.context.stx.append("resizeChart", () => {
+		this.highlightAlign();
+	});
 	// Subscribe to the keyboardNavigation channel and listen for calls to register elements
 	const { channelSubscribe } = CIQ.UI.BaseComponent.prototype;
 	const channel =
@@ -4642,16 +4357,10 @@ CIQ.UI.KeystrokeHub.executeHotkeyCommand = function ({
 			scrollChart({ page: true });
 			break;
 		case "zoomInXAxis":
-			if (!stx.allowZoom || (stx.activeDrawing && !stx.allowDrawingZoom)) {
-				return;
-			}
-			stx.zoomIn();
+			if (stx.allowZoom) stx.zoomIn();
 			break;
 		case "zoomOutXAxis":
-			if (!stx.allowZoom || (stx.activeDrawing && !stx.allowDrawingZoom)) {
-				return;
-			}
-			stx.zoomOut();
+			if (stx.allowZoom) stx.zoomOut();
 			break;
 		case "zoomInYAxis":
 			zoomYAxis(-1);
@@ -4699,79 +4408,27 @@ CIQ.UI.KeystrokeHub.executeHotkeyCommand = function ({
 			// if (!stx.uiContext.isModal()) keystrokeHub.tabOrderDeselect();
 			if (CIQ.ChartEngine.drawingLine) {
 				stx.undo();
-			} else if (stx.repositioningAnchorSelector) {
-				CIQ.Studies.cancelRepositionAnchor(stx);
 			} else {
 				const uiManager = CIQ.UI.getUIManager();
-				// If there is an active modal, pass the escape key to it for a chance to process internally.
-				if (keystrokeHub.tabActiveModals.length) {
-					// If the modal successfully handles Escape, it will return true and there's no need to do anything further here.
-					if (
-						keystrokeHub.tabActiveModals[0].processEsc &&
-						keystrokeHub.tabActiveModals[0].processEsc(keystrokeHub)
-					)
-						break;
-					// Esc will close the most recent modal (position 0) if the modal didn't intercept with processEsc() == true
-					if (uiManager) uiManager.closeMenu(keystrokeHub.tabActiveModals[0]);
-					// If there's another modal available at position 0, set it as active
-					if (keystrokeHub.tabActiveModals[0])
-						keystrokeHub.setKeyControlElement(keystrokeHub.tabActiveModals[0]);
-				} else {
-					// No modals are active so return to default behavior.
-					if (uiManager) uiManager.closeMenu();
-				}
+				if (uiManager) uiManager.closeMenu();
 			}
 			break;
 		case "keyboardNavigateDeselect":
 			keystrokeHub.tabOrderDeselect();
 			break;
 		case "keyboardNavigateNext":
-			if (keystrokeHub.tabActiveModals.length) return false;
 			keystrokeHub.tabIndexNext();
 			break;
 		case "keyboardNavigatePrevious":
-			if (keystrokeHub.tabActiveModals.length) return false;
 			keystrokeHub.tabIndexNext(true);
 			break;
 		case "keyboardNavigateClick":
-			if (keystrokeHub.tabActiveModals.length) return false;
 			keystrokeHub.tabOrderClickSelected();
 			break;
 		default:
 			return false; // not captured
 	}
 	return true;
-};
-/**
- * Resets all state variables used in tab navigation and rebuilds the internal tab order array.
- *
- * @memberof CIQ.UI.KeystrokeHub
- * @private
- * @since 8.4.0
- */
-CIQ.UI.KeystrokeHub.prototype.resetTabNavigation = function () {
-	this.tabOrder = [null];
-	this.tabIndex = 0;
-	this.yNormalizationThreshold =
-		this.context.topNode.getBoundingClientRect().height / 25;
-	this.tabActiveElement = null;
-	this.tabActiveModals = [];
-	this.keyControlElement = null;
-	this.highlightElement = null;
-	// Halt keyboard navigation if the mouse button is used anywhere else.
-	this.context.topNode.addEventListener("pointerdown", () =>
-		this.tabOrderDeselect()
-	);
-	// Reenable the mouse pointer when the mouse is moved
-	this.context.topNode.addEventListener("pointermove", () =>
-		this.context.topNode.classList.remove("disable-mouse-pointer")
-	);
-	// Update the highlight position on resize
-	this.context.stx.append("resizeChart", () => {
-		this.highlightAlign();
-	});
-	// Update the keystrokeHub tabOrder array
-	this.setTabOrderElements();
 };
 /**
  * Queries elements assigned for keyboard navigation and adds references to an internal tab order
@@ -4973,8 +4630,7 @@ CIQ.UI.KeystrokeHub.prototype.tabOrderDeselect = function (eventsOnly) {
 	}
 };
 /**
- * Highlights the selected element in the tab order or hides the highlight
- * if no element is selected.
+ * Highlights the selected element in the tab order.
  *
  * @memberof CIQ.UI.KeystrokeHub
  * @private
@@ -4982,8 +4638,8 @@ CIQ.UI.KeystrokeHub.prototype.tabOrderDeselect = function (eventsOnly) {
  */
 CIQ.UI.KeystrokeHub.prototype.tabOrderSelect = function () {
 	const { tabOrder, tabIndex } = this;
-	if (tabIndex <= 0) this.highlightHide();
-	else this.highlightPosition(tabOrder[tabIndex]);
+	if (tabIndex <= 0) return;
+	this.highlightPosition(tabOrder[tabIndex]);
 };
 /**
  * Simulates a mouse click on the selected element in the tab order.
@@ -5041,50 +4697,10 @@ CIQ.UI.KeystrokeHub.prototype.tabIndexNext = function (reverse) {
 		setNextElement(this, reverse);
 	}
 	// If the current selected element isn't visible, find the next in line that is
-	while (
-		!CIQ.trulyVisible(this.tabOrder[this.tabIndex].element) ||
-		this.tabOrder[this.tabIndex].element.getAttribute("keyboard-selectable") ===
-			"false"
-	) {
+	while (!CIQ.trulyVisible(this.tabOrder[this.tabIndex].element)) {
 		setNextElement(this, reverse);
 	}
 	this.tabOrderSelect();
-};
-/**
- * Adds `targetModal` to the internal active modal array and sets it as the active node for
- * keyboard navigation.
- *
- * @param {HTMLElement} targetModal Element to set as the active modal.
- *
- * @memberof CIQ.UI.KeystrokeHub
- * @private
- * @since 8.4.0
- */
-CIQ.UI.KeystrokeHub.prototype.addActiveModal = function (targetModal) {
-	// Don't add an element more than once
-	if (this.tabActiveModals.indexOf(targetModal) > -1) return;
-	this.tabActiveModals.unshift(targetModal);
-	this.tabOrderDeselect();
-	this.setKeyControlElement(targetModal);
-};
-/**
- * Removes `targetModal` from the internal active modal array. If no other modals
- * are active, keyboard control is passed back to the main tab navigation.
- *
- * @param {HTMLElement} targetModal Element to remove from active modals array.
- *
- * @memberof CIQ.UI.KeystrokeHub
- * @private
- * @since 8.4.0
- */
-CIQ.UI.KeystrokeHub.prototype.removeActiveModal = function (targetModal) {
-	let { tabActiveModals } = this;
-	let modalIdx = tabActiveModals.indexOf(targetModal);
-	if (modalIdx > -1) {
-		tabActiveModals.splice(modalIdx, 1);
-		if (tabActiveModals[0]) this.setKeyControlElement(tabActiveModals[0]);
-		else this.setKeyControlElement();
-	}
 };
 /**
  * Sets the size and position of the highlight DOM element to match the bounding box of the
@@ -5130,9 +4746,7 @@ CIQ.UI.KeystrokeHub.prototype.highlightAlign = function () {
 	if (this.tabActiveElement) {
 		// The element position can change over time, during a window resize for example. getBoundingClientRect
 		// is called every time to ensire the highlight is aligned with the current position of the element.
-		const selectedElementRect =
-			this.tabActiveElement.element.getBoundingClientRect();
-		const contextRect = this.context.topNode.getBoundingClientRect();
+		const selectedElementRect = this.tabActiveElement.element.getBoundingClientRect();
 		// Remove the highlight if the element has no dimension
 		if (selectedElementRect.width <= 0 || selectedElementRect.height <= 0) {
 			this.highlightHide();
@@ -5140,8 +4754,8 @@ CIQ.UI.KeystrokeHub.prototype.highlightAlign = function () {
 		}
 		this.highlightCreate();
 		Object.assign(this.highlightElement.style, {
-			top: selectedElementRect.top - contextRect.top + "px",
-			left: selectedElementRect.left - contextRect.left + "px",
+			top: selectedElementRect.top + "px",
+			left: selectedElementRect.left + "px",
 			width: selectedElementRect.width + "px",
 			height: selectedElementRect.height + "px"
 		});
@@ -5188,8 +4802,6 @@ CIQ.UI.KeystrokeHub.prototype.highlightHide = function () {
  * @memberof CIQ.UI.KeystrokeHub
  */
 CIQ.UI.KeystrokeHub.prototype.setActiveContext = function (context) {
-	const isContextWrapper = context.topNode.querySelector("cq-context");
-	if (isContextWrapper) return;
 	this.context = context;
 };
 /**
@@ -5377,7 +4989,7 @@ class UIManager extends HTMLElement {
 		}
 		// hide all the items we've decided to close
 		for (var j = 0; j < closeThese.length; j++) {
-			if (closeThese[j].hide) closeThese[j].hide();
+			closeThese[j].hide();
 		}
 		// filter out the ones that are inactive
 		this.activeMenuStack = activeMenuStack.filter(function (item) {
@@ -5469,16 +5081,6 @@ class UIManager extends HTMLElement {
 		}
 	}
 	/**
-	 * Adds "menu" listener for {@link CIQ.ChartEngine#callbackListeners}.
-	 *
-	 * @memberof CIQ.UI.UIManager
-	 * @param {CIQ.ChartEngine} stx
-	 * @since 8.4.0
-	 */
-	initializeMenuListeners(stx) {
-		stx.callbackListeners.menu = [];
-	}
-	/**
 	 * Lifts a menu to an absolute position on the `body` element, so that it can rise above any
 	 * `hidden` or `scroll` overflow situations.
 	 *
@@ -5554,11 +5156,8 @@ class UIManager extends HTMLElement {
 					context.CIQ.UI &&
 					context.CIQ.UI.context &&
 					context.CIQ.UI.context.stx
-				) {
-					const { stx } = context.CIQ.UI.context;
-					stx.modalBegin();
-					if (stx.callbackListeners.menu) stx.dispatch("menu", { stx, menu });
-				}
+				)
+					context.CIQ.UI.context.stx.modalBegin();
 			}
 		);
 	}
@@ -5655,8 +5254,13 @@ CIQ.UI.getUIManager = function () {
 };
 customElements.define("cq-ui-manager", UIManager);
 // extract methods to use as functions
-const { qs, qsa, channelWrite, channelRead, channelSubscribe } =
-	CIQ.UI.BaseComponent.prototype;
+const {
+	qs,
+	qsa,
+	channelWrite,
+	channelRead,
+	channelSubscribe
+} = CIQ.UI.BaseComponent.prototype;
 /**
  * The Chart class contains a collection of methods used to instantiate and configure charts
  * and the chart user interface.
@@ -5690,112 +5294,25 @@ class Chart {
 		if (!container) container = document.body;
 		if (config && !config.chartId) config.chartId = container.id;
 		const contextContainer = getContextContainer(container);
-		const firstChildContext = qs("cq-context", contextContainer);
-		const existingContext = CIQ.getFromNS(firstChildContext, "CIQ.UI.context");
-		const chartContainer = qs(
-			existingContext ? "[cq-context-engine]" : ".chartContainer",
-			contextContainer
-		);
 		const stx = CIQ.ChartEngine.create({
-			container: chartContainer,
+			container: qs(".chartContainer", contextContainer),
 			config,
 			deferLoad: true
 		});
-		chartContainer.stx = stx;
-		let parentContext = container.closest("cq-context");
-		if (parentContext) {
-			parentContext = parentContext.parentElement.closest("cq-context");
-			if (parentContext) {
-				CIQ.UI.stxtap(container, ({ target }) => {
-					const contextEl = target.closest("cq-context");
-					if (contextEl) {
-						const context = contextEl.CIQ.UI.context;
-						parentContext.switchContext(context);
-					}
-				});
-			}
-		}
 		CIQ.UI.scrollbarStyling = config.scrollbarStyling;
 		CIQ.UI.ensureComponentsRegistered();
-		let uiContext = new CIQ.UI.Context(stx, contextContainer);
+		const uiContext = new CIQ.UI.Context(stx, contextContainer);
 		uiContext.config = config;
 		container.context = uiContext; // make context available for grid
-		if (existingContext) {
-			container.switchContext = getContextSwitcher(container);
-			// Activate the first charts context. Set in the next event loop to ensure context is available
-			setTimeout(() => {
-				container.switchContext(existingContext);
-			});
-			const chartArr = Array.from(container.querySelectorAll("cq-context"))
-				.map((el) => el.querySelector(".chartContainer"))
-				.concat(uiContext.stx.container);
-			container.getChartContainers = () => chartArr;
-			container.getCharts = () => chartArr.map(({ stx }) => stx);
-		}
-		function getContextSwitcher(container) {
-			let currentContext = container.CIQ.UI.context;
-			const targetContext = container.CIQ.UI.context;
-			const updateContext = (context) => {
-				if (context === currentContext) return;
-				currentContext = context;
-				getHeaderAndFooterElements().forEach((el) =>
-					updateElContext(el, context)
-				);
-				updateHelpers(context);
-				Array.from(container.querySelectorAll("cq-context-wrapper")).forEach(
-					(wrapper) => {
-						const wrapperContext =
-							wrapper.querySelector("cq-context").CIQ.UI.context;
-						wrapper.classList.toggle("active", context === wrapperContext);
-					}
-				);
-			};
-			return updateContext;
-			function getHeaderAndFooterElements() {
-				return getElements(".ciq-nav, .ciq-footer", container).filter((el) => {
-					return (
-						el.localName !== "cq-themes" &&
-						el.localName !== "cq-info-toggle-dropdown" &&
-						el.localName !== "cq-side-nav" &&
-						!el.classList.contains("shortcuts-ui")
-					);
-				});
-			}
-			function getElements(selectors, context) {
-				return selectors.split(/, |,/g).reduce((acc, selector) => {
-					const container = context.querySelector(selector);
-					const elements = Array.from(container.querySelectorAll("*"));
-					return acc.concat(elements);
-				}, []);
-			}
-			function updateElContext(el, context) {
-				if (el.changeContext) {
-					el.changeContext(context);
-					return;
-				}
-				if (el.stx) el.stx = context.stx;
-				if (el.context) el.context = context;
-			}
-			function updateHelpers(newContext) {
-				Object.values(targetContext.advertised).forEach((helper) => {
-					if (helper.changeContext) helper.changeContext(newContext);
-				});
-			}
-		}
 		// create UI helpers
 		new CIQ.UI.Layout(uiContext);
-		new CIQ.UI.Channel(uiContext);
+		new CIQ.UI.StudyEdit(null, uiContext);
 		this.initLookup(uiContext);
-		this.initDialogHandler(uiContext);
 		this.initContainerListeners(uiContext);
 		this.initEventMarkers(uiContext);
-		if (existingContext) {
-			CIQ.UI.BaseComponent.buildReverseBindings(contextContainer);
-			return uiContext;
-		}
-		new CIQ.UI.StudyEdit(null, uiContext);
 		this.initDrawingTools(uiContext);
 		this.initDrawingEditListeners(uiContext);
+		this.initDialogHandler(uiContext);
 		this.initColorPicker();
 		this.initExtensions({ stx, uiContext, config, type: "plugins" });
 		this.loadChart(uiContext);
@@ -5803,11 +5320,10 @@ class Chart {
 		CIQ.UI.BaseComponent.buildReverseBindings(contextContainer);
 		contextContainer.bindingInitiated = true;
 		CIQ.UI.begin(config.onWebComponentsReady); // initiates webcomponent taps and binding
-		uiContext.uiManager = CIQ.UI.getUIManager();
-		uiContext.uiManager.initializeMenuListeners(stx);
 		// Call to setTabOrderElements is moved to the event queue so the dom has a chance to render
 		window.setTimeout(function () {
-			document.body.keystrokeHub.resetTabNavigation();
+			// Update the keystrokeHub tabOrder array
+			document.body.keystrokeHub.setTabOrderElements();
 		}, 0);
 		return uiContext;
 		function getContextContainer(container) {
@@ -5967,6 +5483,13 @@ class Chart {
 				return;
 			}
 			keystrokeHub.setActiveContext(uiContext);
+			qsa("cq-lookup").forEach((item) =>
+				item.removeAttribute("cq-keystroke-default")
+			);
+			qs("cq-menu.ciq-search cq-lookup", uiContext.topNode).setAttribute(
+				"cq-keystroke-default",
+				""
+			);
 		};
 	}
 	/**
@@ -6221,15 +5744,14 @@ class Chart {
 		}
 		if (breakpoint[0] !== stx.chart.breakpoint) {
 			// Move the second breakpoint channelWrite to the event queue so it doesn't immediately overwrite the first
-			window.setTimeout(() => {
+			window.setTimeout(() =>
 				channelWrite(
 					channels.breakpoint || "channel.breakpoint",
 					breakpoint[0],
 					stx
-				);
-				stx.notifyBreakpoint(breakpoint[0]);
-				stx.resizeChart();
-			});
+				)
+			);
+			stx.notifyBreakpoint(breakpoint[0]);
 		}
 		channelWrite(
 			channels.containerSize || "channel.containerSize",

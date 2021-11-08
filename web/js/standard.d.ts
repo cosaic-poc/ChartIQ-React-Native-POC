@@ -115,19 +115,6 @@ declare module '../js/chartiq.js' {
         behavior?: object,
         filter?: Function
       )
-      /**
-       * Pauses updates from the quoteDriver without killing or disattaching it.
-       * Takes a symbol that is stored to know when it can be resumed.
-       *
-       * @param symbol symbol to pause on
-       * @since 8.4.0
-       */
-      public pause(symbol: string): void
-      /**
-       * Called by CIQ.ChartEngine#loadChart to resume updating when the symbol changes.
-       * @since 8.4.0
-       */
-      public resume(): void
     }
     /**
      * Convenience function that uses the configuration provided in `params.config` to create the
@@ -577,18 +564,6 @@ declare module '../js/chartiq.js' {
       			color: "auto",
       			parameters: { pattern: "solid", opacity: 0.25, lineWidth: 1 }
       		}
-      	},
-      /**
-       * Volume profile drawing settings.
-       *
-       * @example
-       * volumeProfile:{
-       * 		priceBuckets: 30
-       * }
-       * @since 8.4.0
-       */
-      volumeProfile: {
-      		priceBuckets: 30
       	},
       /**
        * Annotation settings.
@@ -1083,72 +1058,6 @@ declare module '../js/chartiq.js' {
        */
       public intersected(tick: number, value: number, box: object): object
       /**
-       * Returns the value (price) of a drawing given a Y-axis pixel. The value is relative to the panel or the canvas.
-       * This function is preferred over CIQ.ChartEngine#valueFromPixel when used by drawing functions because
-       * it automatically returns the value based off the plot corresponding the drawing's `field` property.
-       * CIQ.ChartEngine#valueFromPixel usually returns the value of the main series plot.
-       * @param  pixel	  The y pixel position
-       * @param  [panel] A panel object. If passed then the value will be relative to that panel. If not passed then the value will be relative to the panel that is in the actual Y location.
-       * @param  [yAxis] Which yAxis. Defaults to panel.yAxis.
-       * @return		  The value relative to the panel, of the plot whose field matches the field property of the drawing
-       * @since 8.4.0
-       */
-      public valueFromPixel(
-        pixel: number,
-        panel?: CIQ.ChartEngine.Panel,
-        yAxis?: CIQ.ChartEngine.YAxis
-      ): number
-      /**
-       * Returns the Y pixel location for the (split) unadjusted price rather than the displayed price for a drawing.
-       * This is important for drawing tools or any other device that requires the actual underlying price.
-       * This function is preferred over CIQ.ChartEngine#pixelFromValueAdjusted when used by drawing functions
-       * because it automatically returns the pixel based off the value of the plot corresponding the drawing's
-       * `field` property.
-       * CIQ.ChartEngine#pixelFromValueAdjusted usually returns the pixel of the main series plot's value.
-       *
-       * @param  panel The panel to get the value from
-       * @param  tick  The tick location (in the dataSet) to check for an adjusted value
-       * @param  value The value
-       * @param [yAxis] The yaxis to use
-       * @return		  The pixel location of the plot whose field matches the field property of the drawing
-       * @since 8.4.0
-       */
-      public pixelFromValue(
-        panel: CIQ.ChartEngine.Panel,
-        tick: number,
-        value: number,
-        yAxis?: CIQ.ChartEngine.YAxis
-      ): number
-      /**
-       * Converts a box represented by two corner coordinates [tick0,value0] and [tick1,value1] into pixel coordinates.
-       * This is important for drawing tools or any other device that requires the actual underlying price.
-       * This function is preferred over CIQ.convertBoxToPixels when used by drawing functions because it
-       * automatically returns the pixel values based off the values of the box as if they were values of the plot
-       * corresponding to the drawing's `field` property.
-       * CIQ.convertBoxToPixels usually returns the pixel values of the box assuming those values are the main series plot's values.
-       * @param stx The chartEngine
-       * @param  panelName  Panel on which the coordinates reside
-       * @param  box Box to convert
-       * @param  [box.x0]
-       * @param  [box.y0]
-       * @param  [box.x1]
-       * @param  [box.y1]
-       * @param  [yAxis]
-       * @return  A converted box
-       * @since 8.4.0
-       */
-      public boxToPixels(
-        stx: CIQ.ChartEngine,
-        panelName: string,
-        box: {
-          x0?: number,
-          y0?: number,
-          x1?: number,
-          y1?: number
-        },
-        yAxis?: CIQ.ChartEngine.YAxis
-      ): object
-      /**
        * Instance function used to copy the relevant drawing parameters into itself.
        * It just calls the static function.
        * @param withPreferences set to true to return previously saved preferences
@@ -1261,14 +1170,6 @@ declare module '../js/chartiq.js' {
        */
       public adjust(): void
       /**
-       * Returns the highlighted state. Set this.highlighted to the highlight state.
-       * For simple drawings the highlighted state is just true or false. For complex drawings
-       * with pivot points for instance, the highlighted state may have more than two states.
-       * Whenever the highlighted state changes a draw() event will be triggered.
-       * @param highlighted True to highlight the drawing, false to unhighlight
-       */
-      public highlight(highlighted: Boolean): void
-      /**
        * Returns true if the tick and value are inside the box
        * @param  tick  The tick
        * @param  value The value
@@ -1279,23 +1180,6 @@ declare module '../js/chartiq.js' {
        */
       public pointIntersection(tick: number, value: number, box: object, isPixels: boolean): boolean
       /**
-       * Sets the internal properties of the drawing points where x is a tick or a date and y is a value.
-       * @param  point    index to point to be converted (0,1)
-       * @param  x    index of bar in dataSet (tick) or date of tick (string form)
-       * @param  y    price
-       * @param  [chart] Optional chart object
-       * @since
-       * - 04-2015
-       * - 8.3.0 `x` tick values outside an allowable range will be replaced by values at the edge
-       * 		of the range. This is to prevent performance problems when switching periodicities.
-       */
-      public setPoint(
-        point: number,
-        x: number|string,
-        y: number,
-        chart?: CIQ.ChartEngine.Chart
-      ): void
-      /**
        * Compute the proper color to use when rendering lines in the drawing.
        *
        * Will use the color but if set to auto or transparent, will use the container's defaultColor.
@@ -1303,16 +1187,13 @@ declare module '../js/chartiq.js' {
        * this function will return that plot's color.
        * If drawing is highlighted will use the highlight color as defined in stx_highlight_vector style.
        * @param color Color string to check and use as a basis for setting.  If not supplied, uses this.color.
-       * @param [isLabel] True if determining color for a yaxis label (and therefore, ignore highlighting)
        * @return Color to use for the line drawing
-       * @since
-       * - 7.0.0 Replaces `setLineColor`. Will return source line's color if auto.
-       * - 8.4.0 Added `isLabel` parameter.
+       * @since 7.0.0 Replaces `setLineColor`. Will return source line's color if auto.
        * @example
        * 		var trendLineColor=this.getLineColor();
        *		this.stx.plotLine(x0, x1, y0, y1, trendLineColor, "segment", context, panel, parameters);
        */
-      public getLineColor(color: string, isLabel?: boolean): string
+      public getLineColor(color: string): string
     }
     /**
      * A simple device to make ease functions easy to use. Requests a cubic function that takes the
@@ -1430,9 +1311,7 @@ declare module '../js/chartiq.js' {
      * 					which the marker is associated.
      * 					If this value is not provided, the marker is set "above_candle" as long as a valid candle is selected
      * 					by `params.x`.
-     * 					This element should be detached from the DOM. If an element is not provided, an empty `div` is created.
-     * 					You can create your own or use the provided CIQ.Marker.Simple and CIQ.Marker.Performance
-     * 					node creators.
+     * 					DOM. If an element is not provided, an empty `div` is created. You can create your own or use the provided CIQ.Marker.Simple and CIQ.Marker.Performance node creators.
      * 					chart panel.
      * Values include:
      * - "date" — `params.x` must be set to a JavaScript date object. This will be converted to the closest `masterData`
@@ -1504,10 +1383,8 @@ declare module '../js/chartiq.js' {
        * @param params.y A valid value for positioning the marker on the y-axis (depending on selected `yPositioner`).
        * 					If this value is not provided, the marker is set "above_candle" as long as a valid candle is selected
        * 					by `params.x`.
-       * @param [params.node] The HTML element that contains the marker.
-       * 					This element should be detached from the DOM. If an element is not provided, an empty `div` is created.
-       * 					You can create your own or use the provided CIQ.Marker.Simple and CIQ.Marker.Performance
-       * 					node creators.
+       * @param [params.node] The HTML element that contains the marker. This element should be detached from the
+       * 					DOM. If an element is not provided, an empty `div` is created. You can create your own or use the provided CIQ.Marker.Simple and CIQ.Marker.Performance node creators.
        * @param params.panelName="chart" The name of the panel to which the `node` is attached. Defaults to the main
        * 					chart panel.
        * @param [params.xPositioner="date"] Determines the x-axis position of the marker.
@@ -1564,7 +1441,7 @@ declare module '../js/chartiq.js' {
           x: any,
           y: Number,
           panelName: string,
-          node?: HTMLElement|CIQ.Marker.Simple|CIQ.Marker.Performance,
+          node?: HTMLElement,
           xPositioner?: string,
           yPositioner?: string,
           permanent?: boolean,
@@ -1652,7 +1529,6 @@ declare module '../js/chartiq.js' {
      * - `beginningDayOfWeek` : Weekday number (0-6) to optionally override CIQ.Market prototype setting of same name.
      * - `normal_daily_open`: A string defining a time in `HH:mm` format. Set this to specify the normal open time for a market.
      * - `normal_daily_close`: A string defining a time in `HH:mm` format. Set this to specify the normal close time for a market.
-     * - `minimum_session_length`: The minimum interval of time used to test for a market session open.  See CIQ.Market#minimumSessionLength.
      *
      * Example:
      * ```
@@ -1875,7 +1751,6 @@ declare module '../js/chartiq.js' {
        * - `beginningDayOfWeek` : Weekday number (0-6) to optionally override CIQ.Market prototype setting of same name.
        * - `normal_daily_open`: A string defining a time in `HH:mm` format. Set this to specify the normal open time for a market.
        * - `normal_daily_close`: A string defining a time in `HH:mm` format. Set this to specify the normal close time for a market.
-       * - `minimum_session_length`: The minimum interval of time used to test for a market session open.  See CIQ.Market#minimumSessionLength.
        *
        * Example:
        * ```
@@ -2091,29 +1966,6 @@ declare module '../js/chartiq.js' {
        */
       public beginningDayOfWeek: number
       /**
-       * The shortest session length for the market.
-       * The higher this number, the more performant iterations through the times will be.
-       * However, too high a number may result in skipping over shorter market sessions.
-       * Make sure this number is smaller than the number of minutes in the shortest session for this market.
-       *
-       * @since 8.4.0
-       *
-       * @example
-       * stxx.chart.market.minimumSessionLength = 1;  // The lowest possible setting
-       */
-      public minimumSessionLength: number
-      /**
-       * An array of days on which trading occurs. This function uses the current market definitions
-       * to create a list of trading days for the week. If there are no rules set in the market definition,
-       * then all days of the week are returned.
-       *
-       * If there are no rules set in the market definition, all days of the week are returned.
-       *
-       * @return Sorted array of days on which trading occurs.
-       * @since 8.4.0
-       */
-      public tradingDays(): number[]
-      /**
        * Returns an array of objects containing a list of sessions and whether or not they are enabled
        *
        * @return String array of market session names, and corresponding status (e.g. [{ name: 'pre', enabled: false } { name: 'post', enabled: true }])
@@ -2261,26 +2113,12 @@ declare module '../js/chartiq.js' {
        */
       public isMarketDay(): object
       /**
-       * Checks if a supplied date is a market day.  Only the date is examined; hours, minutes, seconds are ignored.
+       * Checks if a supplied date is a market day.  Only the date is examined; hours, minutes, seconds are ignored
        * @param date A date
        * @return An object with the open market session's details, if it is a market day. Or `null` if it is not a market day.
        * @since 04-2016-08
        */
       public isMarketDate(date: Date): object
-      /**
-       * Checks if a supplied date is the first market day of the month.
-       * @param date A date
-       * @return True if first market day, false otherwise.
-       * @since 8.4.0
-       */
-      public isFirstMarketDayOfMonth(date: Date): boolean
-      /**
-       * Checks if a supplied date is the first market day of the week.
-       * @param date A date
-       * @return True if first market day, false otherwise.
-       * @since 8.4.0
-       */
-      public isFirstMarketDayOfWeek(date: Date): boolean
       /**
        * Creates iterators for the associated Market to traverse through time taking into account market hours.
        * An iterator instance can go forward or backward in time any arbitrary amount.
@@ -3341,14 +3179,11 @@ declare module '../js/chartiq.js' {
        */
       displayDragOK(soft?: boolean): void
       /**
-       * Displays the "ok to draw" icon and the field which is highlighted, near the crosshairs.
+       * Displays the "ok to draw" icon and the field which is highlighted, near the crosshairs. Used with the [average line drawing]CIQ.Drawing.average.
        *
-       * In general, any series and most studies can have a drawing placed on it.
-       * When such a plot is highlighted, this function will show the [drawOk chart control]CIQ.ChartEngine.htmlControls
-       * and display the field being highlighted.
-       * @since
-       * - 7.0.0
-       * - 8.4.0 Works with any drawing.
+       * In general, any series and most studies can have an average line drawing placed on it.
+       * When such a plot is highlighted, this function will show the [drawOk chart control]CIQ.ChartEngine.htmlControls and display the field being highlighted.
+       * @since 7.0.0
        */
       displayDrawOK(): void
       /**
@@ -3731,7 +3566,7 @@ declare module '../js/chartiq.js' {
        * @param [parameters.symbol=id] <span class="injection">Data Loading</span> The symbol to fetch in string format. This will be sent into the fetch() function, if no data is provided.  If no symbol is provided, series will use the `id` as the symbol. If both `symbol` and `symbolObject` are set, `symbolObject` will be used.
        * @param [parameters.symbolObject=id] <span class="injection">Data Loading</span> The symbol to fetch in object format. This will be sent into the fetch() function, if no data is provided. If no symbolObject is provided, series will use the `id` as the symbol. You can send anything you want in the symbol object, but you must always include at least a 'symbol' element. If both `symbol` and `symbolObject` are set, `symbolObject` will be used.
        * @param [parameters.field=Close/Value] <span class="injection">Data Loading</span> Specify an alternative field to draw data from (other than the Close/Value). Must be present in your pushed data objects or returned from the quoteFeed.
-       * @param [parameters.isComparison=false] <span class="injection">Rendering</span> If set to true, shareYAxis is automatically set to true to display relative values instead of the primary symbol's price labels. CIQ.ChartEngine#setComparison is also called and set to `true`. This is only applicable when using the primary Y axis, and should only be used with internal addSeries renderers.
+       * @param [parameters.isComparison=fasle] <span class="injection">Rendering</span> If set to true, shareYAxis is automatically set to true to display relative values instead of the primary symbol's price labels. CIQ.ChartEngine#setComparison is also called and set to `true`. This is only applicable when using the primary Y axis, and should only be used with internal addSeries renderers.
        * @param [parameters.shareYAxis=false] <span class="injection">Rendering</span>
        * - Set to `true` so that the series shares the primary Y-axis and renders along actual values and print its corresponding current price label on the y axis.
        * - When set to `false`, the series will not be attached to a y axis. Instead it is superimposed on the chart; taking over its entire height, and maintaining the relative shape of the line. No current price will be displayed. Superimposing the ‘shape’ of one series over a primary chart, is useful when rendering multiple series that do not share a common value range.
@@ -3779,8 +3614,7 @@ declare module '../js/chartiq.js' {
        * An array of objects, each one with the followng elements:
        * @param [parameters.data.DT] JavaScript date object or epoch representing data point (overrides Date parameter if present)
        * @param [parameters.data.Date] string date representing data point ( only used if DT parameter is not present)
-       * @param [parameters.data.Value] value of the data point ( As an alternative, you can send `parameters.data.Close` since your quote feed may already be returning the data using this element name)
-       * @param [parameters.data.Close] value of the data point ( Used as an alternative to `parameters.data.Value`)
+       * @param parameters.data.Value value of the data point ( As an alternative, you can send `parameters.data.Close` since your quote feed may already be returning the data using this element name)
        * @param [parameters.panel] <span class="injection">Rendering</span> The panel name on which the series should display. If the panel doesn't exist, one will be created. If `true` is passed, a new panel will also be created.
        * @param [parameters.action='add-series'] <span class="injection">Rendering</span> Overrides what action is sent in symbolChange events. Set to null to prevent a symbolChange event.
        * @param [parameters.loadData=true] <span class="injection">Data Loading</span> Include and set to false if you know the initial data is already in the masterData array or will be loaded by another method. The series will be added but no data requested. Note that if you remove this series, the data points linked to it will also be removed which may create issues if required by the chart. If that is the case, you will need to manually remove from the renderer linked to it instead of the underlying series itself.
@@ -4044,10 +3878,9 @@ declare module '../js/chartiq.js' {
           fillStyle?: string,
           permanent?: boolean,
           data?: {
+            Value: number,
             DT?: Date,
-            Date?: string,
-            Value?: number,
-            Close?: number
+            Date?: string
           },
           panel?: string|boolean,
           action?: string,
@@ -5136,6 +4969,43 @@ declare module '../js/chartiq.js' {
        */
       constructor()
       /**
+       * Determine whether the tick/value lies within the theoretical box outlined by this drawing's two
+       * points.
+       *
+       * @param tick Tick in the `dataSet`.
+       * @param value Value at position.
+       * @param box x0, y0, x1, y1, r representing an area around the cursor, including the
+       * 		radius.
+       * @return True if box intersects the drawing.
+       *
+       */
+      public boxIntersection(tick: number, value: number, box: object): boolean
+      /**
+       * Returns the highlighted state. Set this.highlighted to the highlight state.
+       * For simple drawings the highlighted state is just true or false. For complex drawings
+       * with pivot points for instance, the highlighted state may have more than two states.
+       * Whenever the highlighted state changes a draw() event will be triggered.
+       * @param highlighted True to highlight the drawing, false to unhighlight
+       */
+      public highlight(highlighted: Boolean): void
+      /**
+       * Sets the internal properties of the drawing points where x is a tick or a date and y is a value.
+       * @param  point    index to point to be converted (0,1)
+       * @param  x    index of bar in dataSet (tick) or date of tick (string form)
+       * @param  y    price
+       * @param  [chart] Optional chart object
+       * @since
+       * - 04-2015
+       * - 8.3.0 `x` tick values outside an allowable range will be replaced by values at the edge
+       * 		of the range. This is to prevent performance problems when switching periodicities.
+       */
+      public setPoint(
+        point: number,
+        x: number|string,
+        y: number,
+        chart?: CIQ.ChartEngine.Chart
+      ): void
+      /**
        * Intersection is based on a hypothetical box that follows a user's mouse or finger. An
        * intersection occurs when the box crosses over the drawing. The type should be "segment", "ray"
        * or "line" depending on whether the drawing extends infinitely in any or both directions. Radius
@@ -5166,24 +5036,12 @@ declare module '../js/chartiq.js' {
         isPixels?: boolean
       ): boolean
       /**
-       * Determine whether the tick/value lies within the theoretical box outlined by this drawing's two
-       * points.
-       *
-       * @param tick Tick in the `dataSet`.
-       * @param value Value at position.
-       * @param box x0, y0, x1, y1, r representing an area around the cursor, including the
-       * 		radius.
-       * @return True if box intersects the drawing.
-       *
-       */
-      public boxIntersection(tick: number, value: number, box: object): boolean
-      /**
        * Any two-point drawing that results in a drawing that is less than 10 pixels
        * can safely be assumed to be an accidental click. Such drawings are so small
        * that they are difficult to highlight and delete, so we won't allow them.
        *
-       * <b>Note:</b> it is very important to use CIQ.Drawing#pixelFromValue. This will ensure that
-       * saved drawings always render correctly when a chart is adjusted or transformed for display.
+       * <b>Note:</b> it is very important to use pixelFromValueAdjusted() rather than pixelFromPrice(). This will
+       * ensure that saved drawings always render correctly when a chart is adjusted or transformed for display
        * @param tick Tick in the `dataSet`.
        * @param value Value at position.
        */
@@ -5220,16 +5078,6 @@ declare module '../js/chartiq.js' {
        * Default measure function for BaseTwoPoint drawings
        */
       public measure(): void
-      /**
-       * Returns the Y value on the drawing's axis of the value passed in which is on the panel's main y axis.
-       *
-       * @param  tick  The tick location (in the dataSet) to check for an adjusted value
-       * @param  value The value
-       * @return		  The value on the drawing's axis
-       *
-       * @since 8.4.0
-       */
-      public valueOnDrawingAxis(tick: number, value: number): number
     }
     /**
      * Annotation drawing tool. An annotation is a simple text tool. It uses the class stx_annotation
@@ -5261,7 +5109,6 @@ declare module '../js/chartiq.js' {
        * @param [obj.pnl] The panel name
        * @param [obj.d0] String form date or date time
        * @param [obj.v0] The value at which to position the annotation
-       * @param [obj.fld] Field which drawing is associated with
        * @param [obj.text] The annotation text (escaped using encodeURIComponent())
        * @param [obj.tzo0] Offset of UTC from d0 in minutes
        * @param [obj.bc] Border color
@@ -5273,8 +5120,6 @@ declare module '../js/chartiq.js' {
        * @param [obj.fnt.sz] Font size
        * @param [obj.fnt.wt] Font weight
        * @param [obj.fnt.fl] Font family
-       *
-       * @since 8.4.0 Added `fld` property to `obj` parameter.
        */
       public reconstruct(
         stx: CIQ.ChartEngine,
@@ -5283,7 +5128,6 @@ declare module '../js/chartiq.js' {
           pnl?: string,
           d0?: string,
           v0?: number,
-          fld?: string,
           text?: string,
           tzo0?: number,
           bc?: string,
@@ -5321,9 +5165,6 @@ declare module '../js/chartiq.js' {
        * @param [obj.d1] Date (string form) for the second point
        * @param [obj.tzo0] Offset of UTC from d0 in minutes
        * @param [obj.tzo1] Offset of UTC from d1 in minutes
-       * @param [obj.fld] Field which drawing is associated with
-       *
-       * @since 8.4.0 Added `fld` property to `obj` parameter.
        */
       public reconstruct(
         stx: CIQ.ChartEngine,
@@ -5337,8 +5178,7 @@ declare module '../js/chartiq.js' {
           d0?: number,
           d1?: number,
           tzo0?: number,
-          tzo1?: number,
-          fld?: string
+          tzo1?: number
         }
       ): void
     }
@@ -5372,9 +5212,6 @@ declare module '../js/chartiq.js' {
        * @param [obj.d1B] Computed outer Date (string form) for the second point if original drawing was on intraday but now displaying on daily
        * @param [obj.tzo0] Offset of UTC from d0 in minutes
        * @param [obj.tzo1] Offset of UTC from d1 in minutes
-       * @param [obj.fld] Field which drawing is associated with
-       *
-       * @since 8.4.0 Added `fld` property to `obj` parameter.
        */
       public reconstruct(
         stx: CIQ.ChartEngine,
@@ -5392,8 +5229,7 @@ declare module '../js/chartiq.js' {
           d0B?: number,
           d1B?: number,
           tzo0?: number,
-          tzo1?: number,
-          fld?: string
+          tzo1?: number
         }
       ): void
     }
@@ -5421,9 +5257,6 @@ declare module '../js/chartiq.js' {
        * @param [obj.d0] Date (string form) for the first point
        * @param [obj.al] True to include an axis label
        * @param [obj.tzo0] Offset of UTC from d0 in minutes
-       * @param [obj.fld] Field which drawing is associated with
-       *
-       * @since 8.4.0 Added `fld` property to `obj` parameter.
        */
       public reconstruct(
         stx: CIQ.ChartEngine,
@@ -5435,8 +5268,7 @@ declare module '../js/chartiq.js' {
           v0?: number,
           d0?: number,
           al?: boolean,
-          tzo0?: number,
-          fld?: string
+          tzo0?: number
         }
       ): void
     }
@@ -5487,9 +5319,6 @@ declare module '../js/chartiq.js' {
        * @param [obj.d1] Date (string form) for the second point
        * @param [obj.tzo0] Offset of UTC from d0 in minutes
        * @param [obj.tzo1] Offset of UTC from d1 in minutes
-       * @param [obj.fld] Field which drawing is associated with
-       *
-       * @since 8.4.0 Added `fld` property to `obj` parameter.
        */
       public reconstruct(
         stx: CIQ.ChartEngine,
@@ -5504,8 +5333,7 @@ declare module '../js/chartiq.js' {
           d0?: number,
           d1?: number,
           tzo0?: number,
-          tzo1?: number,
-          fld?: string
+          tzo1?: number
         }
       ): void
     }
@@ -5546,10 +5374,6 @@ declare module '../js/chartiq.js' {
        * @param [obj.a] Angle of the rotation in degrees
        * @param [obj.sx] Horizontal scale factor
        * @param [obj.sy] Vertical scale factor
-       * @param [obj.fld] Field which drawing is associated with
-       * @param [obj.ver] Version number of shape
-       *
-       * @since 8.4.0 Added `fld` property to `obj` parameter.
        */
       public reconstruct(
         stx: CIQ.ChartEngine,
@@ -5564,9 +5388,7 @@ declare module '../js/chartiq.js' {
           tzo0?: number,
           a?: number,
           sx?: number,
-          sy?: number,
-          fld?: string,
-          ver?: number
+          sy?: number
         }
       ): void
     }
@@ -5673,9 +5495,7 @@ declare module '../js/chartiq.js' {
    * 					which the marker is associated.
    * 					If this value is not provided, the marker is set "above_candle" as long as a valid candle is selected
    * 					by `params.x`.
-   * 					This element should be detached from the DOM. If an element is not provided, an empty `div` is created.
-   * 					You can create your own or use the provided CIQ.Marker.Simple and CIQ.Marker.Performance
-   * 					node creators.
+   * 					DOM. If an element is not provided, an empty `div` is created. You can create your own or use the provided CIQ.Marker.Simple and CIQ.Marker.Performance node creators.
    * 					chart panel.
    * Values include:
    * - "date" — `params.x` must be set to a JavaScript date object. This will be converted to the closest `masterData`
@@ -5873,7 +5693,6 @@ declare module '../js/chartiq.js' {
    * - `beginningDayOfWeek` : Weekday number (0-6) to optionally override CIQ.Market prototype setting of same name.
    * - `normal_daily_open`: A string defining a time in `HH:mm` format. Set this to specify the normal open time for a market.
    * - `normal_daily_close`: A string defining a time in `HH:mm` format. Set this to specify the normal close time for a market.
-   * - `minimum_session_length`: The minimum interval of time used to test for a market session open.  See CIQ.Market#minimumSessionLength.
    *
    * Example:
    * ```
@@ -6102,7 +5921,7 @@ declare module '../js/chartiq.js' {
        *
        * @param parms
        * @param parms.begin A dataset element from CIQ.Chart.dataSet
-       * @param parms.market An instance of CIQ.Market
+       * @param parms.market An instane of CIQ.Market
        * @param parms.periodicity A valid periodicity as require by CIQ.ChartEngine#setPeriodicity
        * @param parms.interval Time interval: millisecond, second, minute, hour, day, week, or month.
        * @param parms.multiple How many jumps to make on each interval loop.
@@ -7128,14 +6947,12 @@ declare module '../js/chartiq.js' {
      * Manages yAxis for a study when a new position is requested.
      *
      * @param stx A chart engine instance
-     * @param panel The panel where the yAxis should be
+     * @param panel The panel where the yAxis is
      * @param name The study whose axis to manage
      * @param [newPosition] New position (left/right/none,default/shared, or specific axis name)
      * @param [defaultAxis] Axis defaults to use when creating new axis
      * @return The yAxis to use
-     * @since
-     * - 7.1.0
-     * - 8.4.0 Creates a new yAxis if existing default yAxis has `allowSharing` property set to false.
+     * @since 7.1.0
      */
     function smartCreateYAxis(
       stx: CIQ.ChartEngine,
@@ -7307,15 +7124,6 @@ declare module '../js/chartiq.js' {
      * @since 8.1.0
      */
     function repositionAnchor(stx: CIQ.ChartEngine, sd: CIQ.Studies.StudyDescriptor): void
-    /**
-     * Cancels an active repositioning. If the study requires a tap to finish adding (e.g. AVWAP),
-     * the incomplete study will be removed.
-     *
-     * @param stx A reference to the chart object.
-     *
-     * @since 8.4.0
-     */
-    function cancelRepositionAnchor(stx: CIQ.ChartEngine): void
     /**
      * Displays the anchor element at its current location and a line depicting the hover location of
      * the anchor as it is being dragged. Called as part of the draw loop.
@@ -7616,7 +7424,7 @@ declare module '../js/chartiq.js' {
      * 		[acceptText]CIQ.ChartEngine.Driver.Lookup#acceptText method.)</caption>
      * CIQ.ChartEngine.Driver.Lookup.ChartIQ = function(exchanges) {
      *     this.exchanges = exchanges;
-     *     if (!this.exchanges) this.exchanges = ["XNYS","XASE","XNAS","XASX","IND_CBOM","INDXASE","INDXNAS","IND_DJI","ARCX","INDARCX","forex"];
+     *     if (!this.exchanges) this.exchanges = ["XNYS","XASE","XNAS","XASX","INDCBSX","INDXASE","INDXNAS","IND_DJI","ARCX","INDARCX","forex"];
      *     this.url = "https://symbols.chartiq.com/chiq.symbolserver.SymbolLookup.service";
      *     this.requestCounter = 0;  // Invalidate old requests.
      * };
@@ -7652,7 +7460,7 @@ declare module '../js/chartiq.js' {
        * 		[acceptText]CIQ.ChartEngine.Driver.Lookup#acceptText method.)</caption>
        * CIQ.ChartEngine.Driver.Lookup.ChartIQ = function(exchanges) {
        *     this.exchanges = exchanges;
-       *     if (!this.exchanges) this.exchanges = ["XNYS","XASE","XNAS","XASX","IND_CBOM","INDXASE","INDXNAS","IND_DJI","ARCX","INDARCX","forex"];
+       *     if (!this.exchanges) this.exchanges = ["XNYS","XASE","XNAS","XASX","INDCBSX","INDXASE","INDXNAS","IND_DJI","ARCX","INDARCX","forex"];
        *     this.url = "https://symbols.chartiq.com/chiq.symbolserver.SymbolLookup.service";
        *     this.requestCounter = 0;  // Invalidate old requests.
        * };
@@ -8232,25 +8040,6 @@ declare module '../js/chartiq.js' {
      */
     function isForexMetal(symbol: string, inverse: boolean): boolean
     /**
-     * Returns true if the symbol is a cryptocurrency pair
-     *
-     * **This is dependent on the market data feed and should be overridden accordingly.**
-     *
-     * @param    symbol The symbol
-     * @return  True if it's a crypto symbol
-     *
-     * @since 8.4.0
-     * @example
-     * CIQ.Market.Symbology.isForexCrypto = function (symbol) {
-     *	const cryptosSupported = {BTC: true, ETH: true, XLM: true, LTC: true, ETC: true, XRP: true, ADA: true, BNB: true};
-     *	if (!symbol) return false;
-     *	if (!CIQ.Market.Symbology.isForexSymbol(symbol)) return false;
-     *	if (symbol.charAt(0) != "^") symbol = "^" + symbol;
-     *	return (cryptosSupported[symbol.substring(1, 4)] || cryptosSupported[symbol.substring(4, 7)]);
-     *};
-     */
-    function isForexCrypto(symbol: string): boolean
-    /**
      * Returns true if the symbol is a forex or a future
      *
      * @param  symbol The symbol
@@ -8272,13 +8061,12 @@ declare module '../js/chartiq.js' {
      * @example
      * // default implementation
      * var factory=function(symbolObject){
-     *  var symbol=symbolObject.symbol;
-     *  if (CIQ.Market.Symbology.isForeignSymbol(symbol)) return CIQ.Market.GENERIC_5DAY;
-     *  if (CIQ.Market.Symbology.isFuturesSymbol(symbol)) return CIQ.Market.GLOBEX;
-     *  if (CIQ.Market.Symbology.isForexCrypto(symbol)) return null; // 24 hour market definition
-     *  if (CIQ.Market.Symbology.isForexMetal(symbol)) return CIQ.Market.METALS;
-     *  if (CIQ.Market.Symbology.isForexSymbol(symbol)) return CIQ.Market.FOREX;
-     *  return CIQ.Market.NYSE;
+     * 	var symbol=symbolObject.symbol;
+     *	if(CIQ.Market.Symbology.isForeignSymbol(symbol)) return null; // 24 hour market definition
+     *	if(CIQ.Market.Symbology.isFuturesSymbol(symbol)) return CIQ.Market.GLOBEX;
+     *	if(CIQ.Market.Symbology.isForexMetal(symbol)) return CIQ.Market.METALS;
+     *	if(CIQ.Market.Symbology.isForexSymbol(symbol)) return CIQ.Market.FOREX;
+     *	return CIQ.Market.NYSE;
      * };
      */
     function factory(symbolObject: object): object
@@ -8330,76 +8118,50 @@ declare module '../js/chartiq.js' {
      * @param  stx	  The charting object
      * @param  chart	The specific chart
      * @param  price The price to transform
-     * @param  [yAxis] Axis where price is to be found
-     * @param  [field] Field whose price needs converting, otherwise the main series is converted
      * @return			The transformed price (into percentage)
-     * @since 8.4.0 Added `yAxis` and `field` parameters. Can now transform a series price,
-     * provided the series name is set in the `field` parameter.
      */
     function priceToPercent(
       stx: CIQ.ChartEngine,
       chart: CIQ.ChartEngine.Chart,
-      price: number,
-      yAxis?: CIQ.ChartEngine.YAxis,
-      field?: string
+      price: number
     ): number
     /**
      * Untransform function for percent comparison charting
      * @param  stx	  The charting object
      * @param  chart	The specific chart
      * @param  percent The price to untransform
-     * @param  [yAxis] Axis where price is to be found
-     * @param  [field] Field whose price needs converting, otherwise the main series is converted
      * @return			The untransformed price
-     * @since 8.4.0 Added `yAxis` and `field` parameters. Can now untransform a series price,
-     * provided the series name is set in the `field` parameter.
      */
     function percentToPrice(
       stx: CIQ.ChartEngine,
       chart: CIQ.ChartEngine.Chart,
-      percent: number,
-      yAxis?: CIQ.ChartEngine.YAxis,
-      field?: string
+      percent: number
     ): number
     /**
      * Transform function for relative comparison charting
      * @param  stx	  The charting object
      * @param  chart	The specific chart
      * @param  price The price to transform
-     * @param  [yAxis] Axis where price is to be found
-     * @param  [field] Field whose price needs converting, otherwise the main series is converted
      * @return			The transformed price (relative to CIQ.Comparison.initialPrice)
-     * @since
-     * - 5.1.0
-     * - 8.4.0 Added `yAxis` and `field` parameters. Can now transform a series price,
-     * 		provided the series name is set in the `field` parameter.
+     * @since 5.1.0
      */
     function priceToRelative(
       stx: CIQ.ChartEngine,
       chart: CIQ.ChartEngine.Chart,
-      price: number,
-      yAxis?: CIQ.ChartEngine.YAxis,
-      field?: string
+      price: number
     ): number
     /**
      * Untransform function for relative comparison charting
      * @param  stx	  The charting object
      * @param  chart	The specific chart
      * @param  relative The price to untransform
-     * @param  [yAxis] Axis where price is to be found
-     * @param  [field] Field whose price needs converting, otherwise the main series is converted
      * @return			The untransformed price
-     * @since
-     * - 5.1.0
-     * - 8.4.0 Added `yAxis` and `field` parameters. Can now transform a series price,
-     * 		provided the series name is set in the `field` parameter.
+     * @since 5.1.0
      */
     function relativeToPrice(
       stx: CIQ.ChartEngine,
       chart: CIQ.ChartEngine.Chart,
-      relative: number,
-      yAxis?: CIQ.ChartEngine.YAxis,
-      field?: string
+      relative: number
     ): number
     /**
      * Formats the percentage values on the comparison chart

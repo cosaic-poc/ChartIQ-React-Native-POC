@@ -632,15 +632,6 @@ body .trade .stx-btn.stx-ico {
 	width: 5px;
 }
 
-.stx_range_slider .stx-chart-panel.stx-show {
-    display: inline-block;
-}
-
-
-.stx_range_slider .stx-chart-panel.stx-show > * {
-    display: none;
-}
-
 /* ------------------------------------------------------- PLUGIN PROTECTION ------------------------------------------------------ */
 
 cq-orderbook {
@@ -664,39 +655,28 @@ body {
 .crosssection-ui,
 .rangeslider-ui,
 .extendedhours-ui,
-.animation-ui,
 .shortcuts-ui,
 .outliers-ui,
-.dataLoader-ui,
 .tooltip-ui {
 	display: none;
 }
 
-/* Hide shortcuts and info toggle (if tooltip addOn has not been initiated) on mobile screens */
+/* Hide shortcuts and info toggle (if tooltip addOn has not been initiated) on mobile screens*/
 cq-context[ciq-mobile] {
 	&:not([tooltip-active]) cq-toggle[cq-member="headsUp"],
-	&[dataLoader-active] .dataLoader-ui,
 	&[shortcuts-active] .shortcuts-ui {
 		display: none;
 	}
 }
 
-/* Hide additional features section as long as all the features in it have also been hidden */
-cq-context[ciq-mobile] cq-menu-dropdown-section.chart-addons {
-	display: none;
-}
-
 /* Enable activated addOn UI */
 body {
 	*[extendedhours-active] .extendedhours-ui,
-	*[animation-active] .animation-ui,
 	*[shortcuts-active] .shortcuts-ui,
 	*[outliers-active] .outliers-ui,
 	*[rangeslider-active] .rangeslider-ui,
 	*[tableview-active] .tableview-ui,
-	*[dataLoader-active] .dataLoader-ui,
-	*[tooltip-active] .tooltip-ui,
-	*[help-active] .help-ui {
+	*[tooltip-active] .tooltip-ui {
 		display: inherit;
 	}
 }
