@@ -12,7 +12,13 @@ quoteFeedForecastSimulator.periodsForward = 50; // where the forecast ends
 quoteFeedForecastSimulator.randomizationFactor = 0.3; // how widely the close will fluctuate in the forecast
 quoteFeedForecastSimulator.spreadPercentage = 0.05; // how quickly the high/low spread will be allowed to grow as the forecast progresses
 quoteFeedForecastSimulator.certaintyPercentages = [
-	0.35, 0.15, 0.08, 0.05, 0.02, 0.01, 0.01
+	0.35,
+	0.15,
+	0.08,
+	0.05,
+	0.02,
+	0.01,
+	0.01
 ]; // these add up to 100% and help predict the Certainty matrix which can be plotted on a scatterplot.
 // each of these certainty percentages will get a price attached to it by the simulator
 // Creates the forecast.  In the real world this function is replaced by a call to a remote server which contains the forecast data.

@@ -311,16 +311,6 @@ declare module '../js/chartiq.js' {
        */
       public findFocused(items: NodeList): any[]
       /**
-       * Finds the elements in `items` that have a `cq-keyboard-active` attribute.
-       *
-       * @param items A list of elements that are selectable via keyboard navigation
-       * @return The elements in `items` that have a `cq-keyboard-active` attribute, or an
-       * 		empty array if no elements are found.
-       *
-       * @since 8.4.0
-       */
-      public findKeyboardActive(items: NodeList): any[]
-      /**
        * Focuses the next item in the tab order.
        *
        * Locates the first element in `items` that has a `cq-focused` attribute. If an element is
@@ -330,20 +320,18 @@ declare module '../js/chartiq.js' {
        * If no elements are found with the `cq-focused` attribute, the attribute is applied to the
        * first element in `items` (last element if `reverse` is true). If the last element in `items`
        * (first element if `reverse` is true) is found to have the `cq-focused` attribute, focus
-       * remains on that element. Unless `loop` is set to true, then focus is applied to first element.
+       * remains on that element.
        *
        * @param items A list of elements that are selectable via keyboard navigation.
        * @param [reverse] If true, the operation is performed in reverse order; that is,
        * 		from the last element in `items` to the first.
-       * @param [loop] Loops back to the first item if the last element in `items` is selected.
-       * @return The newly focused element if a `cq-focused` attribute has changed, false if nothing has changed.
+       * @return true if a `cq-focused` attribute has changed, false if nothing has changed.
        *
        * @since 8.3.0
-       * @since 8.4.0 Added loop parameter. Return element, instead of true, if focus is changed.
        *
        * @see [focusItem]CIQ.UI.BaseComponent#focusItem
        */
-      public focusNextItem(items: NodeList, reverse?: boolean, loop?: boolean): HTMLElement|boolean
+      public focusNextItem(items: NodeList, reverse?: boolean): boolean
       /**
        * Adds a `cq-focused` attribute to `item` and highlights `item`.
        *
@@ -360,14 +348,6 @@ declare module '../js/chartiq.js' {
        * @since 8.3.0
        */
       public removeFocused(items: NodeList): void
-      /**
-       * Blurs and removes the `cq-keyboard-active` attribute from `item`.
-       *
-       * @param item
-       *
-       * @since 8.4.0
-       */
-      public deactivateItem(item: HTMLElement): void
       /**
        * Selects (clicks) the first element in `items` that has a `cq-focused` attribute.
        *
@@ -505,31 +485,7 @@ declare module '../js/chartiq.js' {
        */
       public addInjection(position: String, injection: String, code: Function): void
       /**
-       * Adds listener as an observer and saves it in the list allowing it to reconnect to
-       * a different observable.
-       *
-       * Designed to be used as a helper method for the included WebComponents. A full tutorial on how to work with and customize the web components can be found here: {@tutorial Web Component Interface}
-       *
-       * @param params Object holding parameter properties
-       * @param params.base Observable object
-       * @param params.path Path to the property to observe
-       * @param params.listener The function to invoke when the property changes
-       *
-       * @since 8.4.0
-       */
-      public addObserver(params: {base: object, path: string, listener: Function}): void
-      /**
-       * Changes helper context updates references and listeners
-       *
-       * Designed to be used as a helper method for the included WebComponents. A full tutorial on how to work with and customize the web components can be found here: {@tutorial Web Component Interface}
-       *
-       * @param newContext The new context for the helper
-       *
-       * @since 8.4.0
-       */
-      public changeContext(newContext: object): void
-      /**
-       * Removes injections from the ChartEngine and helper created observers
+       * Removes injections from the ChartEngine
        *
        * Designed to be used as a helper method for the included WebComponents. A full tutorial on how to work with and customize the web components can be found here: {@tutorial Web Component Interface}
        *
@@ -879,19 +835,6 @@ declare module '../js/chartiq.js' {
        */
       public setExtendedHours(node?: HTMLElement): void
       /**
-       * Convenience function to set animation mode from the Display drop-down menu.
-       *
-       * Designed to be used as a helper method for the included WebComponents. A full
-       * tutorial on how to work with and customize the web components can be found here:
-       * {@tutorial Web Component Interface}
-       *
-       * @param [node] The user interface element that enables users to enable and
-       * 		disable animation.
-       *
-       * @since 8.4.0
-       */
-      public setAnimation(node?: HTMLElement): void
-      /**
        * Convenience function to toggle the range slider mode from the Display drop-down menu.
        *
        * Designed to be used as a helper method for the included WebComponents. A full
@@ -990,12 +933,6 @@ declare module '../js/chartiq.js' {
        * @since 6.1.0 Defaults to English.
        */
       public getLanguage(node: HTMLElement): void
-      /**
-       * Toggles help-active attribute in context element, enabling display of cq-help components.
-       *
-       * @since 8.4.0
-       */
-      public toggleHelp(): void
     }
     /**
      * UI Helper for managing the 'Events' menu drop down for showing markers on the chart.
@@ -1230,13 +1167,6 @@ declare module '../js/chartiq.js' {
        *
        */
       public ifAllClosed(): void
-      /**
-       * Adds "menu" listener for CIQ.ChartEngine#callbackListeners.
-       *
-       * @param stx
-       * @since 8.4.0
-       */
-      public initializeMenuListeners(stx: CIQ.ChartEngine): void
       /**
        * Lifts a menu to an absolute position on the `body` element, so that it can rise above any
        * `hidden` or `scroll` overflow situations.
@@ -1716,13 +1646,10 @@ declare module '../js/chartiq.js' {
      * `cq-context`. If no context can be found then returns null.
      *
      * @param me The element for which to get the context.
-     * @param preferContextNode If true, use context from closest cq-context node before using element's context member
      * @return The context or null if none found.
      *
-     *
-     * @since 8.4.0
      */
-    function getMyContext(me: HTMLElement, preferContextNode: boolean): CIQ.UI.Context
+    function getMyContext(me: HTMLElement): CIQ.UI.Context
     /**
      * Utility to run a function across all contexts.
      *
@@ -1863,7 +1790,7 @@ declare module '../js/chartiq.js' {
      *                           "cq-menu-dropdown"],
      *         cq-theme-dialog: ["cq-close", "cq-scroll", "cq-swatch", "cq-theme-piece"],
      *         cq-themes: ["cq-close"],
-     *         cq-timezone-dialog: ["cq-close", "cq-scroll"],
+     *         cq-timezone-dialog: ["cq-close"],
      *         cq-views: ["cq-heading"],
      *         cq-drawing-palette: ["cq-menu", "cq-redo", "cq-scroll", "cq-toggle", "cq-undo", "cq-menu-dropdown"],
      *         cq-drawing-settings: ["cq-clickable", "cq-cvp-controller", "cq-menu", "cq-wave-parameters", "cq-menu-dropdown"]
@@ -1924,15 +1851,6 @@ declare module '../js/chartiq.js' {
      */
     function supportedInputType(type: String): String
     /**
-     * Associates a cq-swatch component with given node.
-     * Keeps track of which colors have been used for the node so they are not repeated.
-     *
-     * @param node
-     * @param swatch Swatch web component to associate with the node
-     * @since 8.4.0
-     */
-    function pickSwatchColor(node: HTMLElement, swatch: HTMLElement): void
-    /**
      * Obtains a reference to the document's [cq-ui-manager]WebComponents.cq-ui-manager
      * instance or, if one does not exist, creates an instance.
      *
@@ -1953,11 +1871,6 @@ declare module '../js/chartiq.js' {
      *
      */
     class UI {
-      /**
-       * Default colors codes used by the WebComponents.cq-color-picker.
-       * @since 8.4.0
-       */
-      public static defaultSwatchColors
       /**
        * Wraps a node or node list in a jQuery object or Faquery object.
        *

@@ -194,11 +194,10 @@ cq-drawing-palette{
 			display: inline-block;
 			z-index: 2000000; /* set unusually high to float over prettier scrollbar */
 			position: absolute;
-			top: calc(75%);
+			top: calc(#{$ICON_SIZE} + 5px);
 			left: 50%;
 			width: auto;
-			padding: 3px;
-			text-align: center;
+			padding: 2px 3px;
 			font-size: 10px;
 			line-height: 1em;
 			font-weight: 400;
@@ -207,6 +206,7 @@ cq-drawing-palette{
 			background:$DEFAULT-selected;
 			border:solid 1px darken( $DEFAULT-bg, 8% );
 			@include border-radius($soft-corners);
+			transition: opacity .25s 0.5s;
 			cursor: pointer;
 			opacity: 0;
 			visibility: hidden;
@@ -217,8 +217,6 @@ cq-drawing-palette{
 		&:hover label{
 			opacity: 1;
 			visibility: visible;
-			top: calc(100% + 5px);
-			transition: opacity 0.1s 0.1s, top 0.5s 0.1s;
 		}
 
 	}
@@ -243,7 +241,6 @@ cq-drawing-palette{
 		.ciq-tool{
 			label{
 				max-width: 52px;
-				min-width: 44px;
 				left: -5px;
 				width: auto;
 				overflow-wrap: break-word;
@@ -545,9 +542,6 @@ cq-drawing-palette{
 			&.elliott {
 				@include tool-sheet-offset(50);
 			}
-			&.volumeprofile {
-				@include tool-sheet-offset(51);
-			}
 
 		}
 		&.active{
@@ -621,14 +615,9 @@ cq-drawing-palette{
 				width: auto;
 				height: auto;
 				// Position bottom labels above the icon because we can't count on there being a footer in the page to create space below.
-				left: -5px;
-				top: 0;
-				transform: translateY(calc(-75% - 5px));
-			}
-
-			&:hover label {
-				transform: translateY(calc(-100% - 5px));
-				transition: opacity 0.1s 0.1s, transform 0.5s 0.1s;
+				transform: translateY(-20px);
+				top: auto;
+				bottom: 0;
 			}
 
 			.icon{
@@ -940,8 +929,7 @@ cq-drawing-settings{
 			background-position: 0 $tool-index * -$ICON_SIZE;
 		}
 
-		cq-clickable[cq-fib-settings],
-		cq-clickable[cq-volumeprofile-settings] {
+		cq-clickable[cq-fib-settings]{
 			line-height: 22px;
 			margin-top:4px;
 		}

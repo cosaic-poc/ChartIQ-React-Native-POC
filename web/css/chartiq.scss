@@ -16,18 +16,16 @@
 
  _ciq-full-screen.scss - used for FullScreen add-on
  _ciq-outliers.scss - used for Outliers add-on
- _ciq-fonts.scss - used for loading fonts
- _ciq-help.scss - used for help webcomponent
  _ciq-drawing-palette.scss - used for drawingPalette webcomponent
- _ciq-message_toaster.scss - used for messageToaster webcomponent
  _perfect-scrollbar.scss - used for PerfectScrollbar styling of scroll webcomponent
+
 
  Run sass to generate a css file from this file and the included _ciq files.
  Include that css in your html.
  */
 
-/* include fonts */
-@import "ciq-fonts";
+/* PT Sans Narrow is used only in table view */
+@import url('https://fonts.googleapis.com/css?family=Roboto:400,700,500,100,300,400italic|Roboto+Condensed:400,700,300|PT+Sans+Narrow:400,700');
 
 $base-font:			'Roboto', sans-serif !default;
 $heading-font:		'Roboto Condensed', sans-serif !default;
@@ -65,7 +63,6 @@ $DEFAULT-text-strong:		#000 !default;
 $DEFAULT-border-subtle:		#ddd !default;
 $DEFAULT-border-medium:		#ccc !default;
 $DEFAULT-border-strong:		#999 !default;
-$DEFAULT-help:			#398dff !default;
 
 @mixin text-truncate {
   overflow: hidden;
@@ -124,6 +121,4 @@ $DEFAULT-help:			#398dff !default;
 @import "ciq-outliers";
 /* PerfectScrollbar */
 @import "perfect-scrollbar";
-/* Interactive Help */
-@import "ciq-help";
 // Add an import for your overrides here and then recompile the SASS

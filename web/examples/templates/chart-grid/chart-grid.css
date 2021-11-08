@@ -54,6 +54,10 @@ body#chart-grid {
   text-align: center;
 }
 
+#chart-grid input {
+  padding:2px 5px;
+}
+
 #chart-grid .ciq-grid cq-menu-dropdown{
   width: auto;
   padding: 5px;
