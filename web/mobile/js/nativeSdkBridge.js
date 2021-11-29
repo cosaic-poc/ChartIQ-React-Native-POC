@@ -1,11 +1,10 @@
 /**
- *	8.3.0
- *	Generation date: 2021-09-08T03:57:27.183Z
- *	Client name: sofi
+ *	8.4.0
+ *	Generation date: 2021-11-29T15:42:32.590Z
+ *	Client name: sonyl test
  *	Package Type: Technical Analysis
  *	License type: trial
- *	Expiration date: "2021/10/08"
- *	iFrame lock: true
+ *	Expiration date: "2022/01/31"
  */
 
 /***********************************************************
@@ -378,6 +377,17 @@ CIQ.MobileBridge.getChartProperty = function (property) {
 	return JSON.stringify(chartProperty);
 };
 /**
+ * Helper function that sets a chart property with a given value.
+ *
+ * @param {string} property Field name to set a value for.
+ * @param {string|number|boolean} value Value to assign to the chart property.
+ *
+ * @memberof CIQ.MobileBridge
+ */
+CIQ.MobileBridge.setChartProperty = function (property, value) {
+	stxx.chart[property] = value;
+};
+/**
  * Helper function that retrieves a chart engine value from the given property.
  *
  * @param {string} property Field name to retrieve a value for.
@@ -391,6 +401,17 @@ CIQ.MobileBridge.getEngineProperty = function (property) {
 		return engineProperty;
 	}
 	return JSON.stringify(engineProperty);
+};
+/**
+ * Helper function that sets a chart engine property with a given value.
+ *
+ * @param {string} property Field name to set a value for.
+ * @param {string|number|boolean} value what to assign the chart engine property.
+ *
+ * @memberof CIQ.MobileBridge
+ */
+CIQ.MobileBridge.setEngineProperty = function (property, value) {
+	stxx[property] = value;
 };
 //////////////////////////
 /*** Chart functions ***/

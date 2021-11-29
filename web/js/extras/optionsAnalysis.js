@@ -1,11 +1,10 @@
 /**
- *	8.3.0
- *	Generation date: 2021-09-08T03:57:27.183Z
- *	Client name: sofi
+ *	8.4.0
+ *	Generation date: 2021-11-29T15:42:32.590Z
+ *	Client name: sonyl test
  *	Package Type: Technical Analysis
  *	License type: trial
- *	Expiration date: "2021/10/08"
- *	iFrame lock: true
+ *	Expiration date: "2022/01/31"
  */
 
 /***********************************************************
@@ -229,7 +228,7 @@ const OptionsAnalysis = {
 		Array.from(root.querySelectorAll("cq-lookup")).forEach((el) => {
 			el.setAttribute(
 				"cq-exchanges",
-				"XNYS,XASE,XNAS,XASX,INDCBSX,INDXASE,INDXNAS,IND_DJI,ARCX,INDARCX"
+				"XNYS,XASE,XNAS,XASX,IND_CBOM,INDXASE,INDXNAS,IND_DJI,ARCX,INDARCX"
 			);
 		});
 		const histPrice = document.createElement("cq-chart-title-date");

@@ -19,6 +19,7 @@
 import { CIQ } from "../../js/chartiq.js";
 CIQ.simulateL2 = function (params) {
 	function moveBidAsk(close) {
+		var stx = this;
 		function formatData(d) {
 			var ret = [];
 			for (var i = 0; i < d.price.length; i++) {
@@ -89,7 +90,7 @@ CIQ.simulateL2 = function (params) {
 						  			"d"]
 					}
 			};
-		var chart = this.chart;
+		var chart = stx.chart;
 		var mid = close;
 		var shadowBreaks = [
 			[1000, 2],
@@ -135,24 +136,25 @@ CIQ.simulateL2 = function (params) {
 		return data;
 	}
 	function onTrade(appendQuotes, chart, params) {
+		var stx = this;
 		if (params !== undefined && params.animationEntry) return;
 		for (var i = 0; i < appendQuotes.length; i++) {
 			//if(appendQuotes[i].BidL2 || appendQuotes[i].AskL2) continue;  // already have data
 			CIQ.ensureDefaults(
 				appendQuotes[i],
-				moveBidAsk.call(this, appendQuotes[i].Close)
+				moveBidAsk.call(stx, appendQuotes[i].Close)
 			);
-			if (this.chart.market.isOpen()) {
+			if (stx.chart.market.isOpen()) {
 				appendQuotes[i].LastSize = Math.round(Math.random() * 100);
 				if (
-					(this.layout.timeUnit != "second" &&
-						this.layout.timeUnit != "millisecond") |
-					(this.layout.timeUnit == "second" && this.layout.interval > 1)
+					(stx.layout.timeUnit != "second" &&
+						stx.layout.timeUnit != "millisecond") |
+					(stx.layout.timeUnit == "second" && stx.layout.interval > 1)
 				)
 					appendQuotes[i].LastTime = new Date();
 			}
 		}
-		if (params.callback) params.callback.call(this);
+		if (params.callback) params.callback.call(stx);
 	}
 	function onInterval(stx) {
 		return function () {

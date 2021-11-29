@@ -86,15 +86,44 @@ CIQ.Market.Symbology.isForexMetal = function (symbol, inverse) {
 	return false;
 };
 /**
+ * Returns true if the symbol is a cryptocurrency pair
+ *
+ * @param  {string}   symbol The symbol
+ * @return {boolean}  True if it's a crypto symbol
+ */
+CIQ.Market.Symbology.isForexCrypto = function (symbol) {
+	const cryptosSupported = {
+		BTC: true,
+		ETH: true,
+		XLM: true,
+		LTC: true,
+		ETC: true,
+		XRP: true,
+		ADA: true,
+		BNB: true
+	};
+	if (!symbol) return false;
+	if (!CIQ.Market.Symbology.isForexSymbol(symbol)) return false;
+	if (symbol.charAt(0) != "^") symbol = "^" + symbol;
+	return (
+		cryptosSupported[symbol.substring(1, 4)] ||
+		cryptosSupported[symbol.substring(4, 7)]
+	);
+};
+/**
  * Returns the market definition of a symbolObject.
  *
  * @param  {object} symbolObject Symbol object of form accepted by {@link CIQ.ChartEngine#loadChart}
  * @return {object} A market definition. See {@link CIQ.Market} for instructions.
+ *
+ * @since 8.4.0 Foreign symbols now get a 24/5 market definition, while cryptocurrencies get a 24/7 one.
  */
 CIQ.Market.Symbology.factory = function (symbolObject) {
 	var symbol = symbolObject.symbol;
-	if (CIQ.Market.Symbology.isForeignSymbol(symbol)) return null; // 24 hour market definition
+	if (CIQ.Market.Symbology.isForeignSymbol(symbol))
+		return CIQ.Market.GENERIC_5DAY;
 	if (CIQ.Market.Symbology.isFuturesSymbol(symbol)) return CIQ.Market.GLOBEX;
+	if (CIQ.Market.Symbology.isForexCrypto(symbol)) return null; // 24 hour market definition
 	if (CIQ.Market.Symbology.isForexMetal(symbol)) return CIQ.Market.METALS;
 	if (CIQ.Market.Symbology.isForexSymbol(symbol)) return CIQ.Market.FOREX;
 	return CIQ.Market.NYSE;
@@ -105,7 +134,6 @@ CIQ.Market.Symbology.factory = function (symbolObject) {
  * @param  {string} entity The symbol/entity for the curve; for example, "US-T BENCHMARK".
  * @param  {string} instrument An individual instrument; for example, "20 YR".
  * @return {string} The symbol for the individual instrument; for example, "US-T BENCHMARK 20 YR".
- * @memberOf CIQ.Market.Symbology
  */
 CIQ.Market.Symbology.encodeTermStructureInstrumentSymbol = function (
 	entity,

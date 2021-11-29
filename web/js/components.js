@@ -1,11 +1,10 @@
 /**
- *	8.3.0
- *	Generation date: 2021-09-08T03:57:27.183Z
- *	Client name: sofi
+ *	8.4.0
+ *	Generation date: 2021-11-29T15:42:32.590Z
+ *	Client name: sonyl test
  *	Package Type: Technical Analysis
  *	License type: trial
- *	Expiration date: "2021/10/08"
- *	iFrame lock: true
+ *	Expiration date: "2022/01/31"
  */
 
 /***********************************************************
@@ -688,7 +687,7 @@ ChartLegend.markup = `
 			<template cq-study-legend>
 				<cq-item>
 					<cq-label></cq-label>
-					<span class="ciq-edit"></span>
+					<span class="ciq-edit" keyboard-selectable-child="true"></span>
 					<div class="ciq-icon ciq-close"></div>
 				</cq-item>
 			</template>
@@ -702,6 +701,10 @@ CIQ.UI.addComponentDefinition("cq-chart-legend", ChartLegend);
 let __js_webcomponents_chartTitle_ = (_exports) => {
 
 /* global _CIQ, _timezoneJS, _SplinePlotter */
+
+
+
+
 
 var CIQ = typeof _CIQ !== "undefined" ? _CIQ : _exports.CIQ;
 
@@ -776,6 +779,10 @@ var CIQ = typeof _CIQ !== "undefined" ? _CIQ : _exports.CIQ;
  */
 
 class ChartTitle extends CIQ.UI.ModalTag {
+	get displayExchange() {
+		return this.getAttribute("display-exchange");
+	}
+
 	constructor() {
 		super();
 		/**
@@ -793,9 +800,8 @@ class ChartTitle extends CIQ.UI.ModalTag {
 	 * @memberof WebComponents.cq-chart-title
 	 */
 	begin() {
-		var self = this;
+		const self = this;
 
-		this.addDefaultMarkup();
 		this.addInjection("append", "createDataSet", function () {
 			self.update();
 		});
@@ -824,8 +830,32 @@ class ChartTitle extends CIQ.UI.ModalTag {
 	setContext(context) {
 		var self = this,
 			stx = this.context.stx;
+
+		this.addDefaultMarkup();
+
+		this.symbolDiv = this.querySelector("cq-symbol");
+		this.symbolDescriptionDiv = this.querySelector("cq-symbol-description");
+		this.currentPriceDiv = this.querySelector("cq-current-price");
+		this.todaysChangeDiv = this.querySelector("cq-todays-change");
+		this.todaysChangePctDiv = this.querySelector("cq-todays-change-pct");
+		this.chartPriceDiv = this.querySelector("cq-chart-price");
+		this.changeDiv = this.querySelector("cq-change");
+		this.exchangeDiv = this.querySelector(".exchange");
 		this.listener = function (obj) {
+			const { exchangeDiv } = self;
 			self.previousClose = stx.mostRecentClose("iqPrevClose");
+			if (exchangeDiv) {
+				const {
+					value: { exchDisp }
+				} = obj;
+				if (self.displayExchange && exchDisp) {
+					exchangeDiv.innerText = `Exchange: ${exchDisp}`;
+				} else if (obj.value.static) {
+					exchangeDiv.innerText = "STATIC";
+				} else {
+					exchangeDiv.innerText = "";
+				}
+			}
 		};
 		CIQ.UI.observeProperty("symbolObject", stx.chart, this.listener);
 		this.initialize();
@@ -837,46 +867,63 @@ class ChartTitle extends CIQ.UI.ModalTag {
 	 * @memberof WebComponents.cq-chart-title
 	 */
 	update() {
-		var stx = this.context.stx;
+		const { stx } = this.context;
+		const {
+			chart: { symbol, symbolDisplay },
+			internationalizer
+		} = stx;
 
-		var node = this.node;
-		var symbolDiv = node.find("cq-symbol");
-		var symbolDescriptionDiv = node.find("cq-symbol-description");
-		var currentPriceDiv = node.find("cq-current-price");
-		var todaysChangeDiv = node.find("cq-todays-change");
-		var todaysChangePctDiv = node.find("cq-todays-change-pct");
-		var chartPriceDiv = node.find("cq-chart-price");
-		var changeDiv = node.find("cq-change");
+		const {
+			symbolDiv,
+			symbolDescriptionDiv,
+			exchangeDiv,
+			currentPriceDiv,
+			changeDiv,
+			chartPriceDiv,
+			todaysChangeDiv,
+			todaysChangePctDiv
+		} = this;
 		var doUpdateBrowserTab =
 			["false", "0", null].indexOf(this.getAttribute("cq-browser-tab")) == -1;
-		var doUpdatePrice = chartPriceDiv.length;
-		var symbol = stx.chart.symbol,
-			symbolDisplay = stx.chart.symbolDisplay;
-		var internationalizer = stx.internationalizer;
-		var priceChanged = false;
+		var wrapper = this.closest("cq-context-wrapper");
+		var isActiveChart =
+			!wrapper || (wrapper && wrapper.classList.contains("active"));
+		if (!isActiveChart) doUpdateBrowserTab = false;
+		const doUpdatePrice = chartPriceDiv && currentPriceDiv;
+		let priceChanged = false;
+		let symbolChanged = false;
 
-		if (!symbol) node.removeClass("stx-show");
-		else node.addClass("stx-show");
+		let show = !symbol ? "remove" : "add";
+		this.classList[show]("stx-show");
 
-		var symbolChanged = symbolDiv.text() !== symbol && !!symbolDiv.text(symbol);
+		if (symbolDiv.innerText !== symbol) {
+			symbolDiv.innerText = symbol;
+			symbolChanged = true;
+		}
+
+		if (
+			symbolDescriptionDiv &&
+			symbolDescriptionDiv.innerText !== (symbolDisplay || symbol)
+		)
+			symbolDescriptionDiv.innerText = symbolDisplay || symbol;
 
 		if (stx.isHistoricalModeSet) {
-			if (currentPriceDiv.text() !== "") currentPriceDiv.text("");
-			changeDiv.css({ display: "none" });
+			if (currentPriceDiv.innerText !== "") currentPriceDiv.innerText = "";
+			changeDiv.style.display = "none";
 			// only change the display so that you don't wreck the line spacing and parens
 			return;
 		}
 
-		var todaysChange = "",
+		let todaysChange = "",
 			todaysChangePct = 0,
 			todaysChangeDisplay = "";
-		var currentQuote = stx.getFirstLastDataRecord(
+		const currentQuote = stx.getFirstLastDataRecord(
 			stx.chart.dataSet,
 			"Close",
 			true
 		);
-		var currentPrice = "";
-		var textPrice = "";
+		let currentPrice = "";
+		let textPrice = "";
 		if (currentQuote) currentPrice = currentQuote.Close;
 		if (doUpdatePrice) {
 			if (currentPrice !== "")
@@ -885,13 +932,11 @@ class ChartTitle extends CIQ.UI.ModalTag {
 					stx.chart.panel,
 					stx.chart.decimalPlaces
 				);
-			var oldPrice = parseFloat(currentPriceDiv.text());
-			if (
-				currentPriceDiv.text() !== textPrice &&
-				!!currentPriceDiv.text(textPrice)
-			) {
+			let oldPrice = parseFloat(currentPriceDiv.innerText);
+			if (currentPriceDiv.innerText !== textPrice) {
+				currentPriceDiv.innerText = textPrice;
 				priceChanged = true;
-				var attr = currentPriceDiv.attr("cq-animate");
+				var attr = this.currentPriceDiv.getAttribute("cq-animate");
 				if (typeof attr != "undefined") {
 					CIQ.UI.animatePrice(
 						currentPriceDiv,
@@ -903,20 +948,17 @@ class ChartTitle extends CIQ.UI.ModalTag {
 			}
 		}
 
-		if (symbolDescriptionDiv.text() !== (symbolDisplay || symbol))
-			symbolDescriptionDiv.text(symbolDisplay || symbol);
-
 		if (
 			(doUpdatePrice || doUpdateBrowserTab) &&
 			symbol &&
 			(symbolChanged || priceChanged)
 		) {
 			// Default to iqPrevClose if the developer hasn't set this.previousClose
-			var previousClose = currentQuote && currentQuote.iqPrevClose;
+			let previousClose = currentQuote && currentQuote.iqPrevClose;
 			if (!previousClose && previousClose !== 0)
 				previousClose = this.previousClose;
 
-			if (currentPrice || currentPrice === 0) {
+			if (changeDiv && (currentPrice || currentPrice === 0)) {
 				todaysChange = CIQ.fixPrice(currentPrice - previousClose);
 				todaysChangePct = (todaysChange / previousClose) * 100;
 				if (previousClose <= 0 || currentPrice < 0) {
@@ -928,30 +970,34 @@ class ChartTitle extends CIQ.UI.ModalTag {
 				} else {
 					todaysChangeDisplay = todaysChangePct.toFixed(2) + "%";
 				}
-				changeDiv.css({ display: "block" });
-			} else {
-				changeDiv.css({ display: "none" });
+				changeDiv.style.display = "";
+			} else if (changeDiv) {
+				changeDiv.style.display = "none";
 			}
-			var todaysChangeAbs = Math.abs(todaysChange);
-			var txtChange = stx.formatYAxisPrice(
+
+			const todaysChangeAbs = Math.abs(todaysChange);
+			const txtChange = stx.formatYAxisPrice(
 				todaysChangeAbs,
 				stx.chart.panel,
 				stx.chart.decimalPlaces
 			);
 			if (todaysChangeAbs) {
-				if (todaysChangeDiv.text() !== txtChange)
-					todaysChangeDiv.text(txtChange);
+				if (todaysChangeDiv.innerText !== txtChange)
+					todaysChangeDiv.innerText = txtChange;
 			}
-			if (todaysChangePctDiv.length) {
-				if (todaysChangePctDiv.text() !== todaysChangeDisplay)
-					todaysChangePctDiv.text(todaysChangeDisplay);
+			if (todaysChangePctDiv) {
+				if (todaysChangePctDiv.innerText !== todaysChangeDisplay)
+					todaysChangePctDiv.innerText = todaysChangeDisplay;
+			}
+			if (todaysChangeDisplay !== "" && todaysChange < 0) {
+				chartPriceDiv.classList.add("stx-down");
+			} else {
+				chartPriceDiv.classList.remove("stx-down");
 			}
 			if (todaysChangeDisplay !== "" && todaysChange > 0) {
-				chartPriceDiv.removeClass("stx-down").addClass("stx-up");
-			} else if (todaysChangeDisplay !== "" && todaysChange < 0) {
-				chartPriceDiv.removeClass("stx-up").addClass("stx-down");
+				chartPriceDiv.classList.add("stx-up");
 			} else {
-				chartPriceDiv.removeClass("stx-down").removeClass("stx-up");
+				chartPriceDiv.classList.remove("stx-up");
 			}
 
 			currentPrice = currentPrice !== undefined ? currentPrice : "";
@@ -975,6 +1021,12 @@ class ChartTitle extends CIQ.UI.ModalTag {
 
 ChartTitle.markup = `
 		<cq-symbol></cq-symbol>
+		<cq-menu class="ciq-menu ciq-period">
+			<span><cq-clickable stxbind="Layout.periodicity">1D</cq-clickable></span>
+			<cq-menu-dropdown>
+				<cq-menu-container cq-name="menuPeriodicity"></cq-menu-container>
+			</cq-menu-dropdown>
+		</cq-menu>
 		<cq-chart-price>
 			<cq-current-price cq-animate></cq-current-price>
 			<cq-change>
@@ -983,6 +1035,7 @@ ChartTitle.markup = `
 				<cq-todays-change-pct></cq-todays-change-pct>)
 			</cq-change>
 		</cq-chart-price>
+		<div class="exchange"></div>
 	`;
 CIQ.UI.addComponentDefinition("cq-chart-title", ChartTitle);
 
@@ -1282,7 +1335,7 @@ var CIQ = typeof _CIQ !== "undefined" ? _CIQ : _exports.CIQ;
  *                 <cq-lookup cq-keystroke-claim>
  *                     <cq-lookup-input cq-no-close>
  *                         <input type="text" cq-focus spellcheck="false" autocomplete="off" autocorrect="off"
- *                                            autocapitalize="none" placeholder="Enter Symbol">
+ *                                            autocapitalize="none" placeholder="">
  *                         <cq-lookup-icon></cq-lookup-icon>
  *                     </cq-lookup-input>
  *                     <cq-lookup-results>
@@ -1375,6 +1428,83 @@ class Comparison extends CIQ.UI.ModalTag {
 			lookup[0].forceInput();
 			e.stopPropagation();
 		});
+
+		// Add the keystroke claim
+		this.addClaim(this);
+
+		const keystrokeHub = document.body.keystrokeHub;
+		if (!keystrokeHub) return;
+
+		let menu = this.querySelector("cq-menu.cq-comparison-new");
+		if (menu) {
+			// Extend the internal menu's hide function so we can do some cleanup
+			let menuHide = menu.hide.bind(menu);
+			menu.hide = () => {
+				const keystrokeHub = document.body.keystrokeHub;
+				// Treat the legend like a modal so keyboard navigation is returned after using colorPicker
+				keystrokeHub.removeActiveModal(this);
+				keystrokeHub.tabOrderSelect();
+				menuHide();
+			};
+		}
+
+		// Add a stxtap handler to the component strictly for keyboard navigation
+		CIQ.UI.stxtap(this, function (e) {
+			if (this.keyboardNavigation) {
+				// Open the menu automatically
+				if (menu) menu.open();
+				// Treat the legend like a modal so keyboard navigation is returned after using colorPicker
+				keystrokeHub.addActiveModal(this);
+			}
+			e.stopPropagation();
+		});
+	}
+
+	/**
+	 * left and Right arrows will move between symbol lookup, color piker and "Add" button.
+	 * The attribute cq-focused will be added to the currently focused tag. This can then be
+	 * queried later, such as when a user hits enter.
+	 *
+	 * @param {undefined} hub Unused parameter
+	 * @param {string} key Key that was stroked
+	 * @param {object} e The event object
+	 * @return {boolean}
+	 */
+	keyStroke(hub, key, e) {
+		if (!this.keyboardNavigation) return;
+		const items = this.querySelectorAll(
+			"cq-lookup, cq-swatch, cq-accept-btn, [keyboard-selectable='true']"
+		);
+		if (!items.length) return;
+		const focused = this.findFocused(items);
+		switch (key) {
+			case "Enter":
+				if (!focused[0]) return;
+				this.clickItem(focused[0], e, this);
+				break;
+			case "Tab":
+				if (focused[0] && focused[0].tagName == "CQ-LOOKUP") {
+					this.keyboardNavigation.disableKeyControlElement(focused[0], true);
+					hub.tabActiveElement.element.blur();
+					focused[0].overrideIsActive = true;
+				}
+				let newFocused = this.focusNextItem(items, false, true);
+				if (newFocused.tagName == "CQ-LOOKUP") {
+					newFocused.keyboardNavigation = this.keyboardNavigation;
+					if (newFocused.onKeyboardSelection) newFocused.onKeyboardSelection();
+					newFocused.overrideIsActive = false;
+				}
+				break;
+			case "Esc":
+			case "Escape":
+				this.removeFocused(items);
+				let menu = this.querySelector("cq-menu.cq-comparison-new");
+				if (menu) menu.hide();
+				break;
+			default:
+				e.preventDefault();
+				break;
+		}
 	}
 
 	/**
@@ -1388,20 +1518,12 @@ class Comparison extends CIQ.UI.ModalTag {
 	 * @since 8.3.0
 	 */
 	onKeyboardSelection() {
-		let menu = this.querySelector("cq-menu.cq-comparison-new");
+		// Pass control to the lookup component
 		let lookup = this.querySelector("cq-lookup");
-		if (menu && lookup) {
-			// Trip the menu button
-			menu.dispatchEvent(
-				new Event("stxtap", {
-					bubbles: true,
-					cancelable: true
-				})
-			);
-			// Pass control to the lookup component
-			lookup.keyboardNavigation = this.keyboardNavigation;
-			if (lookup.onKeyboardSelection) lookup.onKeyboardSelection();
-		}
+		lookup.setAttribute("cq-focused", "true");
+		lookup.overrideIsActive = false;
+		lookup.keyboardNavigation = this.keyboardNavigation;
+		if (lookup.onKeyboardSelection) lookup.onKeyboardSelection();
 	}
 
 	/**
@@ -1412,27 +1534,7 @@ class Comparison extends CIQ.UI.ModalTag {
 	 * @memberof WebComponents.cq-comparison#
 	 */
 	pickSwatchColor() {
-		var stx = this.context.stx;
-		var swatch = this.node.find("cq-swatch");
-		if (!swatch.length) return;
-		var currentColor = swatch[0].style.backgroundColor;
-
-		var usedColors = {};
-		for (var s in stx.chart.series) {
-			var series = stx.chart.series[s];
-			if (!series.parameters.isComparison) continue;
-			usedColors[CIQ.convertToNativeColor(series.parameters.color)] = true;
-		}
-
-		if (currentColor !== "" && !usedColors[currentColor]) return; // Currently picked color not in use then allow it
-		for (var i = 0; i < this.swatchColors.length; i++) {
-			// find first unused color from available colors
-			if (!usedColors[this.swatchColors[i]]) {
-				swatch[0].style.backgroundColor = this.swatchColors[i];
-				return;
-			}
-		}
-		//Uh oh, all colors taken. Last color will be used.
+		CIQ.UI.pickSwatchColor(this, this.querySelector("cq-swatch"));
 	}
 
 	position() {
@@ -2075,6 +2177,482 @@ CIQ.UI.addComponentDefinition("cq-cvp-controller", CVPController);
 };
 
 
+let __js_webcomponents_dataDialog_ = (_exports) => {
+
+/* global _CIQ, _timezoneJS, _SplinePlotter */
+
+
+
+
+
+var CIQ = typeof _CIQ !== "undefined" ? _CIQ : _exports.CIQ;
+
+class DataDialog extends CIQ.UI.DialogContentTag {
+	constructor() {
+		super();
+		this.fileMap = new Map();
+		this.swatchColors = CIQ.UI.defaultSwatchColors;
+	}
+
+	abortImport(e) {
+		const self = this;
+		const targetClose = e.target.nodeName === "CQ-CLOSE";
+
+		const fmf = [...this.fileMap.keys()];
+		const findIndexFn = (fname) => {
+			return (file) => file.name === fname;
+		};
+		for (let fset of this.form.querySelectorAll("fieldset[name]")) {
+			let fname = fset.getAttribute("fields");
+			if (e && e.target.getAttribute("fields") !== fname && !targetClose)
+				continue;
+			let idx = fmf.findIndex(findIndexFn(fname));
+
+			this.form.removeChild(fset.parentElement);
+			this.fileMap.delete(fmf[idx]);
+		}
+
+		if (targetClose) this.fileInput.value = "";
+
+		if (!this.fileMap.size) {
+			this.fileInput.value = "";
+			this.loadDataBtn.style.display = "inline-block";
+			this.importBtn.style.display = "none";
+			this.querySelector("cq-section.loader").style.display = "flex";
+			this.warn("", "", true);
+			CIQ.UI.containerExecute(this, "resize");
+		}
+
+		self.resetTabSelect();
+	}
+
+	close() {
+		this.abortImport({ target: this.querySelector("cq-close") });
+		this.channelWrite("channel.dataLoader", false, this.context.stx);
+		this.loadDataBtn.style.display = this.fileInput.value ? "none" : "inline";
+		this.querySelector("cq-section.loader").style.display = "flex";
+		this.warn("", "", true);
+		super.close();
+	}
+
+	getFormData() {
+		const appendFormData = (fieldSet, reader) => {
+			return (field) => {
+				const el = fieldSet.elements[field];
+				let value;
+
+				if (el) {
+					value = el.type === "checkbox" ? el.checked : el.value;
+				} else {
+					const v = fieldSet.querySelector(`[name='${field}']`);
+					if (v) value = v.value;
+				}
+
+				reader.formData.append(field, value);
+			};
+		};
+
+		for (let entry of this.fileMap) {
+			const [file, reader] = entry;
+			let fieldSet = this.querySelector(`[name='${file.name}'] fieldset`);
+
+			reader.formData = new FormData();
+			["name", "display", "periodicity", "panel", "color"].forEach(
+				appendFormData(fieldSet, reader)
+			);
+		}
+	}
+
+	hide() {
+		this.channelWrite("channel.dataLoader", false, this.context.stx);
+	}
+
+	importData(e) {
+		e.preventDefault();
+		const { dialog } = this;
+		if (!dialog.validate()()) return;
+		let {
+			context: { stx },
+			fileMap
+		} = dialog;
+		dialog.getFormData();
+		fileMap.forEach((reader) => {
+			stx.dataLoader.importData(reader);
+		});
+		dialog.close();
+	}
+
+	async loadData() {
+		this.validateFileInput()();
+		if (this.warning.getAttribute("cq-active")) return;
+		for (const file of this.fileInput.files) {
+			let reader = new CIQ.CSVReader(file);
+			this.fileMap.set(file, reader);
+			await reader.parse(file);
+		}
+
+		this.loadDataBtn.style.display = "none";
+		this.querySelector("cq-section.loader").style.display = "none";
+		this.showData();
+	}
+
+	resetTabSelect() {
+		const {
+			uiManager: { keystrokeHub }
+		} = this.context;
+
+		keystrokeHub.highlightAlign();
+	}
+
+	showData() {
+		const {
+			context: { stx, config = {} },
+			keystrokeHub
+		} = this;
+
+		const setAbortFunc = (fileName) => {
+			return (selector) => {
+				selector.setAttribute("fields", fileName);
+				selector.addEventListener("pointerup", (e) => {
+					e.preventDefault(); // stop submit event!
+					CIQ.UI.containerExecute(selector, "abortImport", [e]);
+				});
+			};
+		};
+
+		let main = false;
+		let tmpl = this.querySelector("template");
+		for (const entries of this.fileMap) {
+			const [file, reader] = entries;
+			const fileName = file.name;
+			const frag = tmpl.content.cloneNode(true);
+			frag.firstElementChild.id += `${fileName}`;
+			frag.firstElementChild.setAttribute("name", fileName);
+
+			const fieldSet = frag.querySelector("fieldset");
+			if (fieldSet) {
+				fieldSet.setAttribute("fields", fileName);
+				fieldSet.setAttribute("name", "fields");
+			}
+
+			const title = frag.querySelector("legend.file-name");
+			title.innerText = `File: ${fileName}`;
+
+			const name = frag.querySelector(".data-name input");
+			name.setAttribute("placeholder", fileName);
+			name.value = fileName;
+
+			const periodicity = frag.querySelector(".ciq-select[name='periodicity']");
+			const periodicities = config.menuPeriodicity
+				? config.menuPeriodicity
+				: (function () {
+						const periodicity = stx.getPeriodicity();
+						return [
+							{
+								value: periodicity,
+								label: `${periodicity.period}, ${periodicity.timeUnit}`
+							}
+						];
+				  })();
+			periodicities
+				.filter((m) => m.label)
+				.forEach((p) => {
+					const opt = document.createElement("option");
+					opt.value = opt.innerText = p.label;
+					opt.value = JSON.stringify(p.value);
+					periodicity.append(opt);
+				});
+
+			const tr = frag.querySelector("thead tr");
+			let { fields = [] } = reader;
+
+			fields.forEach((cell) => {
+				const th = document.createElement("th");
+				th.innerText = cell;
+				tr.append(th);
+			});
+
+			const display = frag.querySelector("[name=display]");
+			const secondaryOptions = frag.querySelector(".secondary-options");
+
+			if (!main) main = true;
+			else {
+				display.value = "secondary";
+				secondaryOptions.style.display = "block";
+			}
+
+			display.addEventListener("change", function (e) {
+				let show = this.value.toLowerCase() === "secondary";
+				secondaryOptions.style.display = show ? "block" : "none";
+				keystrokeHub.highlightAlign();
+			});
+
+			frag.querySelectorAll(".abort").forEach(setAbortFunc(fileName));
+
+			CIQ.UI.pickSwatchColor(this, frag.querySelector("cq-swatch"));
+			this.form.append(frag);
+
+			// Prevent accidental submit from inputs
+			this.form.querySelectorAll("input:not([type=submit]").forEach((input) => {
+				input.addEventListener("keypress", (e) => {
+					if (e.key === "Enter") e.preventDefault();
+				});
+			});
+		}
+
+		this.importBtn.style.display = "inline";
+		CIQ.UI.containerExecute(this, "resize");
+		this.resetTabSelect();
+	}
+
+	setContext(context) {
+		this.context = context;
+		this.addDefaultMarkup();
+
+		this.form = this.querySelector("form");
+		this.fileInput = this.querySelector("input[type=file]");
+		this.loadDataBtn = this.querySelector("button.load");
+		this.importBtn = this.querySelector("button.import");
+		this.controls = this.querySelector("div.ciq-dialog-cntrls");
+
+		this.warning = this.querySelector(".invalid-warning");
+		this.warningTitle = this.warning.querySelector(".invalid-warning-title");
+		this.warningText = this.warning.querySelector(".invalid-warning-text");
+
+		this.form.dialog = this;
+		this.form.addEventListener("submit", this.importData);
+		this.form.addEventListener("change", this.validate());
+
+		this.fileInput.addEventListener("change", this.validateFileInput());
+
+		this.keystrokeHub = context.uiManager.keystrokeHub;
+	}
+
+	/**
+	 * Custom validate method for the determining whether the data is ready to be submitted for import.
+	 * ** NOTE** this validate method is for the form, not for validating files set on input
+	 * @returns boolean valid
+	 */
+	validate() {
+		const self = this;
+		return function (e) {
+			self.getFormData();
+			let isMain;
+			let valid = true;
+			for (const entry of self.fileMap) {
+				const [, reader] = entry;
+				const { formData, fields } = reader;
+				const display = formData.get("display");
+				const periodicity = formData.get("periodicity");
+
+				let validFields =
+					(fields.includes("DT") || fields.includes("Date")) &&
+					fields.some((f) => f === "Close" || f === "Value");
+
+				if (!validFields) {
+					valid = false;
+					return reportValidity(
+						{
+							messageTitle: "Invalid Data fields",
+							messageText:
+								'Your data contains invalid schema to display. It must include a "DT" column and either a "Close" or "Value" column.'
+						},
+						valid
+					);
+				}
+
+				if (display === "secondary") {
+					if (
+						!CIQ.equals(
+							JSON.parse(periodicity),
+							self.context.stx.getPeriodicity()
+						)
+					) {
+						valid = false;
+						return reportValidity(
+							{
+								messageTitle: "Mis-matched periodicities:",
+								messageText:
+									"Having mixed periodicities can result in chart displaying incorrect time scales. Check your data and try again."
+							},
+							valid
+						);
+					}
+				} else {
+					if (isMain) {
+						valid = false;
+						return reportValidity(
+							{
+								messageTitle: "Multiple Main series",
+								messageText:
+									"Detected multiple data files set to display main data. Only one data file can be main."
+							},
+							valid
+						);
+					}
+					isMain = true;
+				}
+			}
+
+			return reportValidity({ messageTitle: "", messageText: "" }, valid);
+
+			function reportValidity({ messageTitle, messageText }, valid) {
+				self.warn(messageTitle, messageText, valid);
+				self.resetTabSelect();
+				return valid;
+			}
+		};
+	}
+
+	/**
+	 * Validation function for File Input.
+	 * **NOTE** Not the same as the validation for the form
+	 * @returns function Funtion that runs on file input change event
+	 */
+	validateFileInput() {
+		const self = this;
+		return function (e) {
+			// Determine whether called by the dialog or the input then set files
+			const files = self.files || self.fileInput.files;
+
+			let valid = true,
+				title = "",
+				message = "";
+			Object.values(files).forEach(function (file) {
+				const { name } = file;
+				const extension =
+					name.lastIndexOf(".") > 0 &&
+					name.slice(name.lastIndexOf("."), name.length);
+				if (
+					(extension && extension !== ".csv") ||
+					DataDialog.mimeTypes.indexOf(file.type) == -1
+				) {
+					title = "Invalid File Type";
+					message =
+						"Data Importer requires a text/csv file to work. Please select a CSV file.";
+					valid = false;
+				}
+			});
+
+			if (!files.length) {
+				title = `Please select a file!`;
+				message =
+					"Data Importer requires a text/csv file to work. Please select a CSV file.";
+				valid = false;
+			}
+			self.warn(title, message, valid);
+			self.resetTabSelect();
+		};
+	}
+
+	/**
+	 * Displays or clears warning messages based on the validity of the form.
+	 * @param {string} title Title text of warning to display.
+	 * @param {string} text Body text of warning to display.
+	 * @param {boolean} display Should be valid property from validiity
+	 */
+	warn(title, text, valid) {
+		this.warningTitle.innerText = title;
+		this.warningText.innerText = text;
+		if (!valid) this.warning.setAttribute("cq-active", true);
+		else this.warning.removeAttribute("cq-active");
+	}
+}
+
+/**
+ * Valid MIME types that the DataDialog will recognize.
+ * By default the file input only accepts the extensions listed here.
+ *
+ * For more information about extension and MIME types see https://developer.mozilla.org/en-US/docs/Web/HTTP/Basics_of_HTTP/MIME_types/Common_types
+ * @static
+ * @memberof WebComponents.cq-data-dialog
+ */
+DataDialog.mimeTypes = [
+	"text/csv",
+	"application/csv",
+	"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+	"application/vnd.ms-excel"
+];
+
+DataDialog.markup = `
+<h4 class="title">Import Data</h4>
+<cq-close></cq-close>
+<cq-scroll cq-no-maximize>
+	<cq-section class="loader">
+		<label for="fileSelector">Choose one or more CSV files to load data into the chart:</label>
+		<input name="fileSelector" type="file" multiple accept=".csv" />
+	</cq-section>
+	<cq-section class="ciq-dialog-cntrls">
+		<button class="ciq-btn load" stxtap="loadData()">Open Files</button>
+	</cq-section>
+	<cq-section>
+		<form class="import-data" id="data-wizard"></form>
+	</cq-section>
+	<template class="table">
+		<cq-section class="data-table">
+			<fieldset form="data-wizard" name="file-fields">
+			<legend class="file-name"></legend>
+			<div class="data-name"><label for="name">Name for imported data:</label><input type="text" name="name" required /></div>
+			<div class="data-periodicity">
+				<label for="periodicity">Data Periodicity:</label>
+				<span class="select-holder">
+					<select name="periodicity" class="ciq-select" form="data-wizard" required>
+				</span>
+				</select>
+			</div>
+			<div class="data-fields">
+				<label>Data Fields:</label>
+				<table>
+					<thead>
+						<tr></tr>
+					</thead>
+				</table>
+			</div>
+			<div class="data-display">
+				<label>Display As:</label>
+				<span class="select-holder">
+					<select name="display" form="data-wizard" class="ciq-select" required>
+					<option value="main">Main Series</option>
+					<option value="secondary">Secondary Series</option>
+					</select>
+				</span>
+			</div>
+			<div class="content-justify-end">
+				<fieldset class="secondary-options">
+				<legend>Secondary Series Options:</legend>
+					<div>
+						<label>Add in new panel: </label><input type="checkbox" name="panel" />
+					</div>
+					<div>
+						<label>Color: </label><cq-swatch name="color"></cq-swatch>
+					</div>
+				</fieldset>
+			</div>
+		</div>
+		<div class="buttons">
+			<button class="ciq-btn-negative abort">Remove</button>
+		</div>
+		</fieldset>
+		</cq-section>
+	</template>
+	<cq-section>
+		<div class="invalid-warning">
+			<div class="invalid-warning-title"></div>
+			<div class="invalid-warning-text"></div>
+		</div>
+	</cq-section>
+	<cq-section class="ciq-dialog-cntrls">
+		<button class="ciq-btn import" form="data-wizard" type="submit">Confirm</button>
+	</cq-section>
+
+</cq-scroll>
+`;
+
+CIQ.UI.addComponentDefinition("cq-data-dialog", DataDialog);
+
+};
+
+
 let __js_webcomponents_dialog_ = (_exports) => {
 
 /* global _CIQ, _timezoneJS, _SplinePlotter */
@@ -2093,7 +2671,7 @@ var CIQ = typeof _CIQ !== "undefined" ? _CIQ : _exports.CIQ;
 		<cq-timezone-dialog>
 			<h4 class="title">Choose Timezone</h4>
 			<cq-close></cq-close>
-	
+
 			<p>To set your timezone use the location button below, or scroll through the following list...</p>
 			<p class="currentUserTimeZone"></p>
 	    <div class="detect">
@@ -2133,11 +2711,95 @@ class Dialog extends CIQ.UI.BaseComponent {
 		var uiManager = CIQ.UI.getUIManager();
 		uiManager.registerForResize(this);
 		this.uiManager = uiManager;
+
+		if (!this.hasAttribute("cq-no-claim")) this.addClaim(this);
 	}
 
 	disconnectedCallback() {
+		if (!this.hasAttribute("cq-no-claim")) this.removeClaim(this);
 		this.uiManager.unregisterForResize(this);
 		super.disconnectedCallback();
+	}
+
+	getKeyboardSelectableItems() {
+		return this.querySelectorAll(
+			"[keyboard-selectable='true'], input, .ciq-select, cq-swatch, .ciq-btn, .ciq-btn-negative, cq-scroll li"
+		);
+	}
+
+	keyStroke(hub, key, e) {
+		if (hub.tabActiveModals[0] !== this) return;
+		let { shiftKey: reverse } = e || {};
+
+		const items = this.getKeyboardSelectableItems();
+		if (key === "Tab") {
+			const focused = this.focusNextItem(items, reverse, true);
+			const scroll = this.querySelector("cq-scroll");
+			if (focused && scroll) {
+				// Scroll to the element that was focused
+				scroll.scrollToElement(focused);
+				// Let the scroll complete before aligning the highlight
+				setTimeout(() => hub.highlightAlign());
+			}
+		} else if (key == "Enter") {
+			const focused = this.findFocused(items)[0];
+			if (focused) {
+				this.clickItem(focused, e, this);
+				if (typeof focused.click === "function") focused.click();
+			}
+		}
+	}
+
+	onKeyboardSelection() {
+		// Need to hide the highlight on select because the study dialog contents re-render quite often
+		// throwing off the highlight position (e.g. When a dropdown selection is made). Pressing the
+		// tab key will re-focus the next appropriate item and helps the user re-orient themselves.
+		this.keyboardNavigation.highlightHide();
+	}
+
+	onKeyboardDeselection() {
+		// If we're using keyboard navigation, return the highlight to the tab selected element
+		if (this.keyboardNavigation && this.keyboardNavigation !== null)
+			this.keyboardNavigation.highlightAlign();
+	}
+
+	clickItem(item, e, originationElement) {
+		// Pass control to the dropdown. Dropdowns within the dialog become detached from their
+		// parent in the dom and cannot pass comtrol directly.
+		if (item && this.keyboardNavigation) {
+			const dropdown = item.querySelector("cq-menu-dropdown");
+			if (dropdown) {
+				dropdown.keyboardOriginationElement = originationElement;
+				this.keyboardNavigation.setKeyControlElement(dropdown);
+			}
+		}
+		super.clickItem(item, e, this);
+	}
+
+	processEsc(hub) {
+		// See if we need to use Esc to clean up the dialog
+		if (this.closeActiveMenu()) {
+			// If there's another modal available at position 0, set it as active
+			if (hub.tabActiveModals[0])
+				hub.setKeyControlElement(hub.tabActiveModals[0]);
+			// Returning true prevents the keyHub from processing esc.
+			return true;
+		}
+		// If nothing was done, pass false to process esc in the keyHub
+		return false;
+	}
+
+	/**
+	 * Returns true if a menu was closed
+	 */
+	closeActiveMenu() {
+		const activeMenu = this.querySelector("*.stxMenuActive");
+		if (activeMenu) {
+			const uiManager = CIQ.UI.getUIManager();
+			if (uiManager) uiManager.closeMenu(activeMenu);
+			return true;
+		}
+		return false;
 	}
 
 	/**
@@ -2207,6 +2869,12 @@ class Dialog extends CIQ.UI.BaseComponent {
 		this.node.find("input").each(function () {
 			if (this == document.activeElement) this.blur();
 		});
+
+		// Blur any focused elements
+		this.removeFocused();
+		// Remove this dialog from the active index
+		const keystrokeHub = document.body.keystrokeHub;
+		if (keystrokeHub) keystrokeHub.removeActiveModal(this);
 	}
 
 	open(params) {
@@ -2228,6 +2896,8 @@ class Dialog extends CIQ.UI.BaseComponent {
 		this.onClose = () => {
 			this.channelWrite(channels.dialog || "channel.dialog", {}, stx);
 			this.onClose = null;
+			// If Dialog content has a hide method, call it.
+			if (this.firstElementChild.hide) this.firstElementChild.hide();
 		};
 	}
 
@@ -2288,6 +2958,10 @@ class Dialog extends CIQ.UI.BaseComponent {
 			// Add the active theme class to the dialog
 			if (activeTheme) this.classList.add(activeTheme);
 		}
+
+		// Set this dialog as active for tab navigation
+		const keystrokeHub = document.body.keystrokeHub;
+		if (keystrokeHub) keystrokeHub.addActiveModal(this);
 	}
 
 	stxContextMenu() {
@@ -2405,12 +3079,9 @@ class DoubleSlider extends CIQ.UI.BaseComponent {
 		);
 		this.backing = this.querySelector("cq-double-slider-range");
 		this.name = this.getAttribute("name") || CIQ.uniqueID();
-		this.min = Number(this.getAttribute("min")) || 0;
-		this.max = Number(this.getAttribute("max")) || 100;
-		this.step = Number(this.getAttribute("step")) || 1;
-		if (this.hasAttribute("low")) this.low = Number(this.getAttribute("low"));
-		if (this.hasAttribute("high"))
-			this.high = Number(this.getAttribute("high"));
+		["min", "max", "step", "low", "high"].forEach((prop) => {
+			if (this.hasAttribute(prop)) this[prop] = Number(this.getAttribute(prop));
+		});
 
 		this.setBounds(this);
 		const self = this;
@@ -2539,10 +3210,14 @@ class DoubleSlider extends CIQ.UI.BaseComponent {
 	setValue(data) {
 		const obj = {};
 		if (data) {
-			if (typeof data.low !== "undefined")
-				obj.low = Math.max(this.min, data.low);
-			if (typeof data.high !== "undefined")
-				obj.high = Math.min(this.max, data.high);
+			if (data.low !== undefined) {
+				obj.low =
+					this.min === undefined ? data.low : Math.max(this.min, data.low);
+			}
+			if (data.high !== undefined) {
+				obj.high =
+					this.max === undefined ? data.high : Math.min(this.max, data.high);
+			}
 		}
 		if (!CIQ.equals(this.value, obj)) this.value = obj;
 		this.low = obj.low;
@@ -2957,6 +3632,55 @@ class FloatingWindow extends CIQ.UI.ContextTag {
 			onClose
 		});
 		this.shortcutWindow.toggle(true).update({ width }).positionRelativeTo();
+	}
+
+	onDocumentation({
+		container,
+		title,
+		tag,
+		content,
+		actionButtons,
+		width,
+		status,
+		onClose
+	}) {
+		function processButtonAction(action, documentationWindow) {
+			return () => {
+				if (action === "close") {
+					documentationWindow.toggle(false);
+				} else if (typeof action === "function") {
+					action();
+				}
+			};
+		}
+
+		this.documentationWindow = this.constructor.windowImplementation.get({
+			tag,
+			content: content + "<br/>",
+			title,
+			container: container || document.body,
+			onClose
+		});
+		// Add action buttons
+		for (let buttonData of actionButtons) {
+			let actionButton = document.createElement("button");
+			actionButton.innerText = buttonData.label;
+			actionButton.style.marginTop = "1em";
+			actionButton.style.marginRight = "1em";
+			CIQ.safeClickTouch(
+				actionButton,
+				processButtonAction(buttonData.action, this.documentationWindow)
+			);
+			this.documentationWindow.bodyEl.appendChild(actionButton);
+		}
+
+		if (CIQ.I18N && CIQ.I18N.localized)
+			CIQ.I18N.translateUI(null, this.documentationWindow.w);
+
+		this.documentationWindow
+			.toggle(true)
+			.update({ width })
+			.positionRelativeTo();
 	}
 }
 
@@ -3398,9 +4122,12 @@ class DocWindow {
 	 */
 	toggle(value) {
 		const newValue = value === undefined ? !this.isOpen : value;
-		const changed = this.isOpen === newValue;
+		const changed = this.isOpen !== newValue;
 		this.isOpen = newValue;
-		if (changed && !this.isOpen && this.onClose) this.onClose();
+		if (changed && !this.isOpen && this.onClose) {
+			this.onClose();
+			if (this.isCollapsed) this.toggleCollapse(); // reset to open for next time
+		}
 		this.render();
 		return this;
 	}
@@ -3776,14 +4503,24 @@ class Heading extends CIQ.UI.ContextTag {
 		this.searchWrapper = searchWrapper;
 
 		const itemContainer = this.nextElementSibling;
+		let previousValue = "";
 
 		const updateListVisibility = ({ target: { value } }) => {
 			const re = new RegExp(value, "i");
+			const qsa = this.qsa;
 
-			this.qsa("cq-item", itemContainer).forEach((el) => {
+			qsa("cq-item", itemContainer).forEach((el) => {
 				const visibilityAction =
 					value && !re.test(el.textContent) ? "add" : "remove";
 				el.classList[visibilityAction]("item-hidden");
+				if (previousValue !== value) {
+					previousValue = value;
+					this.removeFocused.apply(itemContainer);
+					qsa("cq-keyboard-selected-highlight").forEach((highlightEl) => {
+						highlightEl.classList.add("disabled");
+					});
+					input.focus();
+				}
 			});
 		};
 		input.addEventListener("input", updateListVisibility);
@@ -4038,6 +4775,179 @@ CIQ.UI.addComponentDefinition("cq-hu-static", HeadsUpStatic);
 };
 
 
+let __js_webcomponents_help_ = (_exports) => {
+
+/* global _CIQ, _timezoneJS, _SplinePlotter */
+
+
+var CIQ = typeof _CIQ !== "undefined" ? _CIQ : _exports.CIQ;
+
+/**
+ * Help web component `<cq-help>`.
+ *
+ * cq-help web component will display help if available. Long-press time is set in stxx.longHoldTime
+ * @namespace WebComponents.cq-help
+ * @example
+ * <cq-help help-id="rectangle">
+ * </cq-help>
+ *
+ */
+class Help extends CIQ.UI.ContextTag {
+	connectedCallback() {
+		if (this.attached) return;
+
+		this.addDefaultMarkup();
+
+		["mousedown", "pointerdown", "touchstart"].forEach((eventName) =>
+			this.addEventListener(eventName, this.mouseTouchDown, { passive: false })
+		);
+		["mouseup", "pointerup", "touchend", "touchmove"].forEach((eventName) =>
+			this.addEventListener(eventName, this.mouseTouchUp, { passive: false })
+		);
+
+		super.connectedCallback();
+	}
+
+	disconnectedCallback() {
+		["mousedown", "pointerdown", "touchstart"].forEach((eventName) =>
+			this.removeEventListener(eventName, this.mouseTouchDown)
+		);
+		["mouseup", "pointerup", "touchend", "touchmove"].forEach((eventName) =>
+			this.removeEventListener(eventName, this.mouseTouchUp)
+		);
+		super.disconnectedCallback();
+	}
+
+	setContext() {
+		const attributeName = "help-active";
+		let { topNode, stx } = this.context;
+		if (CIQ.Help && !topNode.hasAttribute(attributeName))
+			topNode.setAttribute(attributeName, "");
+		this.ensureMessagingAvailable(stx);
+	}
+
+	mouseTouchDown(evt) {
+		if (
+			!CIQ.Help ||
+			!CIQ.Help.Content ||
+			!CIQ.Help.Content[this.getAttribute("help-id")] ||
+			this.pressTimer
+		)
+			return;
+		this.pressTimer = setTimeout(() => {
+			this.pressTimer = null;
+			// Allow the press highlight animation to complete before removing
+			setTimeout(() => this.classList.remove("pressing"), 1000);
+			this.press();
+		}, this.context.stx.longHoldTime);
+		this.classList.add("pressing");
+	}
+
+	mouseTouchUp(evt) {
+		if (!this.pressTimer) return;
+		clearTimeout(this.pressTimer);
+		this.pressTimer = null;
+		this.classList.remove("pressing");
+	}
+
+	/**
+	 * Ensures that an instance of the [cq-floating-window]{@link WebComponents.cq-floating-window}
+	 * web component is available to handle event messaging and create the shortcuts legend floating
+	 * window.
+	 *
+	 * This function is called when the add-on is instantiated.
+	 *
+	 * @param {CIQ.ChartEngine} stx The chart engine that provides the UI context, which contains the
+	 * [cq-floating-window]{@link WebComponents.cq-floating-window} web component.
+	 *
+	 * @memberof WebComponents.cq-help
+	 * @alias ensureMessagingAvailable
+	 * @since 8.4.0
+	 */
+	ensureMessagingAvailable(stx) {
+		setTimeout(() => {
+			const contextContainer = stx.uiContext.topNode;
+			if (!contextContainer.querySelector("cq-floating-window")) {
+				contextContainer.append(document.createElement("cq-floating-window"));
+			}
+		});
+	}
+
+	/**
+	 * Adds class `help-available` if a property matching this elements help-id attribute
+	 * can be found in CIQ.Help.Content object. The help indicator (glowing dot) will not
+	 * appear unless this class is present.
+	 *
+	 * @alias verifyHelpContent
+	 * @memberof WebComponents.cq-help
+	 * @since 8.4.0
+	 */
+	verifyHelpContent() {
+		if (!CIQ.Help || !CIQ.Help.Content) return;
+		let helpData = CIQ.Help.Content[this.getAttribute("help-id")];
+		if (helpData) {
+			this.classList.add("help-available");
+		} else {
+			this.classList.remove("help-available");
+		}
+	}
+
+	/**
+	 * @alias press
+	 * @memberof WebComponents.cq-help
+	 * @since 8.4.0
+	 */
+	press() {
+		if (!CIQ.Help || !CIQ.Help.Content) return;
+		let { config, stx } = this.context;
+		let helpId = this.getAttribute("help-id") || "default";
+		let helpData = CIQ.Help.Content[helpId] || CIQ.Help.Content["default"];
+		if (!helpData) return;
+		// Add "close" & "enable" action buttons if no actions are provided
+		if (!helpData.actions)
+			helpData.actions = [CIQ.Help.Actions.close, CIQ.Help.Actions.enable];
+
+		// Pass the parent element to each action function
+		helpData.actionButtons = [];
+
+		function processAction(actionItem, parentElement) {
+			return () => actionItem.action(parentElement);
+		}
+
+		for (let actionItem of helpData.actions) {
+			let { label, action } = actionItem;
+			if (typeof action === "function") {
+				action = processAction(actionItem, this.parentElement);
+			}
+			helpData.actionButtons.push({ label, action });
+		}
+
+		stx.dispatch("floatingWindow", {
+			type: "documentation",
+			title: helpData.title,
+			content: helpData.content,
+			actionButtons: helpData.actionButtons,
+			container: stx.container.querySelector(".stx-subholder"),
+			onClose: () => true,
+			width: 500,
+			status: true,
+			tag: "help"
+		});
+	}
+}
+
+Help.markup = `
+		<div class="ciq-help-widget"></div>
+		<div class="press-indicator">
+			<!-- 1x1 transparent image to maintain aspect ratio when sizing by height -->
+			<img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7">
+		</div>
+	`;
+CIQ.UI.addComponentDefinition("cq-help", Help);
+
+};
+
+
 let __js_webcomponents_infoToggle_ = (_exports) => {
 
 /* global _CIQ, _timezoneJS, _SplinePlotter */
@@ -4235,6 +5145,23 @@ var CIQ = typeof _CIQ !== "undefined" ? _CIQ : _exports.CIQ;
  * - The crosshairs drop-down toggle turns the crosshairs and static HUD on and off in unison
  * - The heads-up display drop-down toggle is not available
  *
+ * The HUD menu can be managed programmatically by sending a 'channel' message to enable or disable the different HUD modes.<br>
+ * Here is the code you will need:
+ *
+ * ```
+ *  function changeHUD(type, stx) {
+ *    const hudChannel = stx.uiContext.config.channels.headsUp;
+ *    const { channelWrite } = CIQ.UI.BaseComponent.prototype;
+ *    channelWrite(hudChannel, type, stx);
+ * }
+ * ```
+ *
+ * Then you can do things such as:
+ *
+ *  - `changeHUD(false, stxx); // turn off HUD`
+ *  - `changeHUD({dynamic: true, floating: false}, stxx); // turn on the dynamic HUD`
+ *  - `changeHUD({dynamic: false, floating: true}, stxx); // turn on the floating HUD`
+ *
  * @namespace WebComponents.cq-info-toggle-dropdown
  * @since 8.2.0
  *
@@ -4304,13 +5231,20 @@ class InfoToggleDropdown extends CIQ.UI.ContextTag {
 			}
 		});
 
-		Object.entries(newLayoutValues).forEach(([key, prop]) => {
-			if (typeof prop === "object") {
-				// replace reference in order to trigger channelSubscribe
-				layout[key] = Object.assign({}, layout[key], prop);
-			} else {
-				layout[key] = prop;
-			}
+		this.connectedCharts().forEach((chartEngine) => {
+			Object.entries(newLayoutValues).forEach(([key, prop]) => {
+				if (typeof prop === "object") {
+					// replace reference in order to trigger channelSubscribe
+					chartEngine.layout[key] = Object.assign(
+						{},
+						chartEngine.layout[key],
+						prop
+					);
+				} else {
+					chartEngine.layout[key] = prop;
+				}
+			});
+			chartEngine.changeOccurred("layout");
 		});
 
 		if (toggleEl.params.action === "class") {
@@ -4321,11 +5255,63 @@ class InfoToggleDropdown extends CIQ.UI.ContextTag {
 		toggleEl.updateClass();
 		this.applyValues(this.channels);
 
-		if (value && !stx.container.classList.contains("stx-crosshair-on")) {
-			const { dataSegment } = stx.chart;
-			const x = stx.pixelFromBar(dataSegment.length - 1);
-			const y = stx.pixelFromPrice(dataSegment.slice(-1)[0].Close);
-			if (!(isNaN(x) || isNaN(y))) stx.mousemoveinner(x, y);
+		const isMultiChart = this.context.topNode.getCharts;
+		if (value) {
+			const activeChart = isMultiChart
+				? this.connectedCharts().find((el) => {
+						const wrapper = el.container.closest("cq-context-wrapper.active");
+						return wrapper;
+				  })
+				: stx;
+			this.positionCrosshair(activeChart);
+		}
+	}
+
+	/**
+	 * Gets all connected charts.
+	 *
+	 * @alias connectedCharts
+	 * @memberof WebComponents.cq-info-toggle-dropdown
+	 * @since 8.4.0
+	 */
+	connectedCharts() {
+		const isMultiChart = this.context.topNode.getCharts;
+		const charts = isMultiChart ? this.context.topNode.getCharts() : [this.stx];
+
+		return charts;
+	}
+
+	/**
+	 * Places crosshair at last data segment in the chart that contains the Close value
+	 *
+	 * @alias positionCrosshair
+	 * @memberof WebComponents.cq-info-toggle-dropdown
+	 * @since 8.4.0
+	 */
+	positionCrosshair(stx) {
+		if (!stx) return;
+		const { dataSegment } = stx.chart;
+		if (
+			stx.container.classList.contains("stx-crosshair-on") ||
+			!dataSegment.length
+		)
+			return;
+
+		const { index, Close } = findLastClose(dataSegment);
+
+		if (index < 0) return;
+
+		const x = stx.pixelFromBar(index);
+		const y = stx.pixelFromPrice(Close);
+		stx.mousemoveinner(x + stx.left, y + stx.top);
+
+		function findLastClose(array) {
+			let index = array.length;
+			while (index-- && array[index]) {
+				const { Close } = array[index];
+				if (Close || Close === 0) return { index, Close };
+			}
+			return -1;
 		}
 	}
 
@@ -4456,12 +5442,17 @@ class InfoToggleDropdown extends CIQ.UI.ContextTag {
 	 * @since 8.2.0
 	 */
 	initInfoComponents(context) {
-		this.options.forEach((option) => {
-			const [, type] = option.getAttribute("cq-member").split("-");
-			if (type && !context.topNode.querySelector(`cq-hu-${type}`)) {
-				const hu = document.createElement(`cq-hu-${type}`);
-				context.topNode.append(hu);
-			}
+		const charts = Array.from(
+			context.topNode.querySelectorAll(".ciq-chart-area")
+		);
+		charts.forEach((chartContainer) => {
+			this.options.forEach((option) => {
+				const [, type] = option.getAttribute("cq-member").split("-");
+				if (type && !chartContainer.querySelector(`cq-hu-${type}`)) {
+					const hu = document.createElement(`cq-hu-${type}`);
+					chartContainer.append(hu);
+				}
+			});
 		});
 	}
 
@@ -4484,23 +5475,23 @@ class InfoToggleDropdown extends CIQ.UI.ContextTag {
 		const crosshair = this.channelRead(channels.crosshair);
 		const headsUp = this.channelRead(channels.headsUp) || {};
 		const { dynamic, floating, crosssection } = headsUp;
+		const { channelWrite } = this;
+		const charts = this.connectedCharts();
 
 		if (CIQ.isMobile) {
-			const staticHudContainer = this.context.topNode.querySelector(
-				"cq-hu-static"
-			);
+			const staticHudContainer =
+				this.context.topNode.querySelector("cq-hu-static");
 			if (staticHudContainer) {
 				staticHudContainer.style.display = floating ? "none" : "";
 			}
-			const dynamicHudContainer = this.context.topNode.querySelector(
-				"cq-hu-dynamic"
-			);
+			const dynamicHudContainer =
+				this.context.topNode.querySelector("cq-hu-dynamic");
 			if (dynamicHudContainer) {
 				dynamicHudContainer.style.display = "none";
 			}
 
 			if (dynamic) {
-				this.channelWrite(
+				fanOutWrite(
 					channels.headsUp,
 					Object.assign({}, headsUp, { dynamic: false, floating: true })
 				);
@@ -4518,10 +5509,7 @@ class InfoToggleDropdown extends CIQ.UI.ContextTag {
 					if (type) {
 						const obj = {};
 						obj[type] = true;
-						this.channelWrite(
-							channels.headsUp,
-							Object.assign({}, headsUp, obj)
-						);
+						fanOutWrite(channels.headsUp, Object.assign({}, headsUp, obj));
 						this.applyValues(channels);
 						return;
 					}
@@ -4530,7 +5518,13 @@ class InfoToggleDropdown extends CIQ.UI.ContextTag {
 		}
 
 		if (!crosshair && (headsUp.static || crosssection)) {
-			this.channelWrite(channels.crosshair, true);
+			fanOutWrite(channels.crosshair, true);
+		}
+
+		function fanOutWrite(channel, value) {
+			charts.forEach((chartEngine) =>
+				channelWrite(channel, value, chartEngine)
+			);
 		}
 
 		// No longer adding the on/off state to Info toggle tooltip, the blue underline indicator already shows this.
@@ -4757,6 +5751,12 @@ if (!CIQ.I18N) {
 				node.find("cq-flag").attr("cq-lang", langCode);
 				CIQ.UI.stxtap(node[0], switchToLanguage(langCode));
 			}
+			// Set the main dialog as keyboard active to reset the highlight when this panel reloads
+			if (document.body.keystrokeHub) {
+				let { tabActiveModals } = document.body.keystrokeHub;
+				if (tabActiveModals[0])
+					document.body.keystrokeHub.setKeyControlElement(tabActiveModals[0]);
+			}
 		}
 	}
 
@@ -4764,7 +5764,7 @@ if (!CIQ.I18N) {
 		<h4 class="title">Choose language</h4>
 		<cq-close></cq-close>
 		<cq-languages>
-			<template><div><cq-flag></cq-flag><cq-language-name></cq-language-name></div></template>
+			<template><div keyboard-selectable="true"><cq-flag></cq-flag><cq-language-name></cq-language-name></div></template>
 		</cq-languages>
 	`;
 	CIQ.UI.addComponentDefinition("cq-language-dialog", LanguageDialog);
@@ -4787,7 +5787,7 @@ var CIQ = typeof _CIQ !== "undefined" ? _CIQ : _exports.CIQ;
  * @namespace WebComponents.cq-loader
  *
  * @example
- * <cq-loader><cq-loader>
+ * <cq-loader></cq-loader>
  */
 class Loader extends CIQ.UI.ContextTag {
 	setContext(context) {
@@ -4877,12 +5877,12 @@ if (!CIQ.ChartEngine.Driver) {
 	 *
 	 * **Customization**
 	 *
-	 * To hide the lookup results window, modify the CSS as follows:
+	 * - To hide the lookup results window, modify the CSS as follows:
 	 * ```css
 	 * .stxMenuActive cq-lookup-results { opacity: 0 }
 	 * ```
 	 *
-	 * To preload default results (rather than an empty result pane) on initial load , set an
+	 * - To preload default results (rather than an empty result pane) on initial load , set an
 	 * `onChartReady` handler in the chart configuration object (see the
 	 * <a href="tutorial-Chart%20Configuration.html" target="_blank">Chart Configuration</a>
 	 * tutorial); for example:
@@ -4911,6 +5911,38 @@ if (!CIQ.ChartEngine.Driver) {
 	 *     const UISymbolLookup = document.querySelector(".ciq-search cq-lookup");
 	 *     UISymbolLookup.results(defaultResults);
 	 * }
+	 * ````
+	 *
+	 * - The placeholder is programmatically set based on the width of the chart. 
+	 * On larger screens "Enter Symbol" is used, but on smaller screens only "Symbol" is used.
+	 * As such, it is not sufficient to set a placeholder value on the HTML, as it will be overwritten by the Web Component logic.
+	 * The following script will update the placeholder according to breakpoint values set in placeholderMapping.
+	 * It should be placed inside the [onWebComponentsReady]{@tutorial Chart Configuration} callback provided in the 
+	 * `defaultConfiguration` object to ensure it is executed once all Web Components have been properly initialized.
+	 * The approach here is to add a second breakpoint channel listener for the lookup component that overwrites the value set by default in the library.
+	 * 
+	 * ```
+	 * function setLookupPlaceholders(placeholderMapping = {
+	 *     "break-lg": "Change symbol",
+	 *     "break-md": "+ symbol",
+	 *     "break-sm": ""
+	 *  }) {
+
+  	 *   Array.from(uiContext.topNode.querySelectorAll('cq-lookup'))
+  	 *   .forEach(el => {
+	 *         const { channels = {} } = el.context.config;
+	 *         el.channelSubscribe(
+	 *            channels.breakpoint || "channel.breakpoint",
+	 *            (breakPoint) => {
+	 *                     const symbolValue = placeholderMapping[breakpoint] || "Change symbol";
+	 * 
+	 *                     const symbolInput = el.querySelector("input");
+	 *                     symbolInput.setAttribute("placeholder", symbolValue);
+	 *          );
+	 *        });
+	 *     });
+	 * }
+	 * setLookupPlaceholders();
 	 * ```
 	 *
 	 * @namespace WebComponents.cq-lookup
@@ -4924,7 +5956,7 @@ if (!CIQ.ChartEngine.Driver) {
 	 *     <cq-lookup-input cq-no-close>
 	 *         <input type="text" spellcheck="false" autocomplete="off"
 	 *                autocorrect="off" autocapitalize="none" name="symbol"
-	 *                placeholder="Enter Symbol">
+	 *                placeholder="">
 	 *         <cq-lookup-icon></cq-lookup-icon>
 	 *     </cq-lookup-input>
 	 *     <cq-lookup-results>
@@ -4948,6 +5980,7 @@ if (!CIQ.ChartEngine.Driver) {
 			// Will hold references to filter tabs for keyboard navigation
 			this.filterElements = null;
 			this.params = {};
+			this.overrideIsActive = false;
 		}
 
 		/**
@@ -5131,10 +6164,9 @@ if (!CIQ.ChartEngine.Driver) {
 					result = true;
 					break;
 				case "Enter":
-					if (input.value === "" || !this.isActive()) break;
-
 					var scrollable = this.resultList;
 					focused = scrollable.length && scrollable[0].focused(); // Using cursor keys to maneuver down lookup results
+					if ((input.value === "" && !focused) || this.overrideIsActive) break;
 					if (focused && focused.selectFC) {
 						focused.selectFC.apply(focused, {});
 					} else {
@@ -5392,6 +6424,11 @@ if (!CIQ.ChartEngine.Driver) {
 				this.params.cb = context.changeSymbol;
 		}
 
+		changeContext(newContext) {
+			if (this.params.cb && newContext.changeSymbol)
+				this.params.cb = newContext.changeSymbol;
+		}
+
 		/**
 		 * Connects a {@link CIQ.ChartEngine.Driver.Lookup} to the web component.
 		 *
@@ -5548,6 +6585,12 @@ class Menu extends HTMLElement {
 				dropdown.querySelectorAll("[cq-focused]")
 			);
 		}
+		if (document.body.keystrokeHub) {
+			let { tabActiveModals } = document.body.keystrokeHub;
+			if (tabActiveModals[0])
+				document.body.keystrokeHub.setKeyControlElement(tabActiveModals[0]);
+		}
+
 		// Close the lookup component
 		const lookup = this.querySelector("cq-lookup");
 		if (lookup) lookup.close();
@@ -5779,13 +6822,16 @@ class MessageToaster extends CIQ.UI.ContextTag {
 	}
 
 	setContext() {
+		const { stx } = this.context;
 		this.contextNode = this.context.topNode;
 
 		// Listen for notification events from the chartEngine
-		this.context.stx.addEventListener("notification", (props) =>
-			this.newMessage(props)
-		);
-		this.context.stx.append("resizeChart", () => this.handleResize());
+		stx.addEventListener("notification", (params) => {
+			if (params && params.remove) this.dismissMessage(params.message);
+			else this.newMessage(params);
+		});
+
+		stx.append("resizeChart", () => this.handleResize());
 	}
 
 	/**
@@ -5909,6 +6955,7 @@ class MessageToaster extends CIQ.UI.ContextTag {
 		if (position == "bottom") messageElement.classList.add("align-bottom");
 		messageElement.displayTime = displayTime;
 		messageElement.priority = priority;
+		messageElement.message = message;
 
 		CIQ.safeClickTouch(
 			messageElement,
@@ -6042,7 +7089,10 @@ class MessageToaster extends CIQ.UI.ContextTag {
 	 *
 	 * @alias newMessage
 	 * @memberof WebComponents.cq-message-toaster#
-	 * @since 8.2.0
+	 * @since
+	 * - 8.2.0
+	 * - 8.4.0 Calling this method with a message that is already displayed or in the queue
+	 * 		will return without doing anything.
 	 */
 	newMessage(notification) {
 		if (typeof notification === "string" && this.context.config) {
@@ -6050,6 +7100,9 @@ class MessageToaster extends CIQ.UI.ContextTag {
 				notification = this.context.config.systemMessages[notification];
 		}
 		if (!notification) return;
+		for (const queueItem of this.messageQueue) {
+			if (queueItem.message === notification.message) return;
+		}
 		let newMessage = this.createMessageElement(notification);
 		if (newMessage) {
 			// Determine if the message priority places it ahead of other messages in the queue
@@ -6066,6 +7119,22 @@ class MessageToaster extends CIQ.UI.ContextTag {
 				this.messageQueue.push(newMessage);
 			}
 			this.displayNextMessage();
+		}
+	}
+
+	/**
+	 * Dismisses a message by removing it from the queue (including if it is already displayed).
+	 *
+	 * @param {string} message The message to dismiss.
+	 * @alias dismissMessage
+	 * @memberof WebComponents.cq-message-toaster#
+	 * @since 8.4.0
+	 */
+	dismissMessage(message) {
+		for (const notification of this.messageQueue) {
+			if (notification.message === message) {
+				this.removeMessageNode(notification);
+			}
 		}
 	}
 }
@@ -6826,7 +7895,10 @@ class Scroll extends CIQ.UI.BaseComponent {
 	 */
 	keyStroke(hub, key, e) {
 		const activeElements = document.querySelectorAll(".stxMenuActive *");
-		if (!Array.from(activeElements).includes(this)) {
+		if (
+			!this.keyboardNavigation &&
+			!Array.from(activeElements).includes(this)
+		) {
 			return;
 		}
 		if (!CIQ.trulyVisible(this)) return false;
@@ -6835,7 +7907,7 @@ class Scroll extends CIQ.UI.BaseComponent {
 		}
 
 		const items = this.querySelectorAll(
-			"[keyboard-selectable='true'], cq-item:not(.item-hidden)"
+			"[keyboard-selectable='true'], cq-item:not(.item-hidden), li"
 		);
 		if (!items.length) return;
 
@@ -7083,6 +8155,13 @@ if (!CIQ.Share) {
 		setState(state) {
 			this.addDefaultMarkup();
 			this.node.find("div[cq-share-dialog-div]")[0].className = state;
+
+			// Set the main dialog as keyboard active to reset the highlight when this panel changes state
+			if (document.body.keystrokeHub) {
+				let { tabActiveModals } = document.body.keystrokeHub;
+				if (tabActiveModals[0])
+					document.body.keystrokeHub.setKeyControlElement(tabActiveModals[0]);
+			}
 		}
 
 		/**
@@ -7142,6 +8221,12 @@ if (!CIQ.Share) {
 					});
 				}
 			);
+			// Set the main dialog as keyboard active to reset the highlight when this panel reloads
+			if (document.body.keystrokeHub) {
+				let { tabActiveModals } = document.body.keystrokeHub;
+				if (tabActiveModals[0])
+					document.body.keystrokeHub.setKeyControlElement(tabActiveModals[0]);
+			}
 		}
 
 		copy() {
@@ -7679,14 +8764,17 @@ class Studies extends CIQ.UI.ContextTag {
 		}
 
 		function pickStudy(node, studyName) {
-			var stx = self.context.stx;
+			const {
+				alwaysDisplayDialog = {},
+				context: { stx }
+			} = self;
 
 			function handleSpecialCase(flag, params, addWhenDone) {
 				if (flag === true) {
 					studyDialog(params, addWhenDone);
 					return true;
 				} else if (typeof flag === "object") {
-					for (var i in flag) {
+					for (let i in flag) {
 						if (i == studyName && flag[i]) {
 							studyDialog(params, addWhenDone);
 							return true;
@@ -7698,13 +8786,19 @@ class Studies extends CIQ.UI.ContextTag {
 			if (
 				handleSpecialCase(
 					self.params.dialogBeforeAddingStudy,
-					{ stx: stx, name: studyName },
+					{ stx, name: studyName },
 					true
 				)
-			)
+			) {
 				return;
-			var sd = CIQ.Studies.addStudy(stx, studyName);
-			handleSpecialCase(self.alwaysDisplayDialog, { sd: sd, stx: stx });
+			}
+
+			const studyParams = alwaysDisplayDialog[studyName]
+				? { interactiveAdd: false } // interactiveAdd and dialog are not compatible
+				: null;
+			const sd = CIQ.Studies.addStudy(stx, studyName, null, null, studyParams);
+
+			handleSpecialCase(self.alwaysDisplayDialog, { sd, stx });
 		}
 	}
 }
@@ -7864,6 +8958,22 @@ if (!CIQ.Studies) {
 					this.queuedUpdates = {};
 				}
 			}
+		}
+
+		closeActiveMenu(node) {
+			const hub = document.body.keystrokeHub;
+			const activeMenu = this.querySelector("*.stxMenuActive");
+			const uiManager = CIQ.UI.getUIManager();
+			if (
+				!activeMenu ||
+				!hub ||
+				!hub.tabActiveElement ||
+				hub.tabActiveElement.element !== node
+			)
+				return;
+			hub.tabActiveElement = null;
+			hub.highlightHide();
+			uiManager.closeMenu(activeMenu);
 		}
 
 		disconnectedCallback() {
@@ -8226,6 +9336,9 @@ if (!CIQ.Studies) {
 			var updates = {};
 			updates[section] = {};
 			updates[section][name] = value;
+			// Close the option menu here when selected via keyboard because keyboard navigation
+			// doesn't provide the necessary mouse event to close it automatically.
+			this.closeActiveMenu(node[0]);
 			this.updateStudy(updates);
 		}
 
@@ -8433,7 +9546,7 @@ if (!CIQ.Studies) {
 			if (this.attached) return;
 			super.connectedCallback();
 			if (this.node.attr("cq-clone-to-panels") !== undefined) {
-				document.body.classList.add("stx-panel-legend");
+				this.closest("cq-context").classList.add("stx-panel-legend");
 			}
 
 			if (!this.hasAttribute("cq-no-claim")) this.addClaim(this);
@@ -8478,12 +9591,28 @@ if (!CIQ.Studies) {
 
 			if (this.hasAttribute("cq-marker")) {
 				CIQ.UI.stxtap(this, function () {
-					node[0].classList.toggle("ciq-active");
+					this.setActiveState();
 				});
 			}
 
 			this.renderLegend();
 			this.init = true;
+		}
+
+		setActiveState(newState) {
+			let isActive = this.classList.contains("ciq-active");
+			// If newState is undefined, toggle the active state
+			newState = typeof newState === "undefined" ? !isActive : newState;
+			const keystrokeHub = document.body.keystrokeHub;
+			if (newState) {
+				this.classList.add("ciq-active");
+				// Treat the legend like a modal so keyboard navigation is returned after using colorPicker
+				if (keystrokeHub && this.keyboardNavigation)
+					keystrokeHub.addActiveModal(this);
+			} else {
+				this.classList.remove("ciq-active");
+				if (keystrokeHub) keystrokeHub.removeActiveModal(this);
+			}
 		}
 
 		keyStroke(hub, key, e) {
@@ -8495,11 +9624,16 @@ if (!CIQ.Studies) {
 			if (key == " " || key == "Spacebar" || key == "Enter") {
 				const focused = this.findFocused(items);
 				if (!focused || !focused.length) return;
-				const childItemsSelected = focused[0].querySelectorAll(
+				const childItemsSelected = focused[0].querySelector(
 					"[keyboard-selectable-child='true'][cq-focused]"
 				);
-				if (childItemsSelected.length) this.clickItem(childItemsSelected[0], e);
-				else this.clickItem(focused[0], e);
+				if (childItemsSelected) {
+					this.clickItem(childItemsSelected, e);
+				} else {
+					// If no child item is seleted, but there is a swatch, go ahead and click it.
+					const selectabelSwatch = focused[0].querySelector("cq-swatch");
+					if (selectabelSwatch) this.clickItem(selectabelSwatch, e);
+				}
 			} else if (key == "ArrowDown" || key == "Down") {
 				this.focusNextItem(items);
 			} else if (key == "ArrowUp" || key == "Up") {
@@ -8524,9 +9658,9 @@ if (!CIQ.Studies) {
 				}
 			} else if (key === "Tab" || key === "Esc" || key === "Escape") {
 				this.removeFocused(items);
-				this.classList.remove("ciq-active");
-				// Wait for transition
-				setTimeout(() => this.keyboardNavigation.tabOrderSelect(), 500);
+				this.setActiveState(false);
+				const keystrokeHub = document.body.keystrokeHub;
+				if (keystrokeHub) keystrokeHub.tabOrderSelect();
 			}
 		}
 
@@ -8535,7 +9669,7 @@ if (!CIQ.Studies) {
 		 * @memberof! WebComponents.cq-study-legend
 		 */
 		launchColorPicker() {
-			this.node.addClass("ciq-active");
+			this.setActiveState(true);
 		}
 
 		/**
@@ -8605,8 +9739,9 @@ if (!CIQ.Studies) {
 					if (edit && !sd.editFunction) {
 						edit.style.visibility = "hidden";
 					} else if (sd.editFunction) {
-						// Put the edit function on the parent so it responds to a keyboard navigation click
-						CIQ.UI.stxtap(newChild[0], editStudy(this, id));
+						// If there isn't an edit button, put the edit function on the parent so it responds to a keyboard navigation click
+						let targetElem = edit || newChild[0];
+						CIQ.UI.stxtap(targetElem, editStudy(this, id));
 					}
 				}
 			}
@@ -8662,18 +9797,28 @@ if (!CIQ.Studies) {
 			this.begin();
 		}
 
+		changeContext(newContext) {
+			this.eventListeners.forEach((listener) => {
+				this.context.stx.removeEventListener(listener);
+			});
+			this.eventListeners = [
+				newContext.stx.addEventListener("layout", this.renderLegend.bind(this))
+			];
+			this.context = newContext;
+			this.renderLegend();
+		}
+
 		spawnPanelLegend() {
 			var stx = this.context.stx;
 			function tap(legend) {
 				return function (e) {
-					legend.classList.toggle("ciq-active");
+					legend.setActiveState();
 				};
 			}
 			for (var p in stx.panels) {
 				if (p == stx.chart.panel.name) continue;
-				var legendHolder = stx.panels[p].subholder.querySelector(
-					".stx-panel-legend"
-				);
+				var legendHolder =
+					stx.panels[p].subholder.querySelector(".stx-panel-legend");
 				if (legendHolder) {
 					var panelLegend = legendHolder.querySelector(this.nodeName);
 					if (!panelLegend) {
@@ -8879,7 +10024,7 @@ class Swatch extends HTMLElement {
 		}
 		var hslf = CIQ.hsl(fillColor);
 		var isTransparent = CIQ.isTransparent(color);
-		this.style.background = fillColor;
+		this.style.background = this.value = fillColor;
 		if (isAuto || Math.abs(hslb[2] - hslf[2]) < 0.2 || isTransparent) {
 			this.style.border = "solid " + border + " 1px";
 			if (isTransparent)
@@ -8982,9 +10127,16 @@ if (!CIQ.ThemeHelper) {
 		 * @private
 		 */
 		applyChanges() {
-			var stx = this.context.stx;
-			this.helper.update(stx);
-			stx.changeOccurred("theme");
+			const isMultiChart = this.context.topNode.getCharts;
+			const charts = isMultiChart
+				? this.context.topNode.getCharts()
+				: [this.context.stx];
+
+			charts.forEach((stx) => {
+				if (!stx) return;
+				this.helper.update(stx);
+				stx.changeOccurred("theme");
+			});
 		}
 
 		/**
@@ -9128,40 +10280,61 @@ if (!CIQ.ThemeHelper) {
 		<cq-scroll cq-no-maximize>
 			<cq-section>
 				<cq-placeholder>Candle Color
-					<cq-theme-piece cq-piece="cu"><cq-swatch cq-overrides="Hollow"></cq-swatch></cq-theme-piece>
-					<cq-theme-piece cq-piece="cd"><cq-swatch cq-overrides="Hollow"></cq-swatch></cq-theme-piece>
+					<cq-theme-piece-container>
+						<cq-theme-piece cq-piece="cu"><cq-swatch cq-overrides="Hollow"></cq-swatch></cq-theme-piece>
+						<cq-theme-piece cq-piece="cd"><cq-swatch cq-overrides="Hollow"></cq-swatch></cq-theme-piece>
+					</cq-theme-piece-container>
 				</cq-placeholder>
 				<cq-placeholder>Candle Wick
-					<cq-theme-piece cq-piece="wu"><cq-swatch></cq-swatch></cq-theme-piece>
-					<cq-theme-piece cq-piece="wd"><cq-swatch></cq-swatch></cq-theme-piece>
+					<cq-theme-piece-container>
+						<cq-theme-piece cq-piece="wu"><cq-swatch></cq-swatch></cq-theme-piece>
+						<cq-theme-piece cq-piece="wd"><cq-swatch></cq-swatch></cq-theme-piece>
+					</cq-theme-piece-container>
 				</cq-placeholder>
 				<cq-placeholder>Candle Border
-					<cq-theme-piece cq-piece="bu"><cq-swatch cq-overrides="No Border"></cq-swatch></cq-theme-piece>
-					<cq-theme-piece cq-piece="bd"><cq-swatch cq-overrides="No Border"></cq-swatch></cq-theme-piece>
+					<cq-theme-piece-container>
+						<cq-theme-piece cq-piece="bu"><cq-swatch cq-overrides="No Border"></cq-swatch></cq-theme-piece>
+						<cq-theme-piece cq-piece="bd"><cq-swatch cq-overrides="No Border"></cq-swatch></cq-theme-piece>
+					</cq-theme-piece-container>
 				</cq-placeholder>
 				<cq-separator></cq-separator>
 				<cq-placeholder>Line/Bar Chart
-					<cq-theme-piece cq-piece="lc"><cq-swatch></cq-swatch></cq-theme-piece>
+					<cq-theme-piece-container>
+						<cq-theme-piece cq-piece="lc"><cq-swatch></cq-swatch></cq-theme-piece>
+					</cq-theme-piece-container>
 				</cq-placeholder>
 				<cq-separator></cq-separator>
 				<cq-placeholder>Mountain Base
-					<cq-theme-piece cq-piece="mb"><cq-swatch></cq-swatch></cq-theme-piece>
+					<cq-theme-piece-container>
+						<cq-theme-piece cq-piece="mb"><cq-swatch></cq-swatch></cq-theme-piece>
+					</cq-theme-piece-container>
 				</cq-placeholder>
 				<cq-placeholder>Mountain Peak
+				<cq-theme-piece-container>
 					<cq-theme-piece cq-piece="mc"><cq-swatch></cq-swatch></cq-theme-piece>
+				</cq-theme-piece-container>
 				</cq-placeholder>
 			</cq-section>
 			<cq-section>
 				<cq-placeholder>Background
-					<cq-theme-piece cq-piece="bg"><cq-swatch></cq-swatch></cq-theme-piece>
+					<cq-theme-piece-container>
+						<cq-theme-piece cq-piece="bg"><cq-swatch></cq-swatch></cq-theme-piece>
+					</cq-theme-piece-container>
 				</cq-placeholder>
 				<cq-placeholder>Grid Lines
-					<cq-theme-piece cq-piece="gl"><cq-swatch></cq-swatch></cq-theme-piece>
+					<cq-theme-piece-container>
+						<cq-theme-piece cq-piece="gl"><cq-swatch></cq-swatch></cq-theme-piece>
+					</cq-theme-piece-container>
 				</cq-placeholder>
 				<cq-placeholder>Date Dividers
-					<cq-theme-piece cq-piece="dd"><cq-swatch></cq-swatch></cq-theme-piece>
+					<cq-theme-piece-container>
+						<cq-theme-piece cq-piece="dd"><cq-swatch></cq-swatch></cq-theme-piece>
+					</cq-theme-piece-container>
 				</cq-placeholder>
-				<cq-placeholder>Axis Text<cq-theme-piece cq-piece="at"><cq-swatch></cq-swatch></cq-theme-piece>
+				<cq-placeholder>Axis Text
+					<cq-theme-piece-container>
+						<cq-theme-piece cq-piece="at"><cq-swatch></cq-swatch></cq-theme-piece>
+					</cq-theme-piece-container>
 				</cq-placeholder>
 			</cq-section>
 			<cq-action>
@@ -9416,19 +10589,19 @@ class Themes extends CIQ.UI.ContextTag {
 
 	loadBuiltIn(className) {
 		if (this.currentLoadedBuiltIn) {
-			this.context.topNode.classList.remove(this.currentLoadedBuiltIn);
+			this.removeThemeClass(this.currentLoadedBuiltIn);
 		}
-		this.context.topNode.classList.add(className);
+		this.addThemeClass(className);
 		this.currentLoadedBuiltIn = this.currentTheme = className;
 		this.reinitializeChart();
 	}
 
 	loadCustom(themeName) {
 		if (this.currentLoadedBuiltIn) {
-			this.context.topNode.classList.remove(this.currentLoadedBuiltIn);
+			this.removeThemeClass(this.currentLoadedBuiltIn);
 		}
 		var theme = this.params.customThemes[themeName];
-		if (theme.builtIn) this.context.topNode.classList.add(theme.builtIn);
+		if (theme.builtIn) this.addThemeClass(theme.builtIn);
 		this.currentLoadedBuiltIn = theme.builtIn;
 		this.currentTheme = theme.name;
 		this.reinitializeChart(theme);
@@ -9438,6 +10611,23 @@ class Themes extends CIQ.UI.ContextTag {
 		if (this.params.customThemes[themeName]) this.loadCustom(themeName);
 		else if (this.params.builtInThemes[themeName]) this.loadBuiltIn(themeName);
 		else this.loadBuiltIn(this.params.defaultTheme);
+	}
+
+	get contextContainers() {
+		const topEl = this.context.topNode;
+		return [topEl].concat(Array.from(topEl.querySelectorAll("cq-context")));
+	}
+
+	addThemeClass(name) {
+		this.contextContainers.forEach((container) =>
+			container.classList.add(name)
+		);
+	}
+
+	removeThemeClass(name) {
+		this.contextContainers.forEach((container) =>
+			container.classList.remove(name)
+		);
 	}
 
 	newTheme() {
@@ -9494,9 +10684,16 @@ class Themes extends CIQ.UI.ContextTag {
 	 * @memberOf WebComponents.cq-themes
 	 */
 	reinitializeChart(theme) {
-		if (this.context.stx.setThemeSettings) {
-			this.context.stx.setThemeSettings(theme ? theme.settings : null);
-		}
+		const isMultiChart = this.context.topNode.getCharts;
+		const charts = isMultiChart
+			? this.context.topNode.getCharts()
+			: [this.context.stx];
+
+		charts.forEach((stx) => {
+			if (stx && stx.setThemeSettings) {
+				stx.setThemeSettings(theme ? theme.settings : null);
+			}
+		});
 	}
 }
 
@@ -9511,7 +10708,7 @@ Themes.markup = `
 				<cq-theme-custom>
 					<cq-item>
 						<cq-label></cq-label>
-						<cq-close></cq-close>
+						<cq-close keyboard-selectable-child="true"></cq-close>
 					</cq-item>
 				</cq-theme-custom>
 			</template>
@@ -9696,17 +10893,21 @@ class Toggle extends CIQ.UI.ContextTag {
 	}
 
 	disconnectedCallback() {
-		CIQ.UI.unobserveProperty(
-			this.params.member,
-			this.params.obj,
-			this.listener
-		);
+		this.disconnectObservable();
 		super.disconnectedCallback();
+	}
+
+	disconnectObservable() {
+		const {
+			params: { member, obj },
+			listener
+		} = this;
+		if (member && obj && listener)
+			CIQ.UI.unobserveProperty(member, obj, listener);
 	}
 
 	begin() {
 		const self = this;
-		const { stx } = this.context;
 
 		if (this.params.member) {
 			this.listener = function (obj) {
@@ -9718,6 +10919,7 @@ class Toggle extends CIQ.UI.ContextTag {
 				this.listener
 			);
 		}
+		if (this.tapInitialized) return;
 		CIQ.UI.stxtap(this, function () {
 			var toggles = self.params.toggles;
 			var obj = self.params.obj;
@@ -9742,10 +10944,12 @@ class Toggle extends CIQ.UI.ContextTag {
 					self.set(true);
 				}
 			}
+			const { stx } = this.context;
 			stx.draw();
 			if (obj === stx.layout) stx.changeOccurred("layout");
 			if (obj === stx.preferences) stx.changeOccurred("preferences");
 		});
+		this.tapInitialized = true;
 	}
 
 	/**
@@ -9847,6 +11051,12 @@ class Toggle extends CIQ.UI.ContextTag {
 		}
 
 		this.begin();
+	}
+
+	changeContext(newContext) {
+		this.disconnectObservable();
+		this.context = newContext;
+		this.setContext(newContext);
 	}
 
 	updateFromBinding(params) {
@@ -10653,15 +11863,15 @@ class ViewDialog extends CIQ.UI.DialogContentTag {
 	 * @memberof WebComponents.cq-view-dialog
 	 */
 	save() {
-		var viewName = this.node.find("input").val();
+		const viewName = this.node.find("input").val();
 		if (!viewName) return;
 
-		var self = this;
-		var madeChange = false;
-		var layout = this.context.stx.exportLayout();
+		let madeChange = false;
+		this.updateContext();
+		const layout = this.context.stx.exportLayout();
 		document.querySelectorAll("cq-views").forEach(function (v) {
-			var obj = v.params.viewObj;
-			var view;
+			const obj = v.params.viewObj;
+			let view;
 
 			for (var i = 0; i < obj.views.length; i++) {
 				view = obj.views[i];
@@ -10684,6 +11894,25 @@ class ViewDialog extends CIQ.UI.DialogContentTag {
 			}
 		});
 		this.close();
+	}
+
+	updateContext() {
+		let activeChart = this.context.topNode.querySelector(
+			"cq-context-wrapper.active cq-context"
+		);
+
+		if (!activeChart) {
+			const multiChartContainer =
+				this.context.topNode.parentNode.closest("cq-context");
+			if (multiChartContainer) {
+				activeChart = multiChartContainer.querySelector(
+					"cq-context-wrapper.active cq-context"
+				);
+			}
+		}
+		if (activeChart) {
+			this.context = activeChart.CIQ.UI.context;
+		}
 	}
 }
 
@@ -10842,7 +12071,6 @@ class Views extends CIQ.UI.ContextTag {
 	renderMenu() {
 		var menu = this.node;
 		var self = this;
-		var stx = self.context.stx;
 
 		function remove(i) {
 			return function (e) {
@@ -10870,6 +12098,7 @@ class Views extends CIQ.UI.ContextTag {
 				if (self.context.loader) self.context.loader.show();
 				var layout = CIQ.first(self.params.viewObj.views[i]);
 				function importLayout() {
+					var stx = self.context.stx;
 					var finishImportLayout = function () {
 						stx.changeOccurred("layout");
 						if (self.context.loader) self.context.loader.hide();
@@ -10915,7 +12144,8 @@ class Views extends CIQ.UI.ContextTag {
 					document.querySelector("cq-view-dialog").open({ context });
 				}
 				const uiManager = CIQ.UI.getUIManager();
-				if (uiManager) uiManager.closeMenu();
+				const viewMenu = context.topNode.querySelector(".ciq-views");
+				if (uiManager && viewMenu) uiManager.closeMenu(viewMenu);
 			});
 		}
 		if (this.params.renderCB) this.params.renderCB(menu);
@@ -10938,6 +12168,94 @@ Views.markup = `
 		</cq-view-save>
 	`;
 CIQ.UI.addComponentDefinition("cq-views", Views);
+
+};
+
+
+let __js_webcomponents_volumeProfileSettingsDialog_ = (_exports) => {
+
+/* global _CIQ, _timezoneJS, _SplinePlotter */
+
+
+
+const CIQ = typeof _CIQ !== "undefined" ? _CIQ : _exports.CIQ;
+
+/**
+ * Volume profile drawing settings dialog web component `<cq-volumeprofile-settings-dialog>`.
+ *
+ * @namespace WebComponents.cq-volumeprofile-settings-dialog
+ * @example
+ * <h4 class="title">Volume Profile Settings</h4>
+	<cq-scroll cq-no-maximize>
+		<div class="ciq-drawing-dialog-setting">
+			<div class="ciq-heading">Price Buckets</div>
+			<div class="stx-data">
+				<input type="number" min="1" step="1"
+			</div>
+		</div
+	</cq-scroll>
+	<div class="ciq-dialog-cntrls">
+		<div class="ciq-btn" stxtap="close()">Done</div>
+	</div>
+ * @since 8.4.0
+ */
+class VolumeProfileSettingsDialog extends CIQ.UI.DialogContentTag {
+	/**
+	 * Ensures that when the dialog is opened the input field is populated with the correct value.
+	 * Also installs a listener to report changes to the value so the drawing can get updated.
+	 *
+	 * @memberOf WebComponents.cq-volumeprofile-settings-dialog
+	 * @param {Object} params parameters
+	 * @param {HTMLElement} params.caller The HTML element that triggered this dialog to open
+	 * @since 8.4.0
+	 */
+	open(params) {
+		this.addDefaultMarkup();
+		super.open(params);
+
+		if (params) this.opener = params.caller;
+		const { currentVectorParameters: vectorParams } = this.context.stx;
+		if (!vectorParams.volumeprofile) vectorParams.volumeprofile = {};
+		const settings = vectorParams.volumeProfile;
+		const inputField = this.querySelector(
+			'div[fieldname="Price Buckets"] input'
+		);
+		inputField.value = settings.priceBuckets;
+
+		inputField.addEventListener("change", ({ target }) => {
+			const intVal = parseInt(target.value);
+			if (isNaN(intVal)) return;
+
+			settings.priceBuckets = intVal;
+			const event = new Event("change", {
+				bubbles: true,
+				cancelable: true
+			});
+
+			this.opener.dispatchEvent(event);
+		});
+	}
+}
+
+VolumeProfileSettingsDialog.markup = `
+	<h4 class="title">Volume Profile Settings</h4>
+	<cq-scroll cq-no-maximize>
+		<div class="ciq-drawing-dialog-setting" fieldname="Price Buckets">
+			<div class="ciq-heading">Price Buckets</div>
+			<div class="stx-data">
+				<input type="number" min="1" step="1"
+			</div>
+		</div
+	</cq-scroll>
+	<div class="ciq-dialog-cntrls">
+		<div class="ciq-btn" stxtap="close()">Done</div>
+	</div>
+`;
+
+CIQ.UI.addComponentDefinition(
+	"cq-volumeprofile-settings-dialog",
+	VolumeProfileSettingsDialog
+);
 
 };
 
@@ -11334,6 +12652,8 @@ if (!Dialog) {
 			} else {
 				if (context.e) context.e.stopPropagation(); // Otherwise the color picker is closed when you swap back and forth between fill and line swatches on the toolbar
 			}
+
+			if (this.keyboardNavigation) this.keyboardNavigation.highlightAlign();
 		}
 
 		initialize() {
@@ -11360,6 +12680,60 @@ if (!Dialog) {
 					CIQ.UI.stxtap(span, closure(self, lineOfColors[b]));
 				}
 			}
+			this.rowLength = this.params.colorMap[0].length || 0;
+		}
+
+		keyStroke(hub, key, e) {
+			if (hub && hub.tabActiveModals[0] !== this) return;
+
+			const items = this.querySelectorAll("cq-colors span, .ciq-btn");
+			if (key === "Escape" || key === "Esc") {
+			} else if (key === "ArrowRight") {
+				this.focusNextItem(items);
+			} else if (key === "ArrowLeft") {
+				this.focusNextItem(items, true);
+			} else if (key === "ArrowDown") {
+				this.focusNextRow(items);
+			} else if (key === "ArrowUp") {
+				this.focusNextRow(items, { reverse: true });
+			} else if (key == "Enter") {
+				const focused = this.findFocused(items);
+				this.clickItem(focused[0], e);
+			}
+		}
+
+		focusNextRow(items, options) {
+			const { reverse } = options || {};
+			const focused = this.findFocused(items);
+			let i = -1;
+			if (focused.length) {
+				// find our location in the list of items
+				for (i = 0; i < items.length; i++) if (items[i] === focused[0]) break;
+			}
+
+			if (reverse) {
+				// Find the previous available item
+				do {
+					i -= this.rowLength;
+					if (i < 0) break;
+				} while (!CIQ.trulyVisible(items[i]));
+			} else {
+				// Find the next available item
+				do {
+					i += this.rowLength;
+					if (i >= items.length) {
+						i = items.length - 1;
+						break;
+					}
+				} while (!CIQ.trulyVisible(items[i]));
+			}
+
+			if (i > -1 && i < items.length && items[i] !== focused[0]) {
+				this.removeFocused(items);
+				this.focusItem(items[i]);
+				return true;
+			}
+			return false;
 		}
 
 		/**
@@ -12015,11 +13389,12 @@ if (!Palette) {
 			</div>
 			<cq-separator></cq-separator>
 			<div class="primary-tool-group">
-				<cq-item class="ciq-tool active" cq-tool="notool" stxtap="tool()"><span class="icon pointer"></span><label>No Tool</label></cq-item>
-				<cq-item class="ciq-tool" cq-tool="measure" stxtap="tool()"><span class="icon measure"></span><label>Measure</label></cq-item>
-				<cq-undo class="ciq-tool"><span class="icon undo"></span><label>Undo</label></cq-undo>
-				<cq-redo class="ciq-tool"><span class="icon redo"></span><label>Redo</label></cq-redo>
+				<cq-item class="ciq-tool active" cq-tool="notool" stxtap="tool()"><cq-help help-id="drawing_palette_notool"></cq-help><span class="icon pointer"></span><label>No Tool</label></cq-item>
+				<cq-item class="ciq-tool" cq-tool="measure" stxtap="tool()"><cq-help help-id="drawing_palette_measure"></cq-help><span class="icon measure"></span><label>Measure</label></cq-item>
+				<cq-undo class="ciq-tool"><cq-help help-id="drawing_palette_undo"></cq-help><span class="icon undo"></span><label>Undo</label></cq-undo>
+				<cq-redo class="ciq-tool"><cq-help help-id="drawing_palette_redo"></cq-help><span class="icon redo"></span><label>Redo</label></cq-redo>
 				<cq-menu class="ciq-select">
+					<cq-help help-id="drawing_palette_tool_categories"></cq-help>
 					<span cq-tool-group-selection>All</span>
 					<cq-menu-dropdown class="ciq-tool-group-selection">
 						{{toolGrouping}}
@@ -12180,7 +13555,16 @@ if (!Palette) {
 							</cq-menu-dropdown>
 						</cq-menu>
 					</cq-annotation>
-					<cq-clickable cq-fib-settings cq-selector="cq-fib-settings-dialog" cq-method="open" cq-section><span class="ciq-btn">Settings</span></cq-clickable>
+					<cq-clickable cq-fib-settings cq-selector="cq-fib-settings-dialog" cq-method="open" cq-section>
+						<span class="ciq-icon-btn cq-icon-gear">
+							<cq-tooltip>Settings</cq-tooltip>
+						</span>
+					</cq-clickable>
+					<cq-clickable cq-volumeprofile-settings cq-selector="cq-volumeprofile-settings-dialog" cq-method="open" cq-section>
+						<span class="ciq-icon-btn cq-icon-gear">
+							<cq-tooltip>Settings</cq-tooltip>
+						</span>
+					</cq-clickable>
 					<div class="ciq-drawing-edit-only" cq-section>
 						<div cq-toolbar-action="done_edit" stxtap="DrawingEdit.endEdit('close')" cq-section><cq-tooltip>Done Editing</cq-tooltip></div>
 					</div>
@@ -12305,7 +13689,7 @@ if (!Palette) {
 
 				var none = this.params.lineSelection.parent().find(".ciq-none");
 				none.hide();
-				var elements = this.defaultElements(drawingParameters);
+				var elements = this.defaultElements(drawingParameters, toolName);
 				for (var i = 0; i < elements.length; i++) {
 					this.node.find(elements[i]).addClass("ciq-active");
 					if (elements[i] == "cq-fill-color") none.show();
@@ -12330,7 +13714,7 @@ if (!Palette) {
 			if (removeDirty) this.dirty(false);
 		}
 
-		defaultElements(drawingParameters) {
+		defaultElements(drawingParameters, toolName) {
 			var arr = [];
 			for (var param in drawingParameters) {
 				if (param == "color") arr.push("cq-line-color");
@@ -12339,7 +13723,13 @@ if (!Palette) {
 					arr.push("cq-line-style");
 				else if (param == "axisLabel") arr.push("cq-axis-label");
 				else if (param == "font") arr.push("cq-annotation");
-				else if (param == "parameters") arr.push("cq-clickable");
+				else if (param == "parameters") {
+					if (toolName === "volumeprofile") {
+						arr.push("cq-clickable[cq-volumeprofile-settings]");
+					} else {
+						arr.push("cq-clickable[cq-fib-settings]");
+					}
+				}
 			}
 
 			return arr;
@@ -12742,7 +14132,16 @@ if (!Palette) {
 							</cq-menu-dropdown>
 						</cq-menu>
 					</cq-annotation>
-					<cq-clickable cq-fib-settings cq-selector="cq-fib-settings-dialog" cq-method="open" cq-section><span class="ciq-icon-btn cq-icon-gear"><cq-tooltip>Settings</cq-tooltip></span></cq-clickable>
+					<cq-clickable cq-fib-settings cq-selector="cq-fib-settings-dialog" cq-method="open" cq-section>
+						<span class="ciq-icon-btn cq-icon-gear">
+							<cq-tooltip>Settings</cq-tooltip>
+						</span>
+					</cq-clickable>
+					<cq-clickable cq-volumeprofile-settings cq-selector="cq-volumeprofile-settings-dialog" cq-method="open" cq-section>
+						<span class="ciq-icon-btn cq-icon-gear">
+							<cq-tooltip>Settings</cq-tooltip>
+						</span>
+					</cq-clickable>
 					<div class="ciq-drawing-edit-only" cq-section>
 						<div cq-toolbar-action="done_edit" stxtap="DrawingEdit.endEdit('close')" cq-section><cq-tooltip>Done Editing</cq-tooltip></div>
 					</div>
@@ -12916,6 +14315,7 @@ export {__js_webcomponents_close_ as close};
 export {__js_webcomponents_comparison_ as comparison};
 export {__js_webcomponents_comparisonLookup_ as comparisonLookup};
 export {__js_webcomponents_cvpController_ as cvpController};
+export {__js_webcomponents_dataDialog_ as dataDialog};
 export {__js_webcomponents_dialog_ as dialog};
 export {__js_webcomponents_doubleSlider_ as doubleSlider};
 export {__js_webcomponents_drawingContext_ as drawingContext};
@@ -12925,6 +14325,7 @@ export {__js_webcomponents_gridSizePicker_ as gridSizePicker};
 export {__js_webcomponents_heading_ as heading};
 export {__js_webcomponents_headsupDynamic_ as headsupDynamic};
 export {__js_webcomponents_headsupStatic_ as headsupStatic};
+export {__js_webcomponents_help_ as help};
 export {__js_webcomponents_infoToggle_ as infoToggle};
 export {__js_webcomponents_infoToggleDropdown_ as infoToggleDropdown};
 export {__js_webcomponents_instantChart_ as instantChart};
@@ -12960,6 +14361,7 @@ export {__js_webcomponents_toolbar_ as toolbar};
 export {__js_webcomponents_undo_ as undo};
 export {__js_webcomponents_viewDialog_ as viewDialog};
 export {__js_webcomponents_views_ as views};
+export {__js_webcomponents_volumeProfileSettingsDialog_ as volumeProfileSettingsDialog};
 export {__js_webcomponents_waveParameters_ as waveParameters};
 export {__js_webcomponents_dialog_colorPicker_ as colorPicker};
 export {__js_webcomponents_palette_drawingPalette_ as drawingPalette};
@@ -12983,6 +14385,7 @@ if (typeof __TREE_SHAKE__ === "undefined" || !__TREE_SHAKE__) {
 		__js_webcomponents_comparison_,
 		__js_webcomponents_comparisonLookup_,
 		__js_webcomponents_cvpController_,
+		__js_webcomponents_dataDialog_,
 		__js_webcomponents_dialog_,
 		__js_webcomponents_doubleSlider_,
 		__js_webcomponents_drawingContext_,
@@ -12992,6 +14395,7 @@ if (typeof __TREE_SHAKE__ === "undefined" || !__TREE_SHAKE__) {
 		__js_webcomponents_heading_,
 		__js_webcomponents_headsupDynamic_,
 		__js_webcomponents_headsupStatic_,
+		__js_webcomponents_help_,
 		__js_webcomponents_infoToggle_,
 		__js_webcomponents_infoToggleDropdown_,
 		__js_webcomponents_instantChart_,
@@ -13027,6 +14431,7 @@ if (typeof __TREE_SHAKE__ === "undefined" || !__TREE_SHAKE__) {
 		__js_webcomponents_undo_,
 		__js_webcomponents_viewDialog_,
 		__js_webcomponents_views_,
+		__js_webcomponents_volumeProfileSettingsDialog_,
 		__js_webcomponents_waveParameters_,
 		__js_webcomponents_dialog_colorPicker_,
 		__js_webcomponents_palette_drawingPalette_,

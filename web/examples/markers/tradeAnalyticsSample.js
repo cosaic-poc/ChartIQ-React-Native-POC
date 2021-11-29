@@ -5,20 +5,21 @@
 //
 import { CIQ, markers } from "../../js/standard.js";
 import marker from "../../examples/markers/markersSample.js";
-var _css;
 if (
 	typeof define === "undefined" &&
 	typeof module === "object" &&
 	typeof require === "function"
-)
-	_css = require("../../examples/markers/tradeAnalyticsSample.css");
-else if (typeof define === "function" && define.amd)
-	define(["../../examples/markers/tradeAnalyticsSample.css"], function (m) {
-		_css = m;
-	});
-else if (typeof window !== "undefined")
-	CIQ.loadStylesheet("examples/markers/tradeAnalyticsSample.css");
-if (_css) CIQ.addInternalStylesheet(_css, "tradeAnalyticsSample.css");
+) {
+	require("../../examples/markers/tradeAnalyticsSample.css");
+} else if (typeof define === "function" && define.amd) {
+	define(["../../examples/markers/tradeAnalyticsSample.css"], () => {});
+} else if (typeof window !== "undefined") {
+	const _css = new URL(
+		"../../examples/markers/tradeAnalyticsSample.css",
+		import.meta.url
+	);
+	if (import.meta.webpack === undefined) CIQ.loadStylesheet(_css.href);
+}
 CIQ.activateImports(markers);
 const MarkersSample = marker.MarkersSample;
 MarkersSample.registerType("trade", "showTradeAnalytics");

@@ -1,11 +1,10 @@
 /**
- *	8.3.0
- *	Generation date: 2021-09-08T03:57:27.183Z
- *	Client name: sofi
+ *	8.4.0
+ *	Generation date: 2021-11-29T15:42:32.590Z
+ *	Client name: sonyl test
  *	Package Type: Technical Analysis
  *	License type: trial
- *	Expiration date: "2021/10/08"
- *	iFrame lock: true
+ *	Expiration date: "2022/01/31"
  */
 
 /***********************************************************
@@ -21,6 +20,250 @@
 
 
 import {CIQ} from "../js/chartiq.js";
+
+
+let __js_addons_standard_dataLoader_ = (_exports) => {
+
+/* global _CIQ, _timezoneJS, _SplinePlotter */
+
+var CIQ = typeof _CIQ !== "undefined" ? _CIQ : _exports.CIQ;
+
+class DataLoader {
+	constructor(params) {
+		const { stx } = params;
+		if (!stx) {
+			console.warn("The DataLoader requires an stx parameter");
+			return;
+		}
+
+		this.stx = stx;
+		this.cssRequired = true;
+
+		stx.dataLoader = this;
+		if (CIQ.UI) {
+			CIQ.UI.observeProperty("uiContext", stx, ({ value: uiContext }) => {
+				if (!uiContext) return;
+				setTimeout(this.subscribeToChanges, 0, uiContext);
+				setTimeout(this.registerHotKeys, 0, uiContext);
+			});
+		}
+	}
+
+	formatData(dataObj, dataOptions) {
+		const { defaultPlotField } = this.stx.chart;
+		const { results, fields } = dataObj;
+		const { name } = dataOptions;
+
+		const dtIdx = fields.indexOf("DT");
+		const dateIdx = fields.indexOf("Date");
+		const nameIdx = fields.indexOf(name);
+
+		const useField = nameIdx > -1;
+		let usedFields = [dtIdx > -1 ? dtIdx : dateIdx];
+		if (useField) usedFields.push(fields.indexOf(name));
+		results.data = results.map((row) => {
+			const entry = {};
+			row.split(",").forEach((col, idx) => {
+				if (useField && usedFields.indexOf(idx) === -1) return;
+				let f = fields[idx];
+				let c;
+				try {
+					c = JSON.parse(col);
+				} catch (e) {
+					c = col;
+				}
+				let parsedCol = f === "DT" || f === "Date" ? c : Number.parseFloat(c);
+				entry[fields[idx]] = parsedCol;
+
+				// If we're using the "name" to signify we want to add a series
+				// then take the value of the series and set it the defaultPlotField.
+				// Otherwise we end up trying to plot the defaultPlotField instead of the "name"
+				if (idx === nameIdx) {
+					delete entry[fields[idx]];
+					entry[defaultPlotField] = parsedCol;
+				}
+			});
+			return entry;
+		});
+	}
+
+	importData(dataObj) {
+		const self = this;
+		const { stx } = this;
+
+		const opt = Object.fromEntries(dataObj.formData.entries());
+		let { color, display, name, panel, periodicity } = opt;
+		periodicity = JSON.parse(periodicity);
+
+		this.formatData(dataObj, opt);
+		const { results } = dataObj;
+		const { data } = results;
+
+		const symbolObject = {
+			symbol: name,
+			static: true
+		};
+		const params = {
+			data,
+			symbolObject,
+			panel: panel === "true" ? true : undefined,
+			color
+		};
+
+		if (display === "secondary") {
+			stx.addSeries(name, params, function () {
+				let series = stx.getSeries({ symbol: name })[0];
+				const tick = stx.tickFromDate(series.endPoints.end);
+				stx.chart.scroll =
+					stx.chart.dataSet.length - 1 - tick + stx.chart.maxTicks;
+				self.registerDataWarnings(true);
+			});
+		} else {
+			stx.quoteDriver.pause(name);
+			stx.loadChart(symbolObject, { masterData: data, periodicity }, () => {
+				self.registerDataWarnings();
+			});
+		}
+	}
+
+	/**
+	 * Registers and cleans up warnings about when data will be removed on users actions
+	 * @param {boolean} series When true adds tear downs for series.
+	 * @memberof DataLoader#
+	 */
+	registerDataWarnings(series) {
+		const { stx } = this;
+		const warningEvt = stx.addEventListener("menu", ({ stx, menu }) => {
+			if (menu === document.querySelector("cq-menu.ciq-period")) {
+				stx.dispatch("notification", {
+					message: "Changing Periodicity may lose loaded data",
+					displayTime: 3
+				});
+			}
+		});
+		let seriesInj, highlightInj;
+		if (series) {
+			seriesInj = stx.append("removeSeries", removeWarnings);
+			highlightInj = stx.append("deleteHighlighed", removeWarnings);
+		}
+
+		stx.addEventListener("periodicity", ({ stx, differentData }) => {
+			const statics = stx.getSymbols({ static: true });
+			if (statics && differentData) {
+				statics.forEach((symbol) => {
+					stx.removeSeries(symbol, stx.chart);
+					removeWarnings();
+				});
+			}
+		});
+
+		stx.addEventListener("newChart", () => {
+			removeWarnings();
+		});
+
+		function removeWarnings() {
+			if (!stx.getSymbols({ static: true }).length) {
+				stx.removeEventListener(warningEvt);
+				if (series) {
+					stx.removeInjection(seriesInj);
+					stx.removeInjection(highlightInj);
+				}
+			}
+		}
+	}
+
+	registerHotKeys(uiContext) {
+		const hotKeys = CIQ.getFromNS(uiContext.config, "hotkeyConfig.hotkeys");
+		if (!hotKeys) return;
+
+		let hotKey = hotKeys.find(({ action }) => action === "dataLoader");
+		if (hotKey)
+			hotKey.action = () => {
+				uiContext.getAdvertised("Channel").write(null, "dataLoader", true);
+			};
+	}
+
+	subscribeToChanges(uiContext) {
+		const { stx } = uiContext;
+		const base = CIQ.UI.BaseComponent.prototype;
+
+		base.channelSubscribe(
+			"channel.dataLoader",
+			(value) => {
+				let val = value
+					? { type: "dataLoader", params: { stx, context: uiContext } }
+					: {};
+
+				base.channelWrite("channel.dialog", val, stx);
+			},
+			stx
+		);
+	}
+}
+
+class CSVReader {
+	constructor(file) {
+		const reader = new FileReader();
+		this.reader = reader;
+		this.file = file;
+	}
+
+	async parse(file) {
+		const { reader } = this;
+		return new Promise((res, rej) => {
+			reader.readAsText(file);
+
+			reader.onload = (e) => {
+				const raw = this.splitResults(reader.result);
+				const fields = raw.shift(); // remove fields so they aren't reparsed
+				const quoted = !!fields.match(/"/);
+				const splitter = quoted ? new RegExp(/,(?=")/) : new RegExp(/,/);
+				this.fields = fields.split(splitter).map((field) => {
+					let f;
+					try {
+						f = JSON.parse(field);
+					} catch (e) {
+						f = field;
+					}
+					return f;
+				});
+				if (raw[raw.length - 1] === "") raw.pop(); // remove any trailing newline
+				this.results = raw;
+				res(raw);
+			};
+
+			reader.onerror = (e) => {
+				console.warn(e);
+				rej(e);
+			};
+		});
+	}
+
+	determineLineBreak(data) {
+		const { length } = data;
+		const carriage = "\r\n";
+		const newLine = "\n";
+		let pct = Math.floor(length * 0.05); // take first 5% of the string
+		let start = 0;
+		let lbreak;
+		do {
+			const sub = data.substring(start, pct);
+			if (sub.indexOf(carriage) > -1) lbreak = carriage;
+			else if (sub.indexOf(newLine) > -1) lbreak = newLine;
+			else start += pct;
+		} while (!lbreak);
+		return lbreak;
+	}
+
+	splitResults(data) {
+		return data.split(this.determineLineBreak(data));
+	}
+}
+
+CIQ.CSVReader = CIQ.CSVReader || CSVReader;
+CIQ.DataLoader = CIQ.DataLoader || DataLoader;
+
+};
 
 
 let __js_addons_standard_extendedHours_ = (_exports) => {
@@ -763,8 +1006,19 @@ CIQ.RangeSlider =
 		self.xaxisHeight = 30;
 		self.manageTouchAndMouse = false;
 		self.minimumCandleWidth = 0;
-		self.chart.panel.subholder.style.cursor = "ew-resize";
-		var yAxis = self.chart.panel.yAxis;
+		var panel = self.chart.panel;
+		var subholder = panel.subholder;
+		var closeButton = panel.close;
+		subholder.style.cursor = "ew-resize";
+		subholder.classList.add("stx_range_slider");
+		if (closeButton) {
+			closeButton.style.display = "inline";
+			CIQ.safeClickTouch(closeButton, function () {
+				stx.layout.rangeSlider = false;
+				stx.changeOccurred("layout");
+			});
+		}
+		var yAxis = panel.yAxis;
 		yAxis.drawCurrentPriceLabel = false;
 		Object.defineProperty(yAxis, "position", {
 			get: function () {
@@ -790,8 +1044,6 @@ CIQ.RangeSlider =
 		self.chart.baseline.userLevel = false;
 		if (self.controls.home) self.controls.home.style.width = 0;
 		self.initializeChart();
-		var subholder = self.chart.panel.subholder;
-
 		if (CIQ.UI) {
 			CIQ.UI.KeystrokeHub.addHotKeyHandler(
 				"rangeSlider",
@@ -799,6 +1051,9 @@ CIQ.RangeSlider =
 					document.body.keystrokeHub.context.advertised.Layout.setRangeSlider();
 				},
 				stx
+			);
+			CIQ.UI.observeProperty("breakpoint", stx.chart, (obj) =>
+				self.notifyBreakpoint(obj.value)
 			);
 		}
 
@@ -850,16 +1105,16 @@ CIQ.RangeSlider =
 			if (!on) return;
 			self.resizeChart();
 			self.initializeChart();
-			self.draw();
-			this.drawSlider();
+			this.requestDraw();
 		};
 		this.setSymbol = function (symbol) {
 			self.chart.panel.display = self.chart.symbol = symbol;
+			self.chart.symbolObject = { symbol: symbol };
+			self.chart.market = stx.chart.market;
 			self.setMainSeriesRenderer();
 			self.resizeChart();
 			this.adjustRange(stx.chart);
-			self.draw();
-			this.drawSlider();
+			this.requestDraw();
 		};
 		this.acceptLayoutChange = function (layout) {
 			var doDraw = false;
@@ -892,8 +1147,7 @@ CIQ.RangeSlider =
 			if (!CIQ.trulyVisible(ciqSlider)) return;
 			if (doDraw) {
 				self.setMainSeriesRenderer();
-				self.draw();
-				this.drawSlider();
+				this.requestDraw();
 			}
 		};
 		this.adjustRange = function (chart) {
@@ -930,17 +1184,15 @@ CIQ.RangeSlider =
 						stx.tickFromDate(chart.endPoints.begin) -
 						scrollOffset
 				) + 1;
-			myChart.maxTicks = myChart.scroll - ticksOffset + 1;
-			self.layout.candleWidth = myChart.width / myChart.maxTicks;
+			self.setMaxTicks(myChart.scroll - ticksOffset + 2);
 		};
 		this.copyData = function (chart) {
-			if (!chart.dataSet) return;
+			if (!(chart.dataSet && chart.masterData)) return;
 			var myChart = self.chart;
-			myChart.masterData = self.masterData = chart.masterData;
-			myChart.dataSet = chart.dataSet;
+			myChart.masterData = self.masterData = chart.masterData.slice(0);
+			myChart.dataSet = chart.dataSet.slice(0);
 			myChart.state = chart.state;
-			self.draw();
-			this.drawSlider();
+			this.requestDraw();
 		};
 		this.calculateYAxisPosition = function () {
 			var panel = self.chart.panel;
@@ -1011,6 +1263,15 @@ CIQ.RangeSlider =
 			ctx.stroke();
 			ctx.restore();
 		};
+		this.requestDraw = function () {
+			if (!this.drawRequested) {
+				this.drawRequested = setTimeout(() => {
+					self.draw();
+					this.drawSlider();
+					this.drawRequested = clearTimeout(this.drawRequested);
+				}, 100);
+			}
+		};
 		stx.addEventListener("layout", function (obj) {
 			obj.stx.slider.acceptLayoutChange(obj.stx.layout);
 		});
@@ -1020,7 +1281,7 @@ CIQ.RangeSlider =
 				CIQ.I18N.setLocale(self, language);
 			}
 			self.preferences.language = language;
-			self.draw();
+			this.slider.requestDraw();
 		});
 		stx.addEventListener("symbolChange", function (obj) {
 			if (obj.action == "master") obj.stx.slider.setSymbol(obj.symbol);
@@ -1039,17 +1300,18 @@ CIQ.RangeSlider =
 				helper.update();
 			}
 		});
-		stx.append("createDataSet", function () {
+		stx.append("createDataSet", function (...args) {
+			const [, , { animationEntry } = {}] = args || [];
+			if (animationEntry) return;
 			this.slider.adjustRange(this.chart);
 			this.slider.copyData(this.chart);
 		});
-		stx.append("draw", function () {
-			if (!CIQ.trulyVisible(ciqSlider)) return;
+		stx.append("draw", function ({ animationEntry } = {}) {
+			if (animationEntry || !CIQ.trulyVisible(ciqSlider)) return;
 			if (!self.chart.dataSet) return;
-			this.slider.adjustRange(this.chart);
 			this.slider.calculateYAxisPosition();
-			self.draw();
-			this.slider.drawSlider();
+			this.slider.adjustRange(this.chart);
+			this.slider.requestDraw();
 		});
 		stx.prepend("resizeChart", function () {
 			var ciqChart = chartContainer.parentElement,
@@ -1070,14 +1332,10 @@ CIQ.RangeSlider =
 			});
 			ciqChart.style.height = totalHeightOfContainers + "px";
 			if (this.layout.rangeSlider) {
-				if (self.chart.breakpoint !== this.chart.breakpoint) {
-					self.notifyBreakpoint(this.chart.breakpoint);
-				}
 				ciqSlider.style.display = "";
 				self.resizeChart();
 				self.initializeChart();
-				self.draw();
-				this.slider.drawSlider();
+				this.slider.requestDraw();
 			} else {
 				ciqSlider.style.display = "none";
 			}
@@ -1125,51 +1383,68 @@ CIQ.RangeSlider =
 			subholder.addEventListener(
 				ev,
 				function (e) {
-					var startDrag = self.startDrag;
-					if (!startDrag && startDrag !== 0) return;
-					var touches = e.touches;
-					var movement =
-						(touches && touches.length
-							? self.backOutX(touches[0].pageX)
-							: self.backOutX(e.pageX)) - e.target.offsetLeft;
-					if (!movement && movement !== 0) return; // wrong event
-					movement -= startDrag;
-					var tickLeft = self.tickLeft,
-						tickRight = self.tickRight;
-					var startPixelLeft = self.startPixelLeft,
-						startPixelRight = self.startPixelRight;
-					var needsLeft = self.needsLeft,
-						needsRight = self.needsRight;
-					if (needsLeft) {
-						if (startPixelLeft + movement < self.chart.left)
-							movement = self.chart.left - startPixelLeft;
-						if (needsRight && startPixelRight + movement >= self.chart.right) {
-							movement = self.chart.right - startPixelRight;
-							if (!self.isHome()) movement += self.layout.candleWidth / 2; // force a right scroll
-						}
-						tickLeft = self.tickFromPixel(startPixelLeft + movement);
-						if (needsRight)
-							tickRight = tickLeft + self.tickRight - self.tickLeft;
-					} else if (needsRight) {
-						tickRight = Math.min(
-							self.tickFromPixel(startPixelRight + movement),
-							stx.chart.dataSet.length - 1
-						);
-					} else return;
+					if (!self.timeout) {
+						// consolidate calls and execute on next tick
+						// this prevents unnecessary calls that could otherwise build up based on mousemove
+						self.timeout = setTimeout(() => {
+							const done = () => (self.timeout = clearTimeout(self.timeout));
 
-					var newCandleWidth = stx.chart.width / (tickRight - tickLeft + 1);
-					if (
-						tickRight >= tickLeft &&
-						newCandleWidth >= stx.minimumCandleWidth
-					) {
-						self.tickLeft = tickLeft;
-						self.tickRight = tickRight;
-						stx.chart.scroll = stx.chart.dataSet.length - tickLeft;
-						if (!needsLeft || !needsRight) {
-							stx.setCandleWidth(newCandleWidth);
-						}
-						stx.micropixels = 0;
-						stx.draw();
+							const {
+								startDrag,
+								startPixelLeft,
+								startPixelRight,
+								needsLeft,
+								needsRight
+							} = self;
+							let { tickLeft, tickRight } = self;
+
+							if (!startDrag && startDrag !== 0) return done();
+							const { touches } = e;
+							let movement =
+								(touches && touches.length
+									? self.backOutX(touches[0].pageX)
+									: self.backOutX(e.pageX)) - e.target.offsetLeft;
+							if (!movement && movement !== 0) return done(); // wrong event
+							movement -= startDrag;
+
+							if (needsLeft) {
+								if (startPixelLeft + movement < self.chart.left)
+									movement = self.chart.left - startPixelLeft;
+								if (
+									needsRight &&
+									startPixelRight + movement >= self.chart.right
+								) {
+									movement = self.chart.right - startPixelRight;
+									if (!self.isHome()) movement += self.layout.candleWidth / 2; // force a right scroll
+								}
+								tickLeft = self.tickFromPixel(startPixelLeft + movement);
+								if (needsRight)
+									tickRight = tickLeft + self.tickRight - self.tickLeft;
+							} else if (needsRight) {
+								tickRight = Math.min(
+									self.tickFromPixel(startPixelRight + movement),
+									stx.chart.dataSet.length - 1
+								);
+							} else return done();
+
+							let newCandleWidth = stx.chart.width / (tickRight - tickLeft + 1);
+							if (
+								tickRight >= tickLeft &&
+								((needsLeft && needsRight) ||
+									newCandleWidth >= stx.minimumCandleWidth)
+							) {
+								self.tickLeft = tickLeft;
+								self.tickRight = tickRight;
+								stx.chart.scroll = stx.chart.dataSet.length - tickLeft;
+								if (!needsLeft || !needsRight) {
+									stx.setCandleWidth(newCandleWidth);
+								}
+								stx.micropixels = 0;
+								stx.draw();
+							}
+
+							done();
+						});
 					}
 				},
 				{ passive: false }
@@ -1177,6 +1452,7 @@ CIQ.RangeSlider =
 		});
 		this.adjustRange(stx.chart);
 		this.copyData(stx.chart);
+		stx.draw();
 	};
 
 };
@@ -1269,7 +1545,6 @@ CIQ.Shortcuts =
 		 */
 		this.windowForEachChart = windowForEachChart;
 		this.content = this.getShortcutContent(config);
-		this.enclosingContainer = stx.container.querySelector(".stx-subholder");
 
 		this.ensureMessagingAvailable(stx);
 		this.enableUI(stx);
@@ -1343,7 +1618,11 @@ CIQ.Shortcuts.prototype.enableUI = function (stx) {
 CIQ.Shortcuts.prototype.ensureMessagingAvailable = function (stx) {
 	setTimeout(() => {
 		const contextContainer = stx.uiContext.topNode;
-		if (!contextContainer.querySelector("cq-floating-window")) {
+		const floatingWindow = Array.from(
+			contextContainer.querySelectorAll("cq-floating-window")
+		).find((el) => el.closest("cq-context") === contextContainer);
+
+		if (!floatingWindow) {
 			contextContainer.append(document.createElement("cq-floating-window"));
 		}
 	});
@@ -1448,7 +1727,7 @@ CIQ.Shortcuts.prototype.toggle = function (value) {
 		type: "shortcut",
 		title: "Shortcuts",
 		content: this.content,
-		container: this.enclosingContainer,
+		container: this.stx.uiContext.topNode,
 		onClose: () => (this.closed = true),
 		width: this.width,
 		status: value,
@@ -1651,6 +1930,11 @@ CIQ.TableView.prototype.open = function (params) {
 	const { stx } = this;
 	const close = this.close.bind(this);
 
+	// Set the view as an active modal, this will disable the main tab key handler
+	// and tie us into the main escape key handler.
+	const keystrokeHub = document.body.keystrokeHub;
+	if (keystrokeHub) keystrokeHub.addActiveModal(this);
+
 	setTimeout(() => (this.removeCloseListener = getCloseListener(this)));
 
 	function getCloseListener(self) {
@@ -1660,11 +1944,30 @@ CIQ.TableView.prototype.open = function (params) {
 		const closeHandler = ({ target }) => !withinTable(target) && close();
 		contextNode.addEventListener("click", closeHandler);
 		const handleKeydown = (e) => {
+			const { tableView } = document.body.keystrokeHub.context.stx;
+			if (!tableView) return;
 			if (e.code === "Escape") {
-				const { tableView } = document.body.keystrokeHub.context.stx;
-				if (tableView) {
-					tableView.close();
-					e.preventDefault();
+				tableView.close();
+				e.preventDefault();
+			} else {
+				// Handle all other keys using keyboard navigation functions in BaseComponent
+				if (!CIQ.UI || !CIQ.UI.BaseComponent) return;
+				const componentProxy = CIQ.UI.BaseComponent.prototype;
+				const items = tableView.view.querySelectorAll("button");
+
+				if (e.code === "Tab") {
+					let { shiftKey } = e || {};
+					componentProxy.focusNextItem(items, shiftKey, true);
+					const focused = componentProxy.findFocused(items);
+					// The highlightItem context must have a keyboardNavigation property
+					if (focused[0])
+						componentProxy.highlightItem.call(
+							{ keyboardNavigation: document.body.keystrokeHub },
+							focused[0]
+						);
+				} else if (e.code === "Enter") {
+					const focused = componentProxy.findFocused(items);
+					if (focused[0]) componentProxy.clickItem(focused[0], e);
 				}
 			}
 		};
@@ -1707,6 +2010,16 @@ CIQ.TableView.prototype.close = function (notify = true) {
 	if (this.removeCloseListener) {
 		this.removeCloseListener();
 		this.removeCloseListener = null;
+	}
+
+	// Remove the table view as an active modal in keyboard navigation
+	if (document.body.keystrokeHub) {
+		let { tabActiveModals } = document.body.keystrokeHub;
+		let modalIdx = tabActiveModals.indexOf(this);
+		if (modalIdx > -1) {
+			tabActiveModals.splice(modalIdx, 1);
+		}
+		document.body.keystrokeHub.highlightAlign();
 	}
 };
 
@@ -1780,7 +2093,7 @@ function TableViewBuilder() {}
  * @since 8.1.0
  */
 TableViewBuilder.colHeaders = {
-	date: { label: "Date/Time" },
+	date: { label: "Date" },
 	open: { label: "Open" },
 	high: { label: "High" },
 	low: { label: "Low" },
@@ -1924,7 +2237,7 @@ TableViewBuilder.createTable = function (stx, config = {}) {
 	function copyFn() {
 		const contentEl = document.createElement("textArea");
 		document.body.appendChild(contentEl);
-		contentEl.textContent = dataToCsv(arr, { colHeaders });
+		contentEl.textContent = dataToCsv(arr, { colHeaders, colSeparator: "," });
 		contentEl.select();
 		document.execCommand("copy");
 		contentEl.remove();
@@ -1932,7 +2245,7 @@ TableViewBuilder.createTable = function (stx, config = {}) {
 	}
 
 	function downloadFn() {
-		const csvData = dataToCsv(arr, { colHeaders });
+		const csvData = dataToCsv(arr, { colHeaders, colSeparator: "," });
 		const fileName = fileNameFormatter(csvData);
 		downloadCsv(csvData, fileName);
 	}
@@ -2017,7 +2330,7 @@ TableViewBuilder.dataToCsv = function (
 			.join(colSeparator);
 	});
 
-	return `${tableHeader}\n${tableRows.join("\n")}`;
+	return `${tableHeader}\n${tableRows.reverse().join("\n")}`;
 };
 
 /**
@@ -2087,16 +2400,8 @@ TableViewBuilder.getChartData = function (
 			return acc + (Close - Base) / Base;
 		}, 0) / length;
 	data.forEach((item, index) => {
-		const {
-			DT,
-			displayDate,
-			High,
-			Low,
-			Open,
-			Close,
-			iqPrevClose,
-			Volume
-		} = item;
+		const { DT, displayDate, High, Low, Open, Close, iqPrevClose, Volume } =
+			item;
 		const Base = usePreviousCloseForChange ? iqPrevClose : Open;
 		const pctChange = (Close - Base) / Base;
 		const date =
@@ -2229,8 +2534,8 @@ TableViewBuilder.getFilenameFormatter = function (stx) {
 		if (csvData) {
 			const rows = csvData.split("\n");
 			if (rows.length > 1) {
-				[, firstDate = ""] = rows[1].match(/^"([^"]*)"/) || [];
-				[, lastDate = ""] = rows[rows.length - 1].match(/^"([^"]*)"/) || [];
+				[, firstDate = ""] = rows[rows.length - 1].match(/^"([^"]*)"/) || [];
+				[, lastDate = ""] = rows[1].match(/^"([^"]*)"/) || [];
 				firstDate = firstDate.replace(/:/g, ".").replace(/\//g, "-");
 				lastDate = lastDate.replace(/:/g, ".").replace(/\//g, "-");
 			}
@@ -2723,6 +3028,7 @@ if (!CIQ.Marker) {
 						) &&
 						bar != stx.chart.dataSegment.length - 1
 					) {
+						adjustSticky(marker);
 						return;
 					}
 
@@ -2747,12 +3053,12 @@ if (!CIQ.Marker) {
 					}
 					var height = parseInt(getComputedStyle(marker.node).height, 10);
 					var top = Math.round(
-						CIQ.ChartEngine.crosshairY - stx.top - height / 2
+						stx.backOutY(CIQ.ChartEngine.crosshairY) - height / 2
 					);
 					if (top + height > stx.height) top = stx.height - height;
 					if (top < 0) top = 0;
 					marker.node.style.top = top + "px";
-
+					adjustSticky(marker);
 					if (showBarHighlight && !stx.layout.crosshair) {
 						const candleWidth =
 							marker.lastBar.candleWidth || stx.layout.candleWidth;
@@ -2774,7 +3080,7 @@ if (!CIQ.Marker) {
 				// backwards compatibility
 				// temporarily disable overXAxis, overYAxis so the crosshairs don't hide if touch device and over Y axis (this can happen
 				// due to the offset which we apply)
-				if (stx.layout.crosshair) {
+				if (CIQ.touchDevice && stx.layout.crosshair) {
 					var overXAxis = stx.overXAxis,
 						overYAxis = stx.overYAxis;
 					stx.overXAxis = stx.overYAxis = false;
@@ -2813,22 +3119,23 @@ if (!CIQ.Marker) {
 			}
 
 			function renderFunction() {
+				var stx = this;
 				// the tooltip has not been initialized with this chart.
 				if (hideIfDisabled()) return;
 
-				var bar = this.barFromPixel(this.cx),
-					data = this.chart.dataSegment[bar];
+				var bar = stx.barFromPixel(stx.cx),
+					data = stx.chart.dataSegment[bar];
 				if (!data) {
 					hideTooltip();
 					return;
 				}
 				if (
-					CIQ.Marker.Tooltip.sameBar(data, this.huTooltip.lastBar) &&
-					bar != this.chart.dataSegment.length - 1
+					CIQ.Marker.Tooltip.sameBar(data, stx.huTooltip.lastBar) &&
+					bar != stx.chart.dataSegment.length - 1
 				) {
 					return;
 				}
-				var node = this.huTooltip.node;
+				var node = stx.huTooltip.node;
 				Array.from(node.parentElement.querySelectorAll("[auto]")).forEach(
 					function (i) {
 						i.remove();
@@ -2840,7 +3147,7 @@ if (!CIQ.Marker) {
 					i.innerHTML = "";
 				});
 
-				var panel = this.chart.panel;
+				var panel = stx.chart.panel;
 				var yAxis = panel.yAxis;
 				var dupMap = {};
 				var fields = [];
@@ -2859,7 +3166,7 @@ if (!CIQ.Marker) {
 				dupMap.DT = dupMap.Close = 1;
 				if (
 					showChange &&
-					CIQ.ChartEngine.isDailyInterval(this.layout.interval)
+					CIQ.ChartEngine.isDailyInterval(stx.layout.interval)
 				) {
 					fields.push({
 						member: "Change",
@@ -2899,11 +3206,11 @@ if (!CIQ.Marker) {
 					dupMap.Volume = 1;
 				}
 				if (showSeries) {
-					var renderers = this.chart.seriesRenderers;
+					var renderers = stx.chart.seriesRenderers;
 					for (var renderer in renderers) {
 						var rendererToDisplay = renderers[renderer];
-						if (rendererToDisplay === this.mainSeriesRenderer) continue;
-						panel = this.panels[rendererToDisplay.params.panel];
+						if (rendererToDisplay === stx.mainSeriesRenderer) continue;
+						panel = stx.panels[rendererToDisplay.params.panel];
 						yAxis = rendererToDisplay.params.yAxis;
 						if (!yAxis && rendererToDisplay.params.shareYAxis)
 							yAxis = panel.yAxis;
@@ -2933,11 +3240,11 @@ if (!CIQ.Marker) {
 					}
 				}
 				if (showStudies) {
-					for (var study in this.layout.studies) {
-						var sd = this.layout.studies[study];
-						panel = this.panels[sd.panel];
-						yAxis = panel && sd.getYAxis(this);
-						for (var output in this.layout.studies[study].outputMap) {
+					for (var study in stx.layout.studies) {
+						var sd = stx.layout.studies[study];
+						panel = stx.panels[sd.panel];
+						yAxis = panel && sd.getYAxis(stx);
+						for (var output in stx.layout.studies[study].outputMap) {
 							if (output && !dupMap[output]) {
 								fields.push({
 									member: output,
@@ -3021,7 +3328,7 @@ if (!CIQ.Marker) {
 						(dsField === null || typeof dsField == "undefined")
 					) {
 						// do this only for additional series and not the main series
-						var seriesPrice = this.valueFromInterpolation(
+						var seriesPrice = stx.valueFromInterpolation(
 							bar,
 							fieldName,
 							"Close",
@@ -3044,14 +3351,13 @@ if (!CIQ.Marker) {
 							if (!yAxis) {
 								// raw value
 								fieldValue = dsField;
-								var intl = this.internationalizer;
+								var intl = stx.internationalizer;
 								if (intl) {
 									var l = intl.priceFormatters.length;
 									var decimalPlaces = CIQ.countDecimals(fieldValue);
 									if (decimalPlaces >= l) decimalPlaces = l - 1;
-									fieldValue = intl.priceFormatters[decimalPlaces].format(
-										fieldValue
-									);
+									fieldValue =
+										intl.priceFormatters[decimalPlaces].format(fieldValue);
 								}
 							} else if (
 								yAxis.originalPriceFormatter &&
@@ -3059,7 +3365,7 @@ if (!CIQ.Marker) {
 							) {
 								// in comparison mode with custom formatter
 								fieldValue = yAxis.originalPriceFormatter.func(
-									this,
+									stx,
 									panel,
 									dsField,
 									labelDecimalPlaces
@@ -3070,13 +3376,13 @@ if (!CIQ.Marker) {
 							) {
 								// using custom formatter
 								fieldValue = yAxis.priceFormatter(
-									this,
+									stx,
 									panel,
 									dsField,
 									labelDecimalPlaces
 								);
 							} else {
-								fieldValue = this.formatYAxisPrice(
+								fieldValue = stx.formatYAxisPrice(
 									dsField,
 									panel,
 									labelDecimalPlaces,
@@ -3086,15 +3392,15 @@ if (!CIQ.Marker) {
 						} else if (dsField.constructor == Date) {
 							if (
 								isRecordDate &&
-								this.controls.floatDate &&
-								this.controls.floatDate.innerHTML
+								stx.controls.floatDate &&
+								stx.controls.floatDate.innerHTML
 							) {
-								if (this.chart.xAxis.noDraw) fieldValue = "N/A";
+								if (stx.chart.xAxis.noDraw) fieldValue = "N/A";
 								else
-									fieldValue = CIQ.displayableDate(this, panel.chart, dsField);
+									fieldValue = CIQ.displayableDate(stx, panel.chart, dsField);
 							} else {
 								fieldValue = CIQ.yyyymmdd(dsField);
-								if (!CIQ.ChartEngine.isDailyInterval(this.layout.interval)) {
+								if (!CIQ.ChartEngine.isDailyInterval(stx.layout.interval)) {
 									fieldValue += " " + dsField.toTimeString().substr(0, 8);
 								}
 							}
@@ -3123,7 +3429,7 @@ if (!CIQ.Marker) {
 							var newFieldName = document.createElement(
 								"stx-hu-tooltip-field-name"
 							);
-							newFieldName.innerHTML = this.translateIf(fieldName);
+							newFieldName.innerHTML = stx.translateIf(fieldName);
 							newField.appendChild(newFieldName);
 							var newFieldValue = document.createElement(
 								"stx-hu-tooltip-field-value"
@@ -3146,10 +3452,38 @@ if (!CIQ.Marker) {
 						}
 					}
 				}
-				this.huTooltip.render();
+				stx.huTooltip.render();
+			}
+
+			function adjustSticky(marker) {
+				if (marker.node.style.left === "-50000px") return;
+				var mSticky = stx.controls.mSticky;
+				if (mSticky && mSticky.style.display !== "none") {
+					var newTop =
+						CIQ.stripPX(marker.node.style.top) -
+						CIQ.elementDimensions(mSticky, {
+							padding: true,
+							border: true,
+							margin: true
+						}).height;
+
+					if (newTop < 0) {
+						marker.node.style.top =
+							CIQ.stripPX(marker.node.style.top) - newTop + "px";
+						newTop = 0;
+					}
+					var style = mSticky.style;
+					CIQ.efficientDOMUpdate(style, "top", newTop + "px");
+					CIQ.efficientDOMUpdate(style, "left", marker.node.style.left);
+					CIQ.efficientDOMUpdate(style, "right", marker.node.style.right);
+				}
 			}
 
 			container.addEventListener("mouseout", hideTooltip);
+
+			stx.append("mousemoveinner", function () {
+				adjustSticky(this.huTooltip);
+			});
 
 			stx.append("deleteHighlighted", function () {
 				this.huTooltip.lastBar = {};
@@ -3250,6 +3584,7 @@ CIQ.Animation =
 			return console.warn(
 				"No CIQ.ChartEngine provided. Cannot properly create CIQ.Animation instance"
 			);
+		this.cssRequired = true;
 		var params = {
 			stayPut: false,
 			ticksFromEdgeOfScreen: 5,
@@ -3275,6 +3610,14 @@ CIQ.Animation =
 			nextBoundary = null;
 		}
 
+		if (CIQ.UI) {
+			CIQ.UI.observeProperty("animation", stx.layout, ({ value }) => {
+				if (params.tension) {
+					stx.chart.tension = value ? animationParameters.tension : 0;
+				}
+			});
+		}
+
 		stx.addEventListener(["symbolChange", "layout"], function (obj) {
 			initMarketSessionFlags();
 		});
@@ -3297,9 +3640,11 @@ CIQ.Animation =
 			if (
 				!chart ||
 				!chart.defaultChartStyleConfig ||
-				chart.defaultChartStyleConfig == "none"
-			)
+				chart.defaultChartStyleConfig == "none" ||
+				!this.layout.animation
+			) {
 				return;
+			}
 
 			if (params !== undefined) {
 				if (params.animationEntry || params.secondarySeries) return;
@@ -3315,7 +3660,6 @@ CIQ.Animation =
 						bar.Close = record.Close;
 						if (record.LastSize) bar.LastSize = record.LastSize;
 						if (record.LastTime) bar.LastTime = record.LastTime;
-
 						// Reset properties to close if Open, High and Low have been added and changed during animation process
 						if (record.Open === undefined && bar.Open !== undefined)
 							bar.Open = record.Close;
@@ -3324,12 +3668,17 @@ CIQ.Animation =
 						if (record.Low === undefined && bar.Low !== undefined)
 							bar.Low = record.Close;
 
-						self.updateCurrentMarketData({
-							Close: bar.Close,
-							DT: bar.DT,
-							LastSize: bar.LastSize,
-							LastTime: bar.LastTime
-						});
+						self.updateCurrentMarketData(
+							{
+								Close: bar.Close,
+								DT: bar.DT,
+								LastSize: bar.LastSize,
+								LastTime: bar.LastTime
+							},
+							null,
+							null,
+							{ animationLastBar: true, fromTrade: true }
+						);
 						self.createDataSet(null, null, { appending: true });
 						return;
 					}
@@ -3466,9 +3815,10 @@ CIQ.Animation =
 								session !== "" &&
 								(!this.layout.marketSessions ||
 									!this.layout.marketSessions[session]);
-							nextBoundary = chart.market[
-								filterSession ? "getNextOpen" : "getNextClose"
-							](dtToFilter);
+							nextBoundary =
+								chart.market[filterSession ? "getNextOpen" : "getNextClose"](
+									dtToFilter
+								);
 						}
 					}
 					if (filterSession) {
@@ -3517,7 +3867,12 @@ CIQ.Animation =
 								!animationParameters.stayPut
 							) {
 								this.nextMicroPixels = this.micropixels;
-								chart.scroll++;
+								if (
+									chart.scroll >=
+									chart.maxTicks -
+										this.preferences.whitespace / this.layout.candleWidth
+								)
+									chart.scroll++;
 							}
 							chart.animatingHorizontalScroll = linearChart; // When the chart advances we also animate the horizontal scroll by incrementing micropixels
 							chart.previousDataSetLength = chart.dataSet.length;
@@ -3551,7 +3906,9 @@ CIQ.Animation =
 		});
 
 		stx.prepend("renderYAxis", function (chart) {
-			if (this.grabbingScreen || !this.isHome()) return;
+			if (this.grabbingScreen || !this.isHome() || !this.layout.animation) {
+				return;
+			}
 			// When display style doesn't support animation
 			var supportedChartType =
 				this.mainSeriesRenderer && this.mainSeriesRenderer.supportsAnimation;
@@ -3619,7 +3976,8 @@ CIQ.Animation =
 				this.chart.dataSet &&
 				this.chart.dataSet.length &&
 				this.mainSeriesRenderer &&
-				this.mainSeriesRenderer.supportsAnimation
+				this.mainSeriesRenderer.supportsAnimation &&
+				this.layout.animation
 			) {
 				if (flashingColorThrottleCounter % flashingColorThrottle === 0) {
 					flashingColorIndex++;
@@ -4472,9 +4830,8 @@ CIQ.Outliers =
 
 			// Set marker positioning relative to the y-axis
 			node.style.transform = "translate(" + xFormLeft + ", " + xFormTop + ")";
-			node.querySelector(
-				".outlier-value"
-			).innerText = this.stx.formatYAxisPrice(labelPrice);
+			node.querySelector(".outlier-value").innerText =
+				this.stx.formatYAxisPrice(labelPrice);
 			// Apply .right class when axis is on the left to right position child elements
 			if (xFormLeft === "0px") node.classList.add("right");
 			else node.classList.remove("right");
@@ -4743,9 +5100,8 @@ CIQ.Outliers =
 			);
 		};
 
-		var originalDetermineMinMax = CIQ.ChartEngine.prototype.determineMinMax.bind(
-			this.stx
-		);
+		var originalDetermineMinMax =
+			CIQ.ChartEngine.prototype.determineMinMax.bind(this.stx);
 		/**
 		 * Overrides the default `CIQ.ChartEngine.prototype.determineMinMax` function when the
 		 * Outliers add-on is active. Injects the local {@link CIQ.Outliers#processDataSet}
@@ -5050,6 +5406,7 @@ CIQ.PlotComplementer =
 
 
 let _exports = {CIQ};
+export {__js_addons_standard_dataLoader_ as dataLoader};
 export {__js_addons_standard_extendedHours_ as extendedHours};
 export {__js_addons_standard_fullScreen_ as fullScreen};
 export {__js_addons_standard_inactivityTimer_ as inactivityTimer};
@@ -5067,6 +5424,7 @@ export {CIQ};
 /* global __TREE_SHAKE__ */
 if (typeof __TREE_SHAKE__ === "undefined" || !__TREE_SHAKE__) {
 	(_exports.CIQ || CIQ).activateImports(
+		__js_addons_standard_dataLoader_,
 		__js_addons_standard_extendedHours_,
 		__js_addons_standard_fullScreen_,
 		__js_addons_standard_inactivityTimer_,

@@ -1,11 +1,10 @@
 /**
- *	8.3.0
- *	Generation date: 2021-09-08T03:57:27.183Z
- *	Client name: sofi
+ *	8.4.0
+ *	Generation date: 2021-11-29T15:42:32.590Z
+ *	Client name: sonyl test
  *	Package Type: Technical Analysis
  *	License type: trial
- *	Expiration date: "2021/10/08"
- *	iFrame lock: true
+ *	Expiration date: "2022/01/31"
  */
 
 /***********************************************************
