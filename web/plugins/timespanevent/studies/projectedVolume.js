@@ -1,9 +1,9 @@
 /**
- *	8.3.0
- *	Generation date: 2021-06-06T16:48:16.849Z
+ *	8.4.0
+ *	Generation date: 2021-11-29T15:42:32.590Z
  *	Client name: sonyl test
  *	Package Type: Technical Analysis
- *	License type: annual
+ *	License type: trial
  *	Expiration date: "2022/01/31"
  */
 
@@ -231,7 +231,8 @@ if (!CIQ.Studies) {
 
 		if (quotes[0].DT > oldestRequired) {
 			if (stx.quoteDriver) {
-				stx.quoteDriver.extendHistoricalData({ from: oldestRequired });
+				if (sd.chart.endPoints.begin > oldestRequired)
+					stx.quoteDriver.extendHistoricalData({ from: oldestRequired });
 				if (oldestPossible > 0) beginProjectionFrom = oldestPossible;
 				else return;
 			} else {
@@ -386,10 +387,8 @@ if (!CIQ.Studies) {
 								// if index has rolled over into the next day
 								workingIndices[i] = null;
 							} else if (!timeIncremented) {
-								({
-									hours: nextHours,
-									minutes: nextMinutes
-								} = getHoursAndMinutes(quotes[workingIndices[i]].DT)); // walk fill minutes and hours forward
+								({ hours: nextHours, minutes: nextMinutes } =
+									getHoursAndMinutes(quotes[workingIndices[i]].DT)); // walk fill minutes and hours forward
 								timeIncremented = true; // once set once we don't need to set again
 							}
 						}
@@ -643,7 +642,7 @@ if (!CIQ.Studies) {
 		PVAT: {
 			name: "Projected Volume at Time",
 			range: "0 to max",
-			yAxis: { ground: true, initialMarginTop: 0, zoom: 0 },
+			yAxis: { ground: true },
 			calculateFN: CIQ.Studies.calculateProjectedVolume,
 			seriesFN: CIQ.Studies.displayProjectedVolume,
 			initializeFN: CIQ.Studies.initProjectedVolume,
@@ -685,7 +684,7 @@ if (!CIQ.Studies) {
 		PAV: {
 			name: "Projected Aggregate Volume",
 			range: "0 to max",
-			yAxis: { ground: true, initialMarginTop: 0, zoom: 0 },
+			yAxis: { ground: true },
 			calculateFN: CIQ.Studies.calculateProjectedVolume,
 			seriesFN: CIQ.Studies.displayProjectedVolume,
 			initializeFN: CIQ.Studies.initProjectedVolume,

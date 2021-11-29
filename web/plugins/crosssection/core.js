@@ -1,9 +1,9 @@
 /**
- *	8.3.0
- *	Generation date: 2021-06-06T16:48:16.849Z
+ *	8.4.0
+ *	Generation date: 2021-11-29T15:42:32.590Z
  *	Client name: sonyl test
  *	Package Type: Technical Analysis
- *	License type: annual
+ *	License type: trial
  *	Expiration date: "2022/01/31"
  */
 
@@ -31,11 +31,12 @@ if (
 	typeof module === "object" &&
 	typeof require === "function"
 ) {
-	_css = require("./crosssection.css");
+	require("./crosssection.css");
 } else if (typeof define === "function" && define.amd) {
-	define(["./crosssection.css"], function (m) {
-		_css = m;
-	});
+	define(["./crosssection.css"], () => {});
+} else if (typeof window !== "undefined") {
+	_css = new URL("./crosssection.css", import.meta.url);
+	if (import.meta.webpack) _css = null;
 }
 
 /**
@@ -135,7 +136,7 @@ CIQ.CrossSection = function (params) {
 	if (!params || !params.stx) return;
 	const stx = params.stx;
 	const { layout } = stx;
-	layout.candleWidth = 1; // initialize chart at base level zoom
+	stx.setCandleWidth(1); // initialize chart at base level zoom
 
 	stx.crossSection = this;
 	stx.plugins.crossSection = this;
@@ -145,6 +146,8 @@ CIQ.CrossSection = function (params) {
 	stx.controls.home = null; // currently only confuses things to have active
 	stx.chart.defaultPlotField = params.dataSetField || "termStructure"; // ensure that methods in core respect field as meaningful data field
 	stx.dontRoll = true;
+	stx.xaxisHeight = 30;
+	stx.chart.xAxis.fitLeftToRight = true;
 
 	this.instrumentSpacing = {};
 	this.stx = stx;
@@ -184,15 +187,13 @@ CIQ.CrossSection = function (params) {
 	this.curves = {};
 
 	if (_css) {
-		CIQ.addInternalStylesheet(_css, "crosssection.css");
-		stx.clearStyles(); // clear out any cached shading values
-		stx.draw();
-	} else {
-		const basePath = CIQ.ChartEngine.pluginBasePath + "crosssection/";
-		CIQ.loadStylesheet(basePath + "crosssection.css", function () {
+		CIQ.loadStylesheet(_css.href, function () {
 			stx.clearStyles(); // clear out any cached shading values
 			stx.draw();
 		});
+	} else {
+		stx.clearStyles(); // clear out any cached shading values
+		stx.draw();
 	}
 
 	stx.callbackListeners.curveChange = [];
@@ -304,9 +305,8 @@ CIQ.CrossSection = function (params) {
 					);
 
 					for (let i = 0; i < points.length; i++) {
-						let { instrument, [points[i][2]]: oldValue } = dataSegment[
-							pointToQuoteMap[curve][i]
-						];
+						let { instrument, [points[i][2]]: oldValue } =
+							dataSegment[pointToQuoteMap[curve][i]];
 						if (!newData[instrument]) continue; // instrument does not apply to curve
 						// let oldValue = dataSegment[i][curve];
 						let newValue = newData[instrument][yaxisField];
@@ -431,7 +431,10 @@ CIQ.CrossSection = function (params) {
 		});
 
 		// Make sure that unused series don't hang around
-		const secondaryMatches = (series) => ({ symbol }) => series === symbol;
+		const secondaryMatches =
+			(series) =>
+			({ symbol }) =>
+				series === symbol;
 
 		for (let series in chart.series) {
 			let seriesUsed = secondary.some(secondaryMatches(series));
@@ -533,6 +536,7 @@ CIQ.CrossSection.prototype.findHighlights = function (stx, isTap, clearOnly) {
 
 			m.style.top = top + "px";
 			m.style.left = left + "px";
+			m.style.right = "auto";
 		};
 	}
 
@@ -1854,13 +1858,8 @@ CIQ.CrossSection.prototype.pivotRecord = function (record, curveName) {
 				return accum;
 		}
 	}
-	const {
-		yaxisField,
-		xaxisField,
-		groupField,
-		aggOperator,
-		filter
-	} = this.stx.layout;
+	const { yaxisField, xaxisField, groupField, aggOperator, filter } =
+		this.stx.layout;
 	if (xaxisField) {
 		return pivotRecordFields(
 			record,

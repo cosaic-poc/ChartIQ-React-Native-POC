@@ -1,9 +1,9 @@
 /**
- *	8.3.0
- *	Generation date: 2021-06-06T16:48:16.849Z
+ *	8.4.0
+ *	Generation date: 2021-11-29T15:42:32.590Z
  *	Client name: sonyl test
  *	Package Type: Technical Analysis
- *	License type: annual
+ *	License type: trial
  *	Expiration date: "2022/01/31"
  */
 
@@ -93,10 +93,9 @@ function CurveEdit(node, context, params = {}) {
 	this.context = context;
 	this.curveContext = document.querySelector("cq-curve-context");
 	if (this.curveContext) this.curveContext.classList.add("ciq-context-menu");
-	const basePath = CIQ.ChartEngine.pluginBasePath + "crosssection/";
-	const defaultPathToTimeSeries =
-		basePath + "sample-time-series-instant-chart.html";
-	this.pathToTimeSeries = params.pathToTimeSeries || defaultPathToTimeSeries;
+	this.pathToTimeSeries =
+		params.pathToTimeSeries ||
+		"plugins/crosssection/sample-time-series-instant-chart.html";
 
 	// Time-series chart needs to be enabled in the plugin config.
 	// If it is, we initialize the other time-series related options.
@@ -640,27 +639,7 @@ class CurveComparison extends CIQ.UI.ModalTag {
 	 * @since 7.5.0
 	 */
 	pickSwatchColor() {
-		const { crossSection } = this.context.stx;
-		const { swatchColors } = this;
-		const swatch = this.querySelector("cq-swatch");
-		if (!swatch) return;
-		let currentColor = swatch.style.backgroundColor;
-
-		let usedColors = new Set();
-		for (let i in crossSection.curves) {
-			let curve = crossSection.curves[i];
-			usedColors.add(curve.color);
-		}
-
-		if (currentColor.length && !usedColors.has(currentColor)) return;
-
-		for (let i = 0; i < swatchColors.length; i++) {
-			let swatchColor = swatchColors[i];
-			if (!usedColors.has(swatchColor)) {
-				swatch.style.backgroundColor = swatchColor;
-				return;
-			}
-		}
+		CIQ.UI.pickSwatchColor(this, this.querySelector("cq-swatch"));
 	}
 
 	/**
@@ -964,9 +943,8 @@ class ComparisonTapCapture extends CIQ.UI.ContextTag {
 	handleTap(e) {
 		let targetType = e.target.tagName;
 		let dropdownActive = this.dropdown.classList.contains("stxMenuActive");
-		let symbolEntryActive = this.symbolEntry.classList.contains(
-			"stxMenuActive"
-		);
+		let symbolEntryActive =
+			this.symbolEntry.classList.contains("stxMenuActive");
 
 		// if neither menu is open OR dropdown is open and click was not on dropdown, stop propagation
 		if (

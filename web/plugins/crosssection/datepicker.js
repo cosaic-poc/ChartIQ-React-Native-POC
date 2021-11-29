@@ -1,9 +1,9 @@
 /**
- *	8.3.0
- *	Generation date: 2021-06-06T16:48:16.849Z
+ *	8.4.0
+ *	Generation date: 2021-11-29T15:42:32.590Z
  *	Client name: sonyl test
  *	Package Type: Technical Analysis
- *	License type: annual
+ *	License type: trial
  *	Expiration date: "2022/01/31"
  */
 
@@ -22,18 +22,19 @@
 import { CIQ } from "../../js/componentUI.js";
 import Pikaday from "./thirdparty/pikaday.esm.js";
 
-let _datepicker_css;
+let _css;
 
 if (
 	typeof define === "undefined" &&
 	typeof module === "object" &&
 	typeof require === "function"
 ) {
-	_datepicker_css = require("./datepicker.css");
+	require("./datepicker.css");
 } else if (typeof define === "function" && define.amd) {
-	define(["./datepicker.css"], function (m1) {
-		_datepicker_css = m1;
-	});
+	define(["./datepicker.css"], () => {});
+} else if (typeof window !== "undefined") {
+	_css = new URL("./datepicker.css", import.meta.url);
+	if (import.meta.webpack) _css = null;
 }
 
 /**
@@ -84,12 +85,10 @@ class Datepicker extends CIQ.UI.ContextTag {
 			);
 		};
 
-		if (_datepicker_css) {
-			CIQ.addInternalStylesheet(_datepicker_css, "datepicker.css");
-			loadComponent();
+		if (_css) {
+			CIQ.loadStylesheet(_css.href, loadComponent);
 		} else {
-			const basePath = CIQ.ChartEngine.pluginBasePath + "crosssection/";
-			CIQ.loadStylesheet(basePath + "datepicker.css", loadComponent);
+			loadComponent();
 		}
 
 		CIQ.UI.stxtap(this, function (event) {

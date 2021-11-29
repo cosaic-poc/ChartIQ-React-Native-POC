@@ -57,6 +57,19 @@ CIQ.Market.METALS = {
 		{ dayofweek: 5, open: "00:00", close: "17:15" }
 	]
 };
+CIQ.Market.GENERIC_5DAY = {
+	name: "5DAY",
+	hour_aligned: true,
+	normal_daily_open: "0:00",
+	normal_daily_close: "24:00",
+	rules: [
+		{ dayofweek: 1, open: "0:00", close: "24:00" },
+		{ dayofweek: 2, open: "0:00", close: "24:00" },
+		{ dayofweek: 3, open: "0:00", close: "24:00" },
+		{ dayofweek: 4, open: "0:00", close: "24:00" },
+		{ dayofweek: 5, open: "0:00", close: "24:00" }
+	]
+};
 CIQ.Market.NYSE = {
 	name: "NYSE",
 	market_tz: "America/New_York",
@@ -97,6 +110,29 @@ CIQ.Market.NYSE = {
 		{ date: "2012-01-02", open: "00:00", close: "00:00" },
 		//As a special case if no open and close attributes are set they
 		//will be assumed "00:00" and "00:00" respectively
+		{ date: "2023-01-02" },
+		{ date: "2023-01-16" },
+		{ date: "2023-02-20" },
+		{ date: "2023-04-07" },
+		{ date: "2023-05-29" },
+		{ date: "2019-07-03", open: "4:00", close: "9:30", name: "pre" },
+		{ date: "2019-07-03", open: "9:30", close: "13:00" },
+		{ date: "2023-07-03", open: "13:00", close: "17:00", name: "post" },
+		{ date: "2023-09-04" },
+		{ date: "2023-11-23" },
+		{ date: "2023-11-24", open: "4:00", close: "9:30", name: "pre" },
+		{ date: "2023-11-24", open: "9:30", close: "13:00" },
+		{ date: "2023-11-24", open: "13:00", close: "17:00", name: "post" },
+		{ date: "2022-01-17" },
+		{ date: "2022-02-21" },
+		{ date: "2022-04-15" },
+		{ date: "2022-05-30" },
+		{ date: "2022-09-05" },
+		{ date: "2022-11-24" },
+		{ date: "2022-11-25", open: "4:00", close: "9:30", name: "pre" },
+		{ date: "2022-11-25", open: "9:30", close: "13:00" },
+		{ date: "2022-11-25", open: "13:00", close: "17:00", name: "post" },
+		{ date: "2022-12-26" },
 		{ date: "2021-01-18" },
 		{ date: "2021-02-15" },
 		{ date: "2021-04-02" },
@@ -106,6 +142,7 @@ CIQ.Market.NYSE = {
 		{ date: "2021-11-25" },
 		{ date: "2021-11-26", open: "4:00", close: "9:30", name: "pre" },
 		{ date: "2021-11-26", open: "9:30", close: "13:00" },
+		{ date: "2021-11-26", open: "13:00", close: "17:00", name: "post" },
 		{ date: "2021-12-24" },
 		{ date: "2020-01-20" },
 		{ date: "2020-02-17" },
@@ -241,6 +278,23 @@ CIQ.Market.LSE = {
 		{ date: "2012-01-02", open: "00:00", close: "00:00" },
 		//As a special case if no open and close attributes are set they
 		//will be assumed "00:00" and "00:00" respectively
+		{ date: "2023-01-02" },
+		{ date: "2023-04-07" },
+		{ date: "2023-04-10" },
+		{ date: "2023-05-01" },
+		{ date: "2023-05-29" },
+		{ date: "2023-08-28" },
+		{ date: "2023-12-22", open: "8:00", close: "12:30" },
+		{ date: "2023-12-29", open: "8:00", close: "12:30" },
+		{ date: "2022-01-03" },
+		{ date: "2022-04-15" },
+		{ date: "2022-04-18" },
+		{ date: "2022-05-02" },
+		{ date: "2022-05-30" },
+		{ date: "2022-08-29" },
+		{ date: "2022-12-23", open: "8:00", close: "12:30" },
+		{ date: "2022-12-27" },
+		{ date: "2022-12-30", open: "8:00", close: "12:30" },
 		{ date: "2021-04-02" },
 		{ date: "2021-04-05" },
 		{ date: "2021-05-03" },

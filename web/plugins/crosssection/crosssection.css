@@ -358,7 +358,8 @@ cq-timeline-controls .ciq-dropdowns {
 	margin-top: 0;
 }
 
-cq-timeline-controls .ciq-dropdowns .ciq-menu {
+/* include :not(.toggle-options) for greater specificity */
+cq-timeline-controls .ciq-dropdowns .ciq-menu:not(.toggle-options) {
 	line-height: 24px;
 	height: 24px;
 	margin: 3px;

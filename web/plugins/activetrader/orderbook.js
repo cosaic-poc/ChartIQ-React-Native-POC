@@ -1,9 +1,9 @@
 /**
- *	8.3.0
- *	Generation date: 2021-06-06T16:48:16.849Z
+ *	8.4.0
+ *	Generation date: 2021-11-29T15:42:32.590Z
  *	Client name: sonyl test
  *	Package Type: Technical Analysis
- *	License type: annual
+ *	License type: trial
  *	Expiration date: "2022/01/31"
  */
 
@@ -124,106 +124,139 @@ class Orderbook extends CIQ.UI.ModalTag {
 	}
 
 	createTable(data, selector, reverseOrder) {
-		var myTemplate = this.node.find("template");
-		var side = this.node.find(selector);
-		if (!side.length) return;
-		var self = this;
-		function setHtml(i) {
-			return function () {
-				var myCol = this.getAttribute("col");
-				if (myCol && data[i][myCol] !== undefined) {
-					var val = Number(data[i][myCol].toFixed(8)); // remove roundoff error
-					var stx = self.context.stx;
-					if (stx.marketDepth) stx = stx.marketDepth.marketDepth;
-					val = stx.formatPrice(val, stx.chart.panel);
-					this.innerHTML = val;
-				}
-			};
-		}
-		function order(selector) {
-			return function (e) {
-				var price = e.currentTarget.getAttribute("price");
-				if (!price && price !== 0) return;
-				var tfc = self.context.stx.tfc;
-				if (tfc) {
-					if (selector == "cq-orderbook-bids") tfc.newTrade("enableBuy");
-					else if (selector == "cq-orderbook-asks") tfc.newTrade("enableSell");
-					tfc.positionCenterLine(Number(price));
-				}
-			};
-		}
-		var setWidth = function (childCount) {
-			return function (child) {
-				child.style.width =
-					CIQ.elementDimensions(child.parentElement, { padding: 1 }).width /
-						childCount +
-					"px";
-			};
-		};
-		for (var d = 0; d < data.length; d++) {
-			var row = side.find("cq-item")[d];
-			var children;
-			if (row) {
-				row = CIQ.UI.$(row);
-			} else {
-				row = CIQ.UI.makeFromTemplate(myTemplate, side);
-				if (reverseOrder) {
-					var reverseRow = Array.from(row.children()).reverse();
-					row.empty().append(reverseRow);
-				}
-				children = row.children().not('[col="shading"]');
-				var childCount = children.length;
-				children.css(
-					"width",
-					CIQ.elementDimensions(row[0], { padding: 1 }).width / childCount +
-						"px"
-				);
-				if (d === 0) {
-					// readjust headers only if there's data
-					var headers = this.node.find("[cq-orderbook-header]");
-					Array.from(headers.children().not('[col="shading"]')).forEach(
-						setWidth(childCount)
-					);
-				}
-				row[0].selectFC = order(selector);
-				CIQ.UI.stxtap(row[0], row[0].selectFC);
-			}
-			children = row.children().not('[col="shading"]');
-			children.each(setHtml(d));
-			row.attr("price", data[d].price);
+		return new Promise((resolve) => {
+			const myTemplate = this.node.find("template");
+			const side = this.node.find(selector);
+			const rows = side.find("cq-item");
+			const self = this;
 
-			var percentSize =
-				(100 * data[d].size) / data[data.length - 1].cum_size + "%";
-			// using linear-gradient is ideal, but it doesn't shade the row in IE Edge or Safari - the cells get the shading instead.  Too bad.
-			if (row[0].hasAttribute("cq-size-shading")) {
-				row.css(
-					"background",
-					"linear-gradient(" +
-						(reverseOrder
-							? "to right, " + row.css("border-left-color")
-							: "to left, " + row.css("border-right-color")) +
-						" " +
-						percentSize +
-						", transparent " +
-						percentSize +
-						", transparent)"
-				);
+			if (!side.length) return;
+
+			function setHtml(i) {
+				return function () {
+					var myCol = this.getAttribute("col");
+					if (myCol && data[i][myCol] !== undefined) {
+						var val = Number(data[i][myCol].toFixed(8)); // remove roundoff error
+						var stx = self.context.stx;
+						if (stx.marketDepth) stx = stx.marketDepth.marketDepth;
+						val = stx.formatPrice(val, stx.chart.panel);
+						this.innerHTML = val;
+					}
+				};
 			}
-			// use absolutely positioned cell instead
-			var shadeCell = row.find('[col="shading"]');
-			shadeCell.css("width", percentSize);
-		}
-		// this removes any extra rows from the end.
-		side
-			.find(
-				"cq-item:nth-last-child(-n+" +
-					(side.children().length - data.length).toString() +
-					")"
-			)
-			.remove();
-		var scroll = this.node.find("cq-scroll");
-		scroll.each(function () {
-			this.resize();
+
+			function order(selector) {
+				return function (e) {
+					var price = e.currentTarget.getAttribute("price");
+					if (!price && price !== 0) return;
+					var tfc = self.context.stx.tfc;
+					if (tfc) {
+						if (selector == "cq-orderbook-bids") tfc.newTrade("enableBuy");
+						else if (selector == "cq-orderbook-asks")
+							tfc.newTrade("enableSell");
+						tfc.positionCenterLine(Number(price));
+					}
+				};
+			}
+
+			function setWidth(childCount) {
+				return function (child) {
+					child.style.width =
+						CIQ.elementDimensions(child.parentElement, { padding: 1 }).width /
+							childCount +
+						"px";
+				};
+			}
+
+			function cleanup() {
+				// this removes any extra rows from the end.
+				side
+					.find(
+						"cq-item:nth-last-child(-n+" +
+							(side.children().length - data.length).toString() +
+							")"
+					)
+					.remove();
+				var scroll = self.node.find("cq-scroll");
+				scroll.each(function () {
+					this.resize();
+				});
+
+				resolve();
+			}
+
+			function processEntries(i) {
+				const t0 = new Date().getTime();
+				const nextFrame = (i) => () => processEntries(i);
+
+				for (; data[i]; i++) {
+					// don't lock up thread for more than 5ms at a time
+					const tooLong = new Date().getTime() - t0 > 5;
+					if (tooLong) return requestAnimationFrame(nextFrame(i));
+
+					let row = rows[i];
+					let children;
+
+					if (row) {
+						row = CIQ.UI.$(row);
+					} else {
+						row = CIQ.UI.makeFromTemplate(myTemplate, side);
+						if (reverseOrder) {
+							var reverseRow = Array.from(row.children()).reverse();
+							row.empty().append(reverseRow);
+						}
+						children = row.children().not('[col="shading"]');
+						var childCount = children.length;
+						children.css(
+							"width",
+							CIQ.elementDimensions(row[0], { padding: 1 }).width / childCount +
+								"px"
+						);
+						if (i === 0) {
+							// readjust headers only if there's data
+							var headers = self.node.find("[cq-orderbook-header]");
+							Array.from(headers.children().not('[col="shading"]')).forEach(
+								setWidth(childCount)
+							);
+						}
+						row[0].selectFC = order(selector);
+						CIQ.UI.stxtap(row[0], row[0].selectFC);
+					}
+
+					children = row.children().not('[col="shading"]');
+					children.each(setHtml(i));
+					row.attr("price", data[i].price);
+
+					var percentSize =
+						(100 * data[i].size) / data[data.length - 1].cum_size + "%";
+
+					// using linear-gradient is ideal, but it doesn't shade the row in
+					// IE Edge or Safari - the cells get the shading instead.  Too bad.
+					if (row[0].hasAttribute("cq-size-shading")) {
+						row.css(
+							"background",
+							"linear-gradient(" +
+								(reverseOrder
+									? "to right, " + row.css("border-left-color")
+									: "to left, " + row.css("border-right-color")) +
+								" " +
+								percentSize +
+								", transparent " +
+								percentSize +
+								", transparent)"
+						);
+					}
+					// use absolutely positioned cell instead
+					var shadeCell = row.find('[col="shading"]');
+					shadeCell.css("width", percentSize);
+				}
+
+				// if we got past the for loop without returning with requestAnimationFrame
+				// that means we got through all of data and can clean up unnecessary rows
+				cleanup();
+			}
+
+			requestAnimationFrame(() => processEntries(0));
 		});
 	}
 
@@ -231,10 +264,10 @@ class Orderbook extends CIQ.UI.ModalTag {
 		this.node.attr("cq-active", true);
 	}
 
-	setContext({ config }) {
+	setContext() {
 		var self = this,
 			stx = this.context.stx;
-		this.listener = function (obj) {
+		this.listener = function () {
 			self.update({ obj: stx.chart.currentMarketData });
 		};
 		CIQ.UI.observeProperty(
@@ -262,36 +295,36 @@ class Orderbook extends CIQ.UI.ModalTag {
 		});
 	}
 
-	update(params) {
-		if (!CIQ.trulyVisible(this)) return;
-		var bids = params.obj.BidL2,
-			asks = params.obj.AskL2;
-		if (!bids && !asks) return;
-		var sortFcn = function (a, b) {
-			return a[0] < b[0] ? -1 : 1;
-		};
-		var bidData = this.createMatrix(
-			bids.Price_Size.slice().sort(sortFcn).reverse()
+	async update({ obj }) {
+		if (!CIQ.trulyVisible(this) || this.creatingTables) return;
+
+		const bids = obj.BidL2 && obj.BidL2.Price_Size.slice();
+		const asks = obj.AskL2 && obj.AskL2.Price_Size.slice();
+		if (!(bids && asks)) return;
+
+		const sortFn = (a, b) => (a[0] < b[0] ? -1 : 1);
+		const bidData = this.createMatrix(bids.sort(sortFn).reverse());
+		const askData = this.createMatrix(asks.sort(sortFn));
+		const tables = Array.from(this.querySelectorAll("cq-orderbook-table"));
+		if (!tables.length) return;
+		const bidsTable = tables.find((t) => t.querySelector("cq-orderbook-bids"));
+		const asksTable = tables.find((t) => t.querySelector("cq-orderbook-asks"));
+
+		this.creatingTables = true;
+
+		await this.createTable(
+			bidData,
+			"cq-orderbook-bids",
+			bidsTable.hasAttribute("reverse")
 		);
-		var askData = this.createMatrix(asks.Price_Size.slice().sort(sortFcn));
-		var tables = this.node.find("cq-orderbook-table");
-		var self = this;
-		tables.each(function () {
-			if (this.querySelectorAll("cq-orderbook-bids").length) {
-				self.createTable(
-					bidData,
-					"cq-orderbook-bids",
-					this.hasAttribute("reverse")
-				);
-			}
-			if (this.querySelectorAll("cq-orderbook-asks").length) {
-				self.createTable(
-					askData,
-					"cq-orderbook-asks",
-					this.hasAttribute("reverse")
-				);
-			}
-		});
+
+		await this.createTable(
+			askData,
+			"cq-orderbook-asks",
+			asksTable.hasAttribute("reverse")
+		);
+
+		this.creatingTables = false;
 	}
 
 	getMarkup() {

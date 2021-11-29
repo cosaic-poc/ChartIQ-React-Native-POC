@@ -4,21 +4,22 @@
 //
 import { CIQ, markers } from "../../js/standard.js";
 import marker from "../../examples/markers/markersSample.js";
-var _css;
 if (
 	typeof define === "undefined" &&
 	typeof module === "object" &&
 	typeof require === "function"
-)
-	_css = require("../../examples/markers/videoSample.css");
-else if (typeof define === "function" && define.amd)
-	define(["../../examples/markers/videoSample.css"], function (m) {
-		_css = m;
-	});
-else if (typeof window !== "undefined")
-	CIQ.loadStylesheet("examples/markers/videoSample.css");
+) {
+	require("../../examples/markers/videoSample.css");
+} else if (typeof define === "function" && define.amd) {
+	define(["../../examples/markers/videoSample.css"], () => {});
+} else if (typeof window !== "undefined") {
+	const _css = new URL(
+		"../../examples/markers/videoSample.css",
+		import.meta.url
+	);
+	if (import.meta.webpack === undefined) CIQ.loadStylesheet(_css.href);
+}
 CIQ.activateImports(markers); // so we can inherit from nodeCreator
-if (_css) CIQ.addInternalStylesheet(_css, "videoSample.css");
 const MarkersSample = marker.MarkersSample;
 /**
  * Retrieves data for video events

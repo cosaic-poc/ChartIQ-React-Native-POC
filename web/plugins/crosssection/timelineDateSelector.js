@@ -1,9 +1,9 @@
 /**
- *	8.3.0
- *	Generation date: 2021-06-06T16:48:16.849Z
+ *	8.4.0
+ *	Generation date: 2021-11-29T15:42:32.590Z
  *	Client name: sonyl test
  *	Package Type: Technical Analysis
- *	License type: annual
+ *	License type: trial
  *	Expiration date: "2022/01/31"
  */
 
@@ -32,12 +32,12 @@ if (
 	define(["./images/lock.svg"], function (m) {
 		lockImg = m;
 	});
+} else {
+	lockImg = new URL("./images/lock.svg", import.meta.url).href;
 }
 
 import { CIQ } from "../../js/componentUI.js";
 import "./core.js";
-
-var glyphPath = CIQ.ChartEngine.pluginBasePath + "crosssection/images/";
 
 /**
  * Timeline controls web component `<cq-timeline-controls>`.
@@ -152,6 +152,25 @@ TimelineControls.markup = `
 	<cq-close></cq-close>
 `;
 
+let hasError = false;
+[
+	["cq-close", "close"],
+	["cq-menu", "menu"],
+	["cq-menu-dropdown", "menuDropdown"]
+].forEach((pair) => {
+	if (
+		!CIQ.UI.components(pair[0]).length &&
+		TimelineControls.markup.includes("</" + pair[0] + ">")
+	) {
+		console.error(
+			`timelineDateSelector markup contains "${pair[0]}" component but "${pair[1]}" webcomponent is not activated.`
+		);
+		hasError = true;
+	}
+});
+if (!hasError)
+	CIQ.UI.addComponentDefinition("cq-timeline-controls", TimelineControls);
+
 /**
  * Curve controls web component `<cq-curve-controls>`.
  *
@@ -238,7 +257,6 @@ CurveControls.markup = `
 	<div class="ciq-curve-control ciq-curve-controls-lock"><span></span>Lock</div>
 `;
 
-CIQ.UI.addComponentDefinition("cq-timeline-controls", TimelineControls);
 CIQ.UI.addComponentDefinition("cq-curve-controls", CurveControls);
 
 /**
@@ -273,7 +291,7 @@ class TimelineDateSelector {
 		this.height = height;
 		this.handleLocations = {};
 		this.lockIcon = new Image();
-		this.lockIcon.src = glyphs.lockImg || lockImg || glyphPath + "lock.svg";
+		this.lockIcon.src = glyphs.lockImg || lockImg;
 		this.stx = stx;
 		this.useNotifications = useNotifications;
 		this.adjustRangeRequired = true;
@@ -306,6 +324,7 @@ class TimelineDateSelector {
 			preferences: { labels: false, whitespace: 0 }
 		});
 
+		selector.setMarketFactory(stx.marketFactory);
 		this.selector = selector;
 		selector.loadChart("", { masterData: [] });
 

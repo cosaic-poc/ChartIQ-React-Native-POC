@@ -1,9 +1,9 @@
 /**
- *	8.3.0
- *	Generation date: 2021-06-06T16:48:16.849Z
+ *	8.4.0
+ *	Generation date: 2021-11-29T15:42:32.590Z
  *	Client name: sonyl test
  *	Package Type: Technical Analysis
- *	License type: annual
+ *	License type: trial
  *	Expiration date: "2022/01/31"
  */
 
@@ -47,7 +47,7 @@ const startActiveTrader = function (stx) {
 			record: true,
 			height: "40%",
 			precedingContainer: "#marketDepthBookmark",
-			allowUIZoom: true
+			interaction: true
 		});
 		if (CIQ.UI) CIQ.UI.activatePluginUI(stx, "MarketDepth");
 	}
@@ -89,8 +89,8 @@ const startActiveTrader = function (stx) {
 		var last = 0;
 		stx.append(
 			"updateCurrentMarketData",
-			function (data, chart, symbol, params) {
-				if (symbol) return;
+			function (data, chart, symbol, params = {}) {
+				if (symbol || params.animationEntry) return;
 				var items = document.querySelectorAll("cq-tradehistory-body cq-item");
 				var d = {};
 				for (var i = 0; i < items.length; i++) {

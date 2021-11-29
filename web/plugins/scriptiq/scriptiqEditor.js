@@ -1,9 +1,9 @@
 /**
- *	8.3.0
- *	Generation date: 2021-06-06T16:48:16.849Z
+ *	8.4.0
+ *	Generation date: 2021-11-29T15:42:32.590Z
  *	Client name: sonyl test
  *	Package Type: Technical Analysis
- *	License type: annual
+ *	License type: trial
  *	Expiration date: "2022/01/31"
  */
 
@@ -23,17 +23,18 @@ import { CIQ } from "../../js/componentUI.js";
 import "./scriptiqApi.js";
 import "./scriptiqMenu.js";
 
-var _scss;
+let _css;
 if (
 	typeof define === "undefined" &&
 	typeof module === "object" &&
 	typeof require === "function"
 ) {
-	_scss = require("./scriptiqEditor.scss");
+	require("./scriptiqEditor.css");
 } else if (typeof define === "function" && define.amd) {
-	define(["./scriptiqEditor.scss"], function (m1) {
-		_scss = m1;
-	});
+	define(["./scriptiqEditor.css"], () => {});
+} else if (typeof window !== "undefined") {
+	_css = new URL("./scriptiqEditor.css", import.meta.url);
+	if (import.meta.webpack) _css = null;
 }
 
 /**
@@ -148,9 +149,8 @@ class ScriptIQEditor extends CIQ.UI.ContextTag {
 			);
 		}
 
-		var compiledScript = CIQ.Scripting.addCoffeeScriptStudyToLibrary(
-			scriptText
-		);
+		var compiledScript =
+			CIQ.Scripting.addCoffeeScriptStudyToLibrary(scriptText);
 
 		if (compiledScript.error) {
 			scriptStatus.val(compiledScript.error);
@@ -326,11 +326,8 @@ class ScriptIQEditor extends CIQ.UI.ContextTag {
 	}
 
 	setContext({ config }) {
-		const basePath = CIQ.ChartEngine.pluginBasePath + "scriptiq/";
-		if (_scss) {
-			CIQ.addInternalStylesheet(_scss, "scriptiqEditor.scss");
-		} else {
-			CIQ.loadStylesheet(basePath + "scriptiqEditor.css");
+		if (_css) {
+			CIQ.loadStylesheet(_css.href);
 		}
 	}
 

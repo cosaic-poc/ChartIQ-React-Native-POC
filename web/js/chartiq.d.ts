@@ -273,6 +273,8 @@ export namespace CIQ.ChartEngine {
   /**
    * Called when the mouse is clicked on the chart and held down.
    *
+   * Also see CIQ.ChartEngine#longHoldTime
+   *
    * @param data Data relevant to the "longhold" event.
    * @param data.stx The chart engine instance.
    * @param data.panel The panel being clicked.
@@ -282,6 +284,11 @@ export namespace CIQ.ChartEngine {
    * @callback CIQ.ChartEngine~longholdEventListener
    *
    * @see CIQ.ChartEngine#addEventListener
+   * @example <caption>Add a "longhold" event listener.</caption>
+   * stxx.longHoldTime = ... // Optionally override default value of 700ms.
+   * stxx.addEventListener("longhold", function(lhObject) {
+   *     CIQ.alert("longhold event at x: " + lhObject.x + " y: " + lhObject.y);
+   * });
    */
   type longholdEventListener = (data: {stx: CIQ.ChartEngine,panel: string,x: number,y: number}) => void
 
@@ -669,6 +676,8 @@ export namespace CIQ.ChartEngine {
      *
      */
     constructor()
+    public yAxis: CIQ.ChartEngine.YAxis
+    public state: object
     public panel: CIQ.ChartEngine.Panel
     /**
      * The current symbol for the chart
@@ -1191,6 +1200,14 @@ export namespace CIQ.ChartEngine {
      * @since 8.0.0 Replaces <a href="CIQ.ChartEngine.html#callbacks%5B%60calculateTradingDecimalPlaces%60%5D">CIQ.ChartEngine.callbacks[\`calculateTradingDecimalPlaces\`]</a>.
      */
     public calculateTradingDecimalPlaces: Function
+    public width: number
+    public height: number
+    public top: number
+    public bottom: number
+    public left: number
+    public right: number
+    public context: CanvasRenderingContext2D
+    public endPoints: object
   }
 
   /**
@@ -1213,6 +1230,15 @@ export namespace CIQ.ChartEngine {
      * @param [yAxis] Y axis (CIQ.ChartEngine.YAxis) object for the panel.
      */
     constructor(name: string, yAxis?: CIQ.ChartEngine.YAxis)
+    public name: string
+    public display: string
+    public chart: CIQ.ChartEngine.Chart
+    public yAxis: CIQ.ChartEngine.YAxis
+    public shareChartXAxis: boolean
+    public top: number
+    public bottom: number
+    public height: number
+    public percent: number
     /**
      * Draws a border around the panel's left and right sides for a more finished look, when no y axis is present.
      * @since 7.1.0
@@ -1246,9 +1272,9 @@ export namespace CIQ.ChartEngine {
    * - CIQ.ChartEngine#xaxisHeight
    *
    * For full customization instructions see:
-   * - {@tutorial Custom X-axis}
+   * - {@tutorial Custom X-Axis}
    * - CIQ.ChartEngine#createXAxis
-   * - CIQ.ChartEngine#createTickXAxisWithDates
+   * - CIQ.ChartEngine#createSpacedDateXAxis
    *
    * Example: stxx.chart.xAxis
    *
@@ -1271,9 +1297,9 @@ export namespace CIQ.ChartEngine {
      * - CIQ.ChartEngine#xaxisHeight
      *
      * For full customization instructions see:
-     * - {@tutorial Custom X-axis}
+     * - {@tutorial Custom X-Axis}
      * - CIQ.ChartEngine#createXAxis
-     * - CIQ.ChartEngine#createTickXAxisWithDates
+     * - CIQ.ChartEngine#createSpacedDateXAxis
      *
      * Example: stxx.chart.xAxis
      *
@@ -1283,6 +1309,39 @@ export namespace CIQ.ChartEngine {
      * stxx.chart.xAxis.formatter=formatFunction;
      */
     constructor(init: object)
+    /**
+     * Object containing functions used to rank the x-axis labels into "levels", keyed off the requested interval.
+     * The lower the level, the more priority the label has in being drawn.  When [CIQ.ChartEngine.drawXAxis]CIQ.ChartEngine#drawXAxis
+     * draws the x-axis labels, any collisions between labels will be settled using this priority.
+     *
+     * This object may be partially or completely overridden to produce custom text and results.
+     * Within each function there is an ability to customize the x-axis label itself.
+     * - You may set the `text` of a label to customize how the label text should look.  If it is not set, the preset `raw` value is used.
+     * - You may set a `boundaryOnlyText` of a label to specify how the label text should look if only boundaries are displayed.
+     * - You may also set the `alwaysBoundary` property of a boundary label to true, to indicate that it should act as a boundary
+     *   even when only boundaries are rendered (the rest of the boundaries are rendered as lines).
+     * of the same level when the axis is condensed to the point where only boundaries are displayed.
+     * - You may set the `suppress` property for any label to force it to not display even if there is room to do so.
+     *
+     * **Note:** For a "line" type label, the level will automatically be increased by CIQ.ChartEngine.XAxis.lineBaseLevel
+     * downstream. Therefore, avoid setting levels set above this value in the functions within this object, as it may cause
+     * collisions with other grid type values.
+     *
+     * Each value is an optional function which takes the following parameters:
+     * - label – CIQ.ChartEngine.XAxisLabel object
+     * - record – x-axis array record containing dataset information
+     * - market – The market class if available
+     * - stx – The chart engine instance
+     *
+     * To not assign any property to a label for a given interval, set its value to `null`.
+     *
+     * Please see {@tutorial Custom X-Axis} for more detail and for some examples of
+     * how to customize the functions in this object.
+     *
+     * @static
+     * @since 8.4.0
+     */
+    public static setPropertiesForInterval
     /**
      * Optional function to format dates on x-axis.
      * If defined, will be used to completely control x-axis formatting, including the floating HUD date of the crosshair.
@@ -1299,7 +1358,7 @@ export namespace CIQ.ChartEngine {
      * <tr><td>labelDate</td><td>Date</td><td>javaScript date to format</td></tr>
      * <tr><td>gridType</td><td>String</td><td>"boundary", "line", or name of drawing (e.g. "vertical") for the axis labels.Absent for the floating crosshair label</td></tr>
      * <tr><td>timeUnit</td><td>Enumerated type</td><td>CIQ.MILLISECOND CIQ.SECOND CIQ.MINUTE CIQ.HOUR CIQ.DAY CIQ.MONTH CIQ.YEAR CIQ.DECADE Absent for the floating crosshair label.</td></tr>
-     * <tr><td>timeUnitMultiplier</td><td>Number</td><td>How many timeUnits. Absent for the floating crosshair label.</td></tr>
+     * <tr><td>timeUnitMultiplier</td><td>Number</td><td>How many timeUnits. Absent for the floating crosshair label. Deprecated as of 8.4.0.</td></tr>
      * <tr><td>defaultText</td><td>String</td><td>Contains the default date label that would be used if no formatter is defined. Simply return this value for dates where no formatting is desired.</td></tr>
      * </table>
      *
@@ -1333,6 +1392,8 @@ export namespace CIQ.ChartEngine {
      * - 3.0.0 Using x axis formatter now is available for year and month boundaries.
      * - 6.3.0 Added `defaultText` parameter.
      * - 6.3.0 Added drawing type as possible `gridType` value.
+     * - 8.4.0 Method is no longer used to format x-axis labels.
+     * 		You can use CIQ.ChartEngine.XAxis.setPropertiesForInterval instead.
      */
     public formatter: Function
     /**
@@ -1341,46 +1402,6 @@ export namespace CIQ.ChartEngine {
      */
     public adjustTimeZone: boolean
     /**
-     * Ideal space between x-axis labels in pixels.
-     * If null then the chart will attempt a tick size and time unit in proportion to the chart.
-     * Please note that if `stxx.chart.yAxis.goldenRatioYAxis` is set to `true`, this setting will also affect the spacing between y-axis labels.
-     * Please note that this setting will be overwritten at rendering time if too small to prevent labels from covering each other.
-     * Not applicable if CIQ.ChartEngine.XAxis#timeUnit is manually set.
-     * See {@tutorial Custom X-axis} for additional details.
-     */
-    public idealTickSizePixels: number
-    /**
-     * Overrides default used in CIQ.ChartEngine#createTickXAxisWithDates
-     * Allowable values:
-     * - CIQ.MILLISECOND,
-     * - CIQ.SECOND
-     * - CIQ.MINUTE
-     * - CIQ.HOUR
-     * - CIQ.DAY
-     * - CIQ.WEEK
-     * - CIQ.MONTH
-     * - CIQ.YEAR
-     * - CIQ.DECADE
-     *
-     * Visual Reference for sample code below (draw a label every 5 seconds using 1 second periodicity ) :
-     * ![xAxis.timeUnit](xAxis.timeUnit.png "xAxis.timeUnit")
-     * @example
-     * // The following will cause the default implementation of createTickXAxisWithDates to print labels in seconds every 5 seconds.
-     * // masterData is in 1 second intervals for this particular example.
-     * stxx.chart.xAxis.timeUnit = CIQ.SECOND;
-     * stxx.chart.xAxis.timeUnitMultiplier = 5;
-     */
-    public timeUnit: number
-    /**
-     * Overrides default used in CIQ.ChartEngine#createTickXAxisWithDates
-     * @example
-     * // The following will cause the default implementation of createTickXAxisWithDates to print labels in seconds every 5 seconds.
-     * // masterData is in 1 second intervals for this particular example.
-     * stxx.chart.xAxis.timeUnit = CIQ.SECOND;
-     * stxx.chart.xAxis.timeUnitMultiplier = 5;
-     */
-    public timeUnitMultiplier: number
-    /**
      * Set to true to draw a line above the x-axis.
      */
     public displayBorder: boolean
@@ -1388,6 +1409,30 @@ export namespace CIQ.ChartEngine {
      * Set to false to suppress grid lines
      */
     public displayGridLines: boolean
+    /**
+     * Switch to allow population of labels in x-axis to be "place as needed".
+     *
+     * Under normal circumstances the x-axis labels are placed in levels (priority) as defined in CIQ.ChartEngine.XAxis.priorities object.
+     * When this flag is set to true, the behavior reverts to placing the labels as space allows from left to right.
+     *
+     * @since 8.4.0
+     */
+    public fitLeftToRight: boolean
+    /**
+     * Switch to allow tight fitting of labels in x-axis.
+     *
+     * @since 8.4.0
+     */
+    public fitTight: boolean
+    /**
+     * READ ONLY. Maximum level of label to draw on the xaxis.
+     * Note this could exceed maxLevelToDisplay since the level of a grid="line"
+     * generated by CIQ.ChartEngine.XAxis.setPropertiesForInterval
+     * has CIQ.ChartEngine.XAxis.lineBaseLevel added to it.
+     *
+     * @since 8.4.0
+     */
+    public maxLevelToDisplay: number
     /**
      * Switch to temporarily hide the x-axis. Set to `true' to activate.
      *
@@ -1398,7 +1443,7 @@ export namespace CIQ.ChartEngine {
     /**
      * Minimum size for label. This ensures adequate padding so that labels don't collide with one another.
      * Please note that this setting is used during the rendering process, not during the label spacing calculation process and will be overwritten if too small to prevent labels from covering each other.
-     * To modify at what interval labels will be placed, please see {@tutorial Custom X-axis} for more details
+     * To modify at what interval labels will be placed, please see {@tutorial Custom X-Axis} for more details
      */
     public minimumLabelWidth: number
     /**
@@ -1413,6 +1458,7 @@ export namespace CIQ.ChartEngine {
      * As such, if iterating through the market day in 'tick' periodicity, the library uses a pre-defined number of minutes to move around.
      * This will be primarily used when deciding where to put x axis labels when going into the future in 'tick' mode.
      *
+     * Set to 0 to suppress future ticks on the x-axis.
      * @example
      * //You can override this behavior as follows:
      * var stxx=new CIQ.ChartEngine({container:document.querySelector(".chartContainer"), layout:{"candleWidth": 16, "crosshair":true}});
@@ -1423,18 +1469,33 @@ export namespace CIQ.ChartEngine {
   }
 
   /**
-   * This is the object stored in CIQ.ChartEngine.chart.xaxis array which contains information regarding an x-axis tick.
-   * See CIQ.ChartEngine#createXAxis for more detail.
+   * This is the object stored in `CIQ.ChartEngine.chart.xaxis` array which contains information regarding an x-axis tick.
+   * See [CIQ.ChartEngine.createXAxis]CIQ.ChartEngine#createXAxis for more detail.
+   * @since 8.4.0 added raw and priority parameter, rationalized to object parameter
    */
   class XAxisLabel {
     /**
-     * This is the object stored in CIQ.ChartEngine.chart.xaxis array which contains information regarding an x-axis tick.
-     * See CIQ.ChartEngine#createXAxis for more detail.
-     * @param hz Horizontal position of center of label in pixels. Any elements with negative positions will be off the edge of the screen, and are only maintained to help produce a more predictable display as the chart is zoomed and paned.
-     * @param grid Either "line" or "boundary" depending on whether the label should be a date/time boundary or just a grid line
-     * @param text The text to display in the label
+     * This is the object stored in `CIQ.ChartEngine.chart.xaxis` array which contains information regarding an x-axis tick.
+     * See [CIQ.ChartEngine.createXAxis]CIQ.ChartEngine#createXAxis for more detail.
+     * @param params input parameters
+     * @param params.hz Horizontal position of center of label in pixels. Any elements with negative positions will be off the edge of the screen, and are only maintained to help produce a more predictable display as the chart is zoomed and panned.
+     * @param params.grid Either "line" or "boundary" depending on whether the label should be a date/time boundary or just a grid line
+     * @param params.text The text to display in the label
+     * @param [params.raw] The raw value used to generate the text
+     * @param [params.level] The order in which the label gets put into the axis (lowest numbers first)
+     * @param [params.marketOpenOffset] For minute labels, number of minutes between midnight market time and label time.  If provided, may be used to align levels with market open times regardless of display time zone.
+     * @since 8.4.0 added raw and priority parameter, rationalized to object parameter
      */
-    constructor(hz: number, grid: string, text: string)
+    constructor(
+      params: {
+        hz: number,
+        grid: string,
+        text: string,
+        raw?: string,
+        level?: number,
+        marketOpenOffset?: number
+      }
+    )
   }
 
   /**
@@ -1542,6 +1603,28 @@ export namespace CIQ.ChartEngine {
      * @since 5.1.0 Created a name member which is used to determine if the y-axis is the same as another.
      */
     constructor(init: object)
+    public name: string
+    public high: number
+    public low: number
+    public shadow: number
+    public logHigh: number
+    public logLow: number
+    public logShadow: number
+    public allowSharing: boolean
+    public multiplier: number
+    public bottom: number
+    public top: number
+    public height: number
+    public left: number
+    public renderers: any[]
+    public studies: any[]
+    public lowValue: number
+    public highValue: number
+    public semiLog: boolean
+    public priceTick: number
+    public printDecimalPlaces: number
+    public yAxisPlotter: CIQ.Plotter
+    public highlight: boolean
     /**
      * Controls maximum number of decimal places to ever display on a y-axis floating price label.
      *
@@ -2087,7 +2170,10 @@ export namespace CIQ.ChartEngine {
    * Path must end in `/`.
    *
    * @static
-   * @since 8.0.0
+   * @since
+   * - 8.0.0
+   * - 8.4.0 No longer in use.
+   *
    */
   let pluginBasePath: string
 
@@ -2404,7 +2490,13 @@ export namespace CIQ {
      */
     public chart: CIQ.ChartEngine.Chart
     /**
-     * Time in MS to trigger a long hold on the chart.
+     * Time in MS to trigger a [longholdEventListener]CIQ.ChartEngine~longholdEventListener on the chart.
+     *
+     * @example <caption>Add a "longhold" event listener.</caption>
+     * stxx.longHoldTime = ... // Optionally override default value of 700ms.
+     * stxx.addEventListener("longhold", function(lhObject) {
+     *     CIQ.alert("longhold event at x: " + lhObject.x + " y: " + lhObject.y);
+     * });
      */
     public longHoldTime: number
     /**
@@ -2436,6 +2528,8 @@ export namespace CIQ {
     /**
      * Minimum candleWidth (in pixels) allowed when zooming out. Determines the maximum number of ticks to display on the chart.
      *
+     * Also see CIQ.ChartEngine#maximumCandleWidth
+     *
      * Use CIQ.ChartEngine#minimumZoomTicks to set the minimum number of ticks that must remain on the chart during a zoom-in operation.
      *
      * When candleWidth<1 and CIQ.ChartEngine.Chart#lineApproximation true,
@@ -2446,9 +2540,13 @@ export namespace CIQ {
     /**
      * Maximum candleWidth (in pixels) allowed when zooming in. Determines the minimum number of ticks to display on the chart.
      *
-     * Also see CIQ.ChartEngine#minimumZoomTicks to set the minimum number of ticks that must remain on the chart during a zoom-in operation.
+     * Also see CIQ.ChartEngine#minimumCandleWidth
      *
-     * @since 7.4.0
+     * Use CIQ.ChartEngine#minimumZoomTicks to set the minimum number of ticks that must remain on the chart during a zoom-in operation.
+     *
+     * @since
+     * - 7.4.0
+     * - 8.4.0 Changed default to 100
      */
     public maximumCandleWidth: number
     /**
@@ -2462,14 +2560,33 @@ export namespace CIQ {
      * Set to false to disable any user zooming on the chart
      * @since 04-2015
      * @example
-     * var stxx=new CIQ.ChartEngine({container:document.querySelector(".chartContainer"), allowZoom:false, layout:{"candleWidth": 16, "crosshair":true}});
+     * var stxx=new CIQ.ChartEngine({
+     *		container:document.querySelector(".chartContainer"),
+     *		allowZoom:false,
+     *		layout:{"candleWidth": 16, "crosshair":true}
+     * });
      */
     public allowZoom: boolean
+    /**
+     * Set to true to enable any user zooming on the chart when creating a drawing
+     * @since 8.4.0 Add flag for zooming while drawing
+     * @example
+     * var stxx=new CIQ.ChartEngine({
+     *		container:document.querySelector(".chartContainer"),
+     *		allowDrawingZoom:true,
+     *		layout:{"candleWidth": 16, "crosshair":true}
+     * });
+     */
+    public allowDrawingZoom: boolean
     /**
      * Set to false to disable any user scrolling of the chart
      * @since 04-2015
      * @example
-     * var stxx=new CIQ.ChartEngine({container:document.querySelector(".chartContainer"), allowScroll:false, layout:{"candleWidth": 16, "crosshair":true}});
+     * var stxx=new CIQ.ChartEngine({
+     *		container:document.querySelector(".chartContainer"),
+     *		allowScroll:false,
+     *		layout:{"candleWidth": 16, "crosshair":true}
+     *	});
      */
     public allowScroll: boolean
     /**
@@ -2768,7 +2885,9 @@ export namespace CIQ {
      * - Set to null to automatically adjust to the size of the axis font.
      * - Set to 0 completely remove the x axis.
      * - Use CIQ.ChartEngine.XAxis#noDraw to temporarily hide the axis, but maintain its spacing.
+     *  - Setting to a value able to accommodate two lines of text will create a two-line x-axis.
      * @since 4.1.0 Now defaults to 30px.
+     * @since 8.4.0 Now defaults to 40px.
      */
     public xaxisHeight: boolean
     /**
@@ -2983,7 +3102,7 @@ export namespace CIQ {
        */
       timeUnit: string,
       /**
-       * READ ONLY. Candle Width In pixels ( see {@tutorial Understanding Chart Range} and CIQ.ChartEngine#candleWidthPercent)
+       * READ ONLY. Candle width in pixels ( see {@tutorial Understanding Chart Range} and CIQ.ChartEngine#candleWidthPercent)
        */
       candleWidth: number,
       /**
@@ -3157,7 +3276,15 @@ export namespace CIQ {
        *
        * @since 7.5.0
        */
-      outliers: boolean
+      outliers: boolean,
+      /**
+       * Specifies whether animation is enabled.
+       *
+       * Note: animation requires the Animation addon.
+       *
+       * @since 8.4.0
+       */
+      animation: boolean
     }
     /**
      * Contains the chart preferences.
@@ -4050,7 +4177,7 @@ export namespace CIQ {
      */
     public showCrosshairs(): void
     /**
-     * Loads a chart for a particular instrument from the data passed in, or fetches new data from the quotefeed; if one attached.
+     * Loads a chart for a particular instrument from the data passed in, or fetches <b>new data</b> from the quotefeed; if one attached.
      *
      * Replaces CIQ.ChartEngine#newChart.
      *
@@ -4536,9 +4663,15 @@ export namespace CIQ {
      * This data is also used to feed the Depth of Market indicator, [Trade History]WebComponents.cq-tradehistory and
      * [Order Book]WebComponents.cq-orderbook web components, part of the [Active Trader package](https://active-trader.demo.chartiq.com/).
      *
-     * When using as part of a chart engine that also display a time-series chart, this method is automatically called with that same time-series data every time new data is load into the chart, thereby maintaing all charts in sync.
+     * When using as part of a chart engine that also display a time-series chart, this method is automatically called with that same time-series data every time new data is load into the chart, thereby maintaining all charts in sync.
      * And only needs to be explicitly called when needing to update the L2 'snapshot' at a faster refresh rate than the rest of the time-series data, or if the time-series data does not provide this information.
      * If using the CIQ.MarketDepth standalone, without a standard time series chart, you must call this method explicitly to load and refresh the data.
+     *
+     * If triggering any action based on calls to this method, you may choose to use an injection or listen to the `touched` property on
+     * the [chart.currentMarketData]CIQ.ChartEngine.Chart#currentMarketData object with CIQ.UI.observeProperty. The injection
+     * will call every time the method is called, whereas the touched property will only be updated once per synchronous block of code. This
+     * produces fewer listener/injection calls, particularly when this method is being called from inside a loop. The touched property will
+     * also update asynchronously. Based on the listener/injection action and how expensive it is, you may wish to use one or the other.
      *
      * Data Format:
      *
@@ -4589,11 +4722,16 @@ export namespace CIQ {
      * @param [params.fromTrade] This function can be called directly or as a result of a trade update, such as from CIQ.ChartEngine.Chart#updateChartData.
      * 										Set this param to `true` to indicate the incoming data is a master data record.
      * 										Otherwise the function will attempt to adjust the record date to align with the last bar.
-     * @param [params.finalClose] If the data.Close is being manipulated (such as with animation), this param should contain the real, final Close value
+     * @param [params.finalClose] If the data.Close is being manipulated (such as with animation), this param should contain the
+     * 		real, final Close value
+     * @param [params.animationEntry] Indicates that the call was initiated by an animation. If you adding any injections to this
+     * 		method, you may wish to ignore animation entries.
+     * @param [params.animationLastBar] Indicates that the call was initiated by the end of an animation.
      * @since
      * - 6.1.0
      * - 6.1.1 Added `params.fromTrade`.
      * - 6.2.3 Added `params.finalClose`.
+     * - 8.4.0 Added `params.animationEntry` and `params.animationLastBar`.
      */
     public updateCurrentMarketData(
       data: object,
@@ -4601,7 +4739,9 @@ export namespace CIQ {
       symbol: string,
       params: {
         fromTrade?: boolean,
-        finalClose?: boolean
+        finalClose?: boolean,
+        animationEntry?: boolean,
+        animationLastBar?: boolean
       }
     ): void
     /**
@@ -5644,8 +5784,13 @@ export namespace CIQ {
      * This is the main rendering function in the animation loop. It draws the chart including panels, axis, and drawings.
      * This method is called continually as a user pans or zooms the chart.
      * This would be a typical place to put an injection to add behavior to the chart after a drawing operation is complete.
+     *
+     * @param [params] Optional params object. Unused by the draw method itself but can be used to signal to injections
+     * 		the circumstances of the draw method being called.
+     * @param [params.animationEntry] Set to true if draw is called from an animation.
+     * @since 8.4.0 Added params param with the animationEntry property.
      */
-    public draw(): void
+    public draw(params?: {animationEntry?: boolean}): void
     /**
      * Adds a series renderer to the chart. A series renderer manages a group of series that are
      * rendered on the chart in the same manner. For instance, several series which are part of the
@@ -6111,7 +6256,7 @@ export namespace CIQ {
      * A caching mechanism is used for performance.
      * If styles are changed dynamically then use CIQ.ChartEngine#clearStyles to reset.
      *
-     * Alse see CIQ.ChartEngine#setStyle.
+     * Also see CIQ.ChartEngine#setStyle.
      *
      * @param  className The CSS class name to get the styles
      * @return			  An object containing each style, in camel case.
@@ -6172,6 +6317,8 @@ export namespace CIQ {
      * **Note** that the canvas font will use the `font-family` CSS property, **NOT** the combined `font` CSS property.
      * Be aware of this when using CIQ.ChartEngine#setStyle
      *
+     * Also note that numeric font-weights are not honored in the canvas in Chrome.
+     *
      * @param  className The name of the CSS class to pull font from
      * @param  ctx		 An HTML Context
      */
@@ -6217,17 +6364,17 @@ export namespace CIQ {
      * INJECTABLE
      * <span class="animation">Animation Loop</span>
      *
-     * Call this method to create the X axis (date axis). Uses CIQ.ChartEngine#createTickXAxisWithDates.
+     * Call this method to create the X axis (date axis). Uses CIQ.ChartEngine#createSpacedDateXAxis.
      *
      * Use css styles `stx_xaxis` to control colors and fonts for the dates.
      * Use css styles `stx_xaxis_dark` to control **color only** for the divider dates.
      * Use css styles `stx_grid_border`, `stx_grid` and `stx_grid_dark` to control the grid line colors.
      * The dark styles are used for dividers; when the grid changes to a major point such as the start of a new day on an intraday chart, or a new month on a daily chart.
      *
-     * See {@tutorial Custom X-axis} and {@tutorial CSS Overview} for additional details.
+     * See {@tutorial Custom X-Axis} and {@tutorial CSS Overview} for additional details.
      *
      * @param  chart	The chart to create an x-axis for
-     * @return			axisRepresentation that can be passed in to CIQ.ChartEngine#drawXAxis
+     * @return	axisRepresentation that can be passed in to [CIQ.ChartEngine.drawXAxis]CIQ.ChartEngine#drawXAxis
      *
      */
     public createXAxis(chart: CIQ.ChartEngine.Chart): CIQ.ChartEngine.XAxisLabel[]
@@ -6365,10 +6512,14 @@ export namespace CIQ {
     /**
      * Returns the appropriate number of decimal points to show for a given priceTick (price differential between two ticks)
      * @param  priceTick The price differential between two ticks
+     * @param  [idealTickSizePixels] The number of pixels between two ticks
      * @return		  The number of decimal places appropriate to show
-     * @since 5.2.0
+     * @since
+     * - 5.2.0
+     * - 8.4.0 Added `idealTickSizePixels` parameter.
+     *   If supplied, `priceTick` will be divided by it before determining decimal places.
      */
-    public decimalPlacesFromPriceTick(priceTick: number): number
+    public decimalPlacesFromPriceTick(priceTick: number, idealTickSizePixels?: number): number
     /**
      * Formats prices for the Y-axis.
      *
@@ -6940,7 +7091,7 @@ export namespace CIQ {
         color: string,
         type: string,
         context?: CanvasRenderingContext2D,
-        confineToPanel?: CIQ.ChartEngine.Panel,
+        confineToPanel?: CIQ.ChartEngine.Panel|boolean,
         pattern?: string,
         lineWidth?: number,
         opacity?: number,
@@ -6989,14 +7140,14 @@ export namespace CIQ {
      * INJECTABLE
      * <span class="animation">Animation Loop</span>
      *
-     * Draws the x-axis. This assumes that the axisRepresentation has previously been calculated by CIQ.ChartEngine#createXAxis
+     * Draws the x-axis. This assumes that the axisRepresentation has previously been calculated by [CIQ.ChartEngine.createXAxis]CIQ.ChartEngine#createXAxis
      *
      * Use css styles `stx_xaxis` to control colors and fonts for the dates.
-     * Use css styles `stx_xaxis_dark` to control **color only** for the divider dates.
+     * Use css styles `stx_xaxis_dark` to control **color only** for the boundary dates.
      * Use css styles `stx_grid_border`, `stx_grid` and `stx_grid_dark` to control the grid line colors.
      * The dark styles are used for dividers; when the grid changes to a major point such as the start of a new day on an intraday chart, or a new month on a daily chart.
      *
-     * See {@tutorial Custom X-axis} and {@tutorial CSS Overview} for additional details.
+     * See {@tutorial Custom X-Axis} and {@tutorial CSS Overview} for additional details.
      *
      * @param  chart			   Chart object
      * @param  axisRepresentation Axis representation object created by createXAxis. This should be an array of axis labels.
@@ -7007,7 +7158,7 @@ export namespace CIQ {
       axisRepresentation: CIQ.ChartEngine.XAxisLabel[]
     ): void
     /**
-     * Draws date based x-axis.
+     * Creates date based x-axis.
      *
      * This method is algorithmically designed to create an x-axis that is responsive to various degrees of user panning, zooming, and periodicity selection.
      * It will print different versions of dates or times depending on those factors, attempting to prevent overlaps and evenly spacing labels.
@@ -7015,19 +7166,17 @@ export namespace CIQ {
      *
      * The algorithm is also market hours aware. See CIQ.Market for details on how to set market hours for the different exchanges.
      *
-     * CIQ.ChartEngine.XAxis#timeUnit and CIQ.ChartEngine.XAxis#timeUnitMultiplier can be hard set to override the algorithm (See {@tutorial Custom X-axis} for additional details).
-     *
-     * This method sets the CIQ.ChartEngine.chart.xaxis array which is a representation of the complete x-axis including future dates.
+     * This method sets the CIQ.ChartEngine.chart.xaxis array, which is a representation of the complete x-axis including future dates.
      * Each array entry contains an object:
      * DT – The date/time displayed on the x-axis
      * date – yyyymmddhhmm string representation of the date
-     * data – If the xaxis coordinate is in the past, then a reference to the chart data element for that date
+     * data – If the x-axis coordinate is in the past, then references the chart data element for that date
      *
-     * @param  [chart] The chart to print the xaxis
+     * @param  [chart] The chart to print the x-axis
      * @return			axisRepresentation that can be passed in to CIQ.ChartEngine#drawXAxis
-     * @since 3.0.0 Using x axis formatter now is available for year and month boundaries.
+     * @since 8.4.0
      */
-    public createTickXAxisWithDates(chart?: object): CIQ.ChartEngine.XAxisLabel[]
+    public createSpacedDateXAxis(chart?: object): CIQ.ChartEngine.XAxisLabel[]
     /**
      * INJECTABLE
      * <span class="animation">Animation Loop</span>
@@ -7306,6 +7455,20 @@ export namespace CIQ {
      *
      */
     constructor()
+    /**
+     * You may set any initial parameters of the renderer here, and they will be used as default values in
+     * the renderer's `params` object.
+     * In order for these init values to take effect, they must be set on the prototype before the renderer is produced.
+     * This object is useful when you do not have access to the constructor, like when using `stxx.setChartType`.
+     *
+     * @example
+     * // Turns on heads-up display mode for the market depth chart.
+     * CIQ.Renderer.prototype.init = { headsUp: true };
+     * stxx.setChartType("marketdepth_mountain_volume");
+     *
+     * @since 8.4.0
+     */
+    public init: object
     /**
      * If your renderer manages a yAxis then the necessary adjustments to its properties should be made here.
      *
@@ -7682,8 +7845,11 @@ export namespace CIQ {
    * @param  [box.y0]
    * @param  [box.x1]
    * @param  [box.y1]
+   * @param  [yAxis]
    * @return  A converted box
-   * @since 6.0.0
+   * @since
+   * - 6.0.0
+   * - 8.4.0 Added `yAxis` parameter.
    */
   function convertBoxToPixels(
     stx: CIQ.ChartEngine,
@@ -7693,7 +7859,8 @@ export namespace CIQ {
       y0?: number,
       x1?: number,
       y1?: number
-    }
+    },
+    yAxis?: CIQ.ChartEngine.YAxis
   ): object
 
   /**
@@ -8498,7 +8665,7 @@ export namespace CIQ {
    *
    * @since 8.1.0
    */
-  function climbUpDomTree(el: HTMLElement, selector?: string): any[]
+  function climbUpDomTree(el: Element, selector?: string): any[]
 
   /**
    * Returns a guaranteed width and height. For instance, `cq-context` or any other wrapping tag can
@@ -9128,6 +9295,17 @@ export namespace CIQ {
    * fields===["ABC.D-->High","ABC.D-->Low"]
    */
   function createObjectChainNames(field: string, properties: any[]): any[]
+
+  /**
+   * Return root of arrow notation string (field-->property)
+   * @param  chain      Arrow notation string.
+   * @return           Base object in string
+   * @since 8.4.0
+   * @example
+   * var root=CIQ.getObjectChainRoot("ABC.D-->Low");
+   * root==="ABC.D"
+   */
+  function getObjectChainRoot(chain: string): string
 
   /**
    * Given an arrow notation string (a-->b-->c), we want to navigate to the location
@@ -10515,6 +10693,41 @@ export namespace CIQ.Renderer.OHLC {
    * @since 5.1.0
    */
   function requestNew(featureList: any[], params?: object): CIQ.Renderer.OHLC
+}
+/**
+ * Defines an object used for rendering the X-axis on the chart, which can be adjusted immediately after declaring your `new CIQ.ChartEngine();`
+ * The CIQ.ChartEngine.XAxis object is created by and part of the CIQ.ChartEngine.Chart object and is used on the main chart panel only.
+ * There is only one x axis per chart container.
+ *
+ * Colors and fonts for the x axis can be controlled by manipulating the CSS.
+ * You can override the `stx_xaxis` class to change the font or colors.
+ *
+ * Also see:
+ * - CIQ.ChartEngine#axisBorders
+ * - CIQ.ChartEngine#xAxisAsFooter
+ * - CIQ.ChartEngine#xaxisHeight
+ *
+ * For full customization instructions see:
+ * - {@tutorial Custom X-Axis}
+ * - CIQ.ChartEngine#createXAxis
+ * - CIQ.ChartEngine#createSpacedDateXAxis
+ *
+ * Example: stxx.chart.xAxis
+ *
+ * @example
+ * var stxx=new CIQ.ChartEngine({container:document.querySelector(".chartContainer"), layout:{"candleWidth": 16, "crosshair":true}});
+ * stxx.chart.xAxis.formatter=formatFunction;
+ */
+export namespace CIQ.ChartEngine.XAxis {
+  /**
+   * Maximum number of supported levels for the xaxis labels in each grid type.
+   * The value of this property is the lowest level a "line" grid type can have.
+   * When assigning levels to grid lines, be sure not to exceed this value.
+   *
+   * @static
+   * @since 8.4.0
+   */
+  let lineBaseLevel: number
 }
 /**
  * Defines an object used for rendering the Y-axis on a panel.

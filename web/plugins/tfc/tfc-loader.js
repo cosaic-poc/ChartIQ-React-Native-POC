@@ -1,9 +1,9 @@
 /**
- *	8.3.0
- *	Generation date: 2021-06-06T16:48:16.849Z
+ *	8.4.0
+ *	Generation date: 2021-11-29T15:42:32.590Z
  *	Client name: sonyl test
  *	Package Type: Technical Analysis
- *	License type: annual
+ *	License type: trial
  *	Expiration date: "2022/01/31"
  */
 
@@ -28,18 +28,18 @@ import { CIQ } from "../../js/componentUI.js";
 import TFC from "./tfc.js";
 import html from "./tfcHtml.js";
 
-var _scss;
-
+let _css;
 if (
 	typeof define === "undefined" &&
 	typeof module === "object" &&
 	typeof require === "function"
 ) {
-	_scss = require("./tfc.scss");
+	require("./tfc.css");
 } else if (typeof define === "function" && define.amd) {
-	define(["./tfc.scss"], function (m1) {
-		_scss = m1;
-	});
+	define(["./tfc.css"], () => {});
+} else if (typeof window !== "undefined") {
+	_css = new URL("./tfc.css", import.meta.url);
+	if (import.meta.webpack) _css = null;
 }
 
 function start(config) {
@@ -109,11 +109,14 @@ CIQ.Account = CIQ.Account || function () {};
 //		present in the document.
 // @param {string} [config.htmlTemplate] Markup string to use instead of the default loaded HTML
 // 		string.
+// @param {boolean} [config.loadSample] Set to true to load the sample demo account.
 //
-// @since 8.1.0 Added `config.loadTemplate` and `config.htmlTemplate`.
+// @since
+// - 6.2.0 Added `context` parameter.
+// - 8.1.0 Added `config.loadTemplate` and `config.htmlTemplate`.
+// - 8.4.0 Added `config.loadSample`.
 CIQ.TFC = function (config) {
 	var tfcConfig = Object.assign({}, config);
-	var basePath = CIQ.ChartEngine.pluginBasePath + "tfc/";
 
 	if (tfcConfig.account) {
 		CIQ.ensureDefaults(
@@ -122,14 +125,25 @@ CIQ.TFC = function (config) {
 				: tfcConfig.account.constructor.prototype,
 			CIQ.Account.prototype
 		);
-	} else if (!CIQ.Account.Demo) {
+	} else if (CIQ.Account.Demo) {
+		tfcConfig.account = CIQ.Account.Demo;
+	} else if (config.loadSample) {
+		var pathbits = import.meta.url.split("/");
+		pathbits.pop();
+		CIQ.loadScript(
+			pathbits.join("/") + "/tfc-demo.js",
+			function () {
+				tfcConfig.account = CIQ.Account.Demo;
+				cb();
+			},
+			true
+		);
+	} else {
 		console.warn(
 			"The TFC plugin requires account, neither TFC plugin account has been provided " +
 				"in the plugin config nor has CIQ.Account.Demo been made available using tfc-demo.js import."
 		);
 		return;
-	} else {
-		tfcConfig.account = CIQ.Account.Demo;
 	}
 
 	if (config.loadTemplate !== false) {
@@ -144,13 +158,13 @@ CIQ.TFC = function (config) {
 	}
 
 	function cb(err) {
-		start(tfcConfig);
+		if (tfcConfig.account) start(tfcConfig);
 	}
-	if (_scss) {
-		CIQ.addInternalStylesheet(_scss, "tfc.scss");
-		cb();
+
+	if (_css) {
+		CIQ.loadStylesheet(_css.href, cb);
 	} else {
-		CIQ.loadStylesheet(basePath + "tfc.css", cb);
+		cb();
 	}
 };
 

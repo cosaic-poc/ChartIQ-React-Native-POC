@@ -1,9 +1,9 @@
 /**
- *	8.3.0
- *	Generation date: 2021-06-06T16:48:16.849Z
+ *	8.4.0
+ *	Generation date: 2021-11-29T15:42:32.590Z
  *	Client name: sonyl test
  *	Package Type: Technical Analysis
- *	License type: annual
+ *	License type: trial
  *	Expiration date: "2022/01/31"
  */
 
@@ -56,9 +56,8 @@ class ScriptIQ extends CIQ.UI.ContextTag {
 					Studies: CIQ.Studies,
 					prepareChannelFill: CIQ.prepareChannelFill
 				};
-				var editor = (self.editor = document.querySelector(
-					"cq-scriptiq-editor"
-				));
+				var editor = (self.editor =
+					document.querySelector("cq-scriptiq-editor"));
 				if (editor) {
 					editor.remove();
 				} else {

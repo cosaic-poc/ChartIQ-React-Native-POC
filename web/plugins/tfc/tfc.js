@@ -1,9 +1,9 @@
 /**
- *	8.3.0
- *	Generation date: 2021-06-06T16:48:16.849Z
+ *	8.4.0
+ *	Generation date: 2021-11-29T15:42:32.590Z
  *	Client name: sonyl test
  *	Package Type: Technical Analysis
- *	License type: annual
+ *	License type: trial
  *	Expiration date: "2022/01/31"
  */
 
@@ -623,10 +623,18 @@ CIQ.Account.prototype.getPoller = function () {
  * 		the default chart.
  * @param {object} [config.context] UI context for interaction between TFC and the UI (for
  * 		example, switching the chart's symbol).
+ * @param {boolean} [config.loadTemplate] Set to false if the Trade from Chart markup is already
+ *		present in the document.
+ * @param {string} [config.htmlTemplate] Markup string to use instead of the default loaded HTML
+ * 		string.
+ * @param {boolean} [config.loadSample] Set to true to load the sample demo account.
  *
  * @constructor
  * @name CIQ.TFC
- * @since 6.2.0 Added `context` parameter.
+ * @since
+ * - 6.2.0 Added `context` parameter.
+ * - 8.1.0 Added `config.loadTemplate` and `config.htmlTemplate`.
+ * - 8.4.0 Added `config.loadSample`.
  */
 CIQ.TFC = function (config) {
 	if (!config.chart) config.chart = config.stx.chart;
@@ -4101,9 +4109,8 @@ CIQ.TFC.prototype.confirmReplace = function (order) {
 		return function () {
 			CIQ.clearSafeClickTouches(submitButton);
 			CIQ.clearSafeClickTouches(abandonButton);
-			var confirmReplaceDialog = self.container.querySelector(
-				".tfcConfirmReplace"
-			);
+			var confirmReplaceDialog =
+				self.container.querySelector(".tfcConfirmReplace");
 			confirmReplaceDialog.classList.add("tfc-pending");
 			confirmReplaceDialog.querySelector(".processOrder").style.display =
 				"block";
@@ -4491,7 +4498,10 @@ CIQ.TFC.prototype.formatInnerValue = function (value) {
 		var yax = this.stx.chart.yAxis;
 		var decimalPlaces = yax.printDecimalPlaces;
 		if (!decimalPlaces && decimalPlaces !== 0) {
-			decimalPlaces = this.stx.decimalPlacesFromPriceTick(yax.priceTick);
+			decimalPlaces = this.stx.decimalPlacesFromPriceTick(
+				yax.priceTick,
+				yax.idealTickSizePixels
+			);
 		}
 		p = value.toFixed(decimalPlaces);
 	}
@@ -4916,9 +4926,8 @@ CIQ.TFC.prototype.construct = function (config) {
 	this.elements.marketSell = marketOrder.querySelector(
 		".tfc-market-sell-action"
 	);
-	this.elements.marketCurrency = marketOrder.querySelector(
-		"input.tfc-currency"
-	);
+	this.elements.marketCurrency =
+		marketOrder.querySelector("input.tfc-currency");
 	this.elements.marketShares = marketOrder.querySelector("input.tfc-shares");
 	this.elements.marketBracket = marketOrder.querySelector(
 		".tfc-market-section.complex"
@@ -4933,9 +4942,8 @@ CIQ.TFC.prototype.construct = function (config) {
 	this.elements.bidForexPart = marketOrder.querySelector(".tfc-bid strong");
 	this.elements.askEquityPart = marketOrder.querySelector(".tfc-ask span");
 	this.elements.bidEquityPart = marketOrder.querySelector(".tfc-bid span");
-	this.elements.abandonMarketOrder = marketOrder.querySelector(
-		".stx-btn.stx-ico"
-	);
+	this.elements.abandonMarketOrder =
+		marketOrder.querySelector(".stx-btn.stx-ico");
 
 	var limitOrder = this.dom.limitOrder;
 	this.elements.limitBuy = limitOrder.querySelector(".click.tfc-buy");
@@ -4957,25 +4965,20 @@ CIQ.TFC.prototype.construct = function (config) {
 	);
 	this.elements.limitTIF = limitOrder.querySelector("select");
 	this.elements.limitDay = limitOrder.querySelector("select .tfc-day");
-	this.elements.abandonLimitOrder = limitOrder.querySelector(
-		".stx-btn.stx-ico"
-	);
-	this.elements.cancelLimitOrder = limitOrder.querySelector(
-		".tfc-cancel-button"
-	);
+	this.elements.abandonLimitOrder =
+		limitOrder.querySelector(".stx-btn.stx-ico");
+	this.elements.cancelLimitOrder =
+		limitOrder.querySelector(".tfc-cancel-button");
 	this.elements.cancelDescription = limitOrder.querySelector(
 		".tfc-cancel-description"
 	);
 
-	this.elements.dragLineAbovePrice = this.dom.dragLineAbove.querySelector(
-		".tfc-price"
-	);
-	this.elements.dragLineCenterPrice = this.dom.dragLineCenter.querySelector(
-		".tfc-price"
-	);
-	this.elements.dragLineBelowPrice = this.dom.dragLineBelow.querySelector(
-		".tfc-price"
-	);
+	this.elements.dragLineAbovePrice =
+		this.dom.dragLineAbove.querySelector(".tfc-price");
+	this.elements.dragLineCenterPrice =
+		this.dom.dragLineCenter.querySelector(".tfc-price");
+	this.elements.dragLineBelowPrice =
+		this.dom.dragLineBelow.querySelector(".tfc-price");
 
 	var otoAbove = this.dom.otoAbove;
 	this.elements.removeOTOAbove = otoAbove.querySelector(

@@ -231,17 +231,17 @@ cq-orderbook {
 /* --------------------------------------------------------- TRADE HISTORY --------------------------------------------------------- */
 
 cq-tradehistory {
-  position: absolute;
-  left:0;
-  top:0;
-  bottom:0;
-  right:0;
-  background-color:rgba(255,255,255,0.85);
-  padding: 0;
-  margin: 0;
-  display: none;
-  z-index:35;
-  .#{$DARK} & {
+	position: absolute;
+	left:0;
+	top:0;
+	bottom:0;
+	right:0;
+	background-color:rgba(255,255,255,0.85);
+	padding: 0;
+	margin: 0;
+	display: none;
+	z-index:35;
+	.#{$DARK} & {
 		background-color:rgba(28,42,53,0.7);
 	}
 	&[cq-active] {
@@ -272,7 +272,7 @@ cq-tradehistory {
 	}
 	& cq-item {
 		cursor: default;
-	  display: table;
+		display: table;
 		font-size: 12px;
 		height: 15px;
 		line-height: 15px;
@@ -305,20 +305,41 @@ cq-tradehistory {
 			& div[col="price"] {
 				font-weight:bold;
 			}
+			&[dir] {
+				&[animate='true']:not([corrected])::after {
+					content: "";
+					position: absolute;
+					top: 0;
+					right: 0;
+					bottom: 0;
+					left: 0;
+					opacity: 1;
+					z-index: -1;
+					animation: trade 2.5s linear -0.5s 1 normal forwards;
+				}
+			}
 			&[dir='up'] {
-				&:not([corrected]) {animation: uptrade 3s linear -1s;}
+				&[animate='true']:not([corrected])::after {
+					background-color: $bid-down-color;
+				}
 				& div[col="price"] {
 					color:$bid-down-color;
 				}
 			}
 			&[dir='down'] {
-				&:not([corrected]) {animation: downtrade 3s linear -1s;}
+				&[animate='true']:not([corrected])::after {
+					background-color: $ask-up-color;
+				}
 				& div[col="price"] {
 					color:$ask-up-color;
 				}
 			}
 			&[dir=''] {
-				&:not([corrected]) {animation: eventrade 3s linear -1s;}
+				&[dir=''] {
+					&[animate='true']:not([corrected])::after {
+						background-color: $even-color;
+					}
+				}
 				& div[col="price"] {
 					color:$even-color;
 				}
@@ -327,12 +348,7 @@ cq-tradehistory {
 	}
 }
 
-@keyframes uptrade {
-	from {background-color: $bid-down-color;}
-}
-@keyframes downtrade {
-	from {background-color: $ask-up-color;}
-}
-@keyframes eventrade {
-	from {background-color: $even-color;}
+@keyframes trade {
+	from { opacity: 1; }
+	to { opacity: 0; }
 }

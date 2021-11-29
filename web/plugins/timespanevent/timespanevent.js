@@ -1,9 +1,9 @@
 /**
- *	8.3.0
- *	Generation date: 2021-06-06T16:48:16.849Z
+ *	8.4.0
+ *	Generation date: 2021-11-29T15:42:32.590Z
  *	Client name: sonyl test
  *	Package Type: Technical Analysis
- *	License type: annual
+ *	License type: trial
  *	Expiration date: "2022/01/31"
  */
 
@@ -24,22 +24,22 @@ import "./timespanevent-marker.js";
 import lceConstants from "./constants.js";
 import "./studies/projectedVolume.js";
 
-var _css;
+let _css;
 if (
 	typeof define === "undefined" &&
 	typeof module === "object" &&
 	typeof require === "function"
 ) {
-	_css = require("./timespanevent.scss");
+	require("./timespanevent.css");
 } else if (typeof define === "function" && define.amd) {
-	define(["./timespanevent.css"], function (m) {
-		_css = m;
-	});
+	define(["./timespanevent.css"], () => {});
+} else {
+	_css = new URL("./timespanevent.css", import.meta.url);
+	if (import.meta.webpack) _css = null;
 }
 
 let SPACING,
 	SPACING_BUFFER,
-	LCE_FOLDER,
 	TIME_SPAN_EVENT,
 	TIME_SPAN_EVENT_PANEL,
 	TIME_SPAN_EVENT_CLASS,
@@ -150,14 +150,11 @@ CIQ.TimeSpanEventPanel = function (params) {
 	({
 		SPACING,
 		SPACING_BUFFER,
-		LCE_FOLDER,
 		TIME_SPAN_EVENT,
 		TIME_SPAN_EVENT_PANEL,
 		TIME_SPAN_EVENT_CLASS,
 		TIME_SPAN_EVENT_IMPLEMENTATION
 	} = modifiedConstants);
-
-	var basePath = CIQ.ChartEngine.pluginBasePath + LCE_FOLDER;
 
 	/**
 	 * Enables event zoom on any time span event regardless of whether the event has
@@ -186,10 +183,9 @@ CIQ.TimeSpanEventPanel = function (params) {
 	};
 
 	if (_css) {
-		CIQ.addInternalStylesheet(_css, "timespanevent.scss");
-		callback();
+		CIQ.loadStylesheet(_css.href, callback);
 	} else {
-		CIQ.loadStylesheet(basePath + "timespanevent.css", callback);
+		callback();
 	}
 
 	this.infoPanel = params.infoPanel || {}; // where to display info box for an eventType
@@ -672,11 +668,8 @@ CIQ.TimeSpanEventPanel = function (params) {
 	});
 
 	stx.append("resizeChart", function () {
-		const {
-			panel,
-			lastResizeHeight,
-			checkSetPanelHeight
-		} = this.timeSpanEventPanel;
+		const { panel, lastResizeHeight, checkSetPanelHeight } =
+			this.timeSpanEventPanel;
 
 		if (panel && lastResizeHeight !== this.height) {
 			this.timeSpanEventPanel.lastResizeHeight = this.height;
@@ -709,7 +702,6 @@ if (CIQ.UI && CIQ.UI.Layout) {
 		if (!params) params = {};
 		self.menuItemSelector = params.menuItemSelector;
 		self.activeClassName = params.activeClassName || "ciq-active";
-		var basePath = CIQ.ChartEngine.pluginBasePath + "timespanevent/";
 
 		function init() {
 			self.implementation = new CIQ[TIME_SPAN_EVENT_IMPLEMENTATION](
@@ -727,7 +719,13 @@ if (CIQ.UI && CIQ.UI.Layout) {
 		if (CIQ[TIME_SPAN_EVENT_IMPLEMENTATION]) {
 			init();
 		} else if (params.loadSample) {
-			CIQ.loadScript(basePath + "examples/timeSpanEventSample.js", init, true);
+			var pathbits = import.meta.url.split("/");
+			pathbits.pop();
+			CIQ.loadScript(
+				pathbits.join("/") + "/examples/timeSpanEventSample.js",
+				init,
+				true
+			);
 		}
 	};
 

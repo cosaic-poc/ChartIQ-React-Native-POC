@@ -1,9 +1,9 @@
 /**
- *	8.3.0
- *	Generation date: 2021-06-06T16:48:16.849Z
+ *	8.4.0
+ *	Generation date: 2021-11-29T15:42:32.590Z
  *	Client name: sonyl test
  *	Package Type: Technical Analysis
- *	License type: annual
+ *	License type: trial
  *	Expiration date: "2022/01/31"
  */
 
@@ -96,6 +96,18 @@ class TradeHistory extends CIQ.UI.ModalTag {
 		super.connectedCallback();
 	}
 
+	disconnectedCallback() {
+		if (this.context) {
+			var stx = this.context.stx;
+			CIQ.UI.unobserveProperty(
+				"touched",
+				stx.chart.currentMarketData,
+				this.listener
+			);
+		}
+		super.disconnectedCallback();
+	}
+
 	clearTable(selector) {
 		var side = this.node.find(selector);
 		if (!side.length) return;
@@ -110,21 +122,23 @@ class TradeHistory extends CIQ.UI.ModalTag {
 		this.node.attr("cq-active", true);
 	}
 
-	setContext(context) {
-		var self = this;
-		self.addInjection(
-			"append",
-			"updateCurrentMarketData",
-			function (data, chart, symbol, params) {
-				if (symbol) return;
-				var last = (chart || this.chart).currentMarketData.Last;
-				if (!last || CIQ.equals(last, self.lastTrade)) return;
-				if (!last.Size) return;
-				self.update(last);
-				self.lastTrade = last;
-			}
+	setContext({ stx }) {
+		const self = this;
+		this.listener = function () {
+			const last = stx.chart.currentMarketData.Last;
+			if (!last || CIQ.equals(last, self.lastTrade)) return;
+			if (!last.Size) return;
+			self.update(last);
+			self.lastTrade = last;
+		};
+
+		CIQ.UI.observeProperty(
+			"touched",
+			stx.chart.currentMarketData,
+			this.listener
 		);
-		context.stx.addEventListener("symbolChange", function (obj) {
+
+		stx.addEventListener("symbolChange", function (obj) {
 			if (obj.action == "master" && self.symbol != obj.symbol)
 				self.clearTable("cq-tradehistory-body");
 			self.symbol = obj.symbol;
@@ -148,42 +162,44 @@ class TradeHistory extends CIQ.UI.ModalTag {
 
 	updateTableRow(data, selector, reverseOrder) {
 		if (!data.Timestamp) return;
-		var myTemplate = this.node.find("template");
-		var side = this.node.find(selector);
+		const myTemplate = this.node.find("template");
+		const side = this.node.find(selector);
 		if (!side.length) return;
-		var maxRows = side.attr("maxrows");
-		var self = this;
+		const maxRows = side.attr("maxrows");
+		const { stx } = this.context;
+		const { animation } = stx.layout;
+
 		function setHtml(record) {
 			return function () {
-				var myCol = this.getAttribute("col");
+				const myCol = this.getAttribute("col");
 				if (myCol && record[myCol] !== undefined) {
-					var val;
+					let val;
 					if (myCol == "time") val = record[myCol];
 					else {
 						val = record[myCol];
 						this.setAttribute("rawval", val);
 						val = Number(val.toFixed(8)); // remove roundoff error
-						var stx = self.context.stx;
-						if (stx.marketDepth) stx = stx.marketDepth.marketDepth;
-						val = stx.formatPrice(val, stx.chart.panel);
+						const myStx = stx.marketDepth ? stx.marketDepth.marketDepth : stx;
+						val = myStx.formatPrice(val, myStx.chart.panel);
 					}
 					this.innerHTML = val;
 				}
 			};
 		}
-		var row;
+		let row;
 		if (maxRows && maxRows == side.find("cq-item").length) {
 			row = CIQ.UI.$(side.find("cq-item")[maxRows - 1]);
 			row.remove();
 		} else {
 			row = CIQ.UI.makeFromTemplate(myTemplate, side);
 			if (reverseOrder) {
-				var reverseRow = Array.from(row.children()).reverse();
+				const reverseRow = Array.from(row.children()).reverse();
 				row.empty().append(reverseRow);
 			}
 		}
-		var allRows = side.find("cq-item");
-		for (var place = 0; place < allRows.length; place++) {
+		let place;
+		let allRows = side.find("cq-item");
+		for (place = 0; place < allRows.length; place++) {
 			if (allRows[place].getAttribute("ts") <= data.Timestamp) {
 				break;
 			}
@@ -191,15 +207,15 @@ class TradeHistory extends CIQ.UI.ModalTag {
 		row.removeAttr("corrected");
 		allRows[place].parentNode.insertBefore(row[0], allRows[place]);
 
-		var children = row.children();
-		var childCount = children.length;
+		const children = row.children();
+		const childCount = children.length;
 		children.css(
 			"width",
 			CIQ.elementDimensions(row[0], { padding: 1 }).width / childCount + "px"
 		);
 
 		// readjust headers
-		var headers = this.node.find("[cq-tradehistory-header]");
+		const headers = this.node.find("[cq-tradehistory-header]");
 		Array.from(headers.children()).forEach(function (child) {
 			child.style.width =
 				CIQ.elementDimensions(child.parentElement, { padding: 1 }).width /
@@ -222,10 +238,11 @@ class TradeHistory extends CIQ.UI.ModalTag {
 		allRows = side.find("cq-item");
 
 		//set the price direction of this row and the row before this if applicable
-		for (var idx = 0; idx < 2; idx++) {
-			var dir = "";
-			var _row = allRows[place - idx],
-				_nextRow = allRows[place - idx + 1];
+		for (let idx = 0; idx < 2; idx++) {
+			const _row = allRows[place - idx];
+			const _nextRow = allRows[place - idx + 1];
+			let dir = "";
+
 			if (_row) {
 				if (_nextRow) {
 					dir =
@@ -236,12 +253,18 @@ class TradeHistory extends CIQ.UI.ModalTag {
 							: "";
 				}
 				_row.setAttribute("dir", dir);
+				if (animation) {
+					_row.setAttribute("animate", true);
+					_row.addEventListener("animationend", () => {
+						_row.removeAttribute("animate");
+					});
+				}
 				if (idx) _row.setAttribute("corrected", true);
 			}
 		}
 
 		// this removes any extra rows from the end.
-		var scroll = this.node.find("cq-scroll");
+		const scroll = this.node.find("cq-scroll");
 		scroll.each(function () {
 			this.resize();
 		});

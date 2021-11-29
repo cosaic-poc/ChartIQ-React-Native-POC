@@ -1,3 +1,5 @@
+import { CIQ } from "../../../js/chartiq.js";
+
 //
 // Sample markers file
 // This file contains functions which create sample markers.  There is a stylesheet which goes along with it as well.
@@ -20,11 +22,10 @@ if (
 		alertPng = m1;
 		newsPng = m2;
 	});
+} else {
+	alertPng = new URL("../images/alert.png", import.meta.url).href;
+	newsPng = new URL("../images/news.png", import.meta.url).href;
 }
-
-import { CIQ } from "../../../js/chartiq.js";
-
-var glyphPath = CIQ.ChartEngine.pluginBasePath + "timespanevent/images/";
 
 CIQ.TimeSpanEventSample = function (stx) {
 	this.stx = stx;
@@ -193,7 +194,7 @@ var orderData = [
 		markerShape: "circle",
 		subChildren: [], // in this sample, subChildren are randomly created by the  above code.
 		isActive: false,
-		glyph: alertPng || glyphPath + "alert.png",
+		glyph: alertPng,
 		showPriceLines: true
 	},
 	{
@@ -234,7 +235,7 @@ var orderData = [
 		markerShape: "circle",
 		subChildren: [], // in this sample, subChildren are randomly created by the above code.
 		isActive: true,
-		glyph: alertPng || glyphPath + "alert.png",
+		glyph: alertPng,
 		showPriceLines: true
 	}
 ];
@@ -256,7 +257,7 @@ var newsData = [
 		story: "Another war broke out.",
 		category: "trade",
 		markerShape: "circle",
-		glyph: newsPng || glyphPath + "news.png"
+		glyph: newsPng
 	},
 	{
 		label: "News",
@@ -267,7 +268,7 @@ var newsData = [
 		story: "Trade tarriffs announced.",
 		category: "trade",
 		markerShape: "circle",
-		glyph: newsPng || glyphPath + "news.png"
+		glyph: newsPng
 	},
 	{
 		label: "News",
@@ -278,7 +279,7 @@ var newsData = [
 		story: "Big company has gone bankrupt.",
 		category: "trade",
 		markerShape: "circle",
-		glyph: newsPng || glyphPath + "news.png"
+		glyph: newsPng
 	},
 	{
 		label: "News",
@@ -290,7 +291,7 @@ var newsData = [
 			"Lorem ipsum dolor sit amet, consectetur adipiscing elit. In risus quam, suscipit eu imperdiet sed, finibus vitae neque. Aenean gravida erat vel arcu bibendum pharetra. Nullam arcu nibh, ullamcorper a quam quis, aliquam mollis ex. Nulla lacus ligula, sollicitudin ac lacinia a, tempus nec sem. Aliquam erat volutpat. Phasellus magna mauris, maximus eget imperdiet eu, tincidunt ut neque. Maecenas rutrum nisl sed laoreet placerat. Nunc semper eu diam eget pretium. Fusce est lectus, feugiat nec metus sed, auctor laoreet ligula. Fusce et felis ut quam finibus porttitor. Fusce mollis felis quis velit rutrum laoreet. Maecenas dignissim mattis facilisis. Aenean tempor fermentum dictum.",
 		category: "trade",
 		markerShape: "circle",
-		glyph: newsPng || glyphPath + "news.png"
+		glyph: newsPng
 	}
 ];
 

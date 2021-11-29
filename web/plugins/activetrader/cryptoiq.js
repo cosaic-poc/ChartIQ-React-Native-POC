@@ -1,9 +1,9 @@
 /**
- *	8.3.0
- *	Generation date: 2021-06-06T16:48:16.849Z
+ *	8.4.0
+ *	Generation date: 2021-11-29T15:42:32.590Z
  *	Client name: sonyl test
  *	Package Type: Technical Analysis
- *	License type: annual
+ *	License type: trial
  *	Expiration date: "2022/01/31"
  */
 
@@ -30,30 +30,31 @@ import "./marketdepth.js";
 import "./orderbook.js";
 import "./tradehistory.js";
 
-var _css;
+let _css;
 if (
 	typeof define === "undefined" &&
 	typeof module === "object" &&
 	typeof require === "function"
 ) {
-	_css = require("./cryptoiq.scss");
+	require("./cryptoiq.css");
 } else if (typeof define === "function" && define.amd) {
-	define(["./cryptoiq.scss"], function (m1) {
-		_css = m1;
-	});
+	define(["./cryptoiq.css"], () => {});
+} else {
+	_css = new URL("./cryptoiq.css", import.meta.url);
+	if (import.meta.webpack) _css = null;
 }
 
-const basePath = CIQ.ChartEngine.pluginBasePath + "activetrader/";
+const styleSheetsLoaded = () => {
+	if (CIQ.MarketDepth) {
+		CIQ.MarketDepth.mdStyleSheetLoaded = true;
+		CIQ.MarketDepth.hmStyleSheetLoaded = true;
+	}
+};
 
 if (_css) {
-	CIQ.addInternalStylesheet(_css, "cryptoiq.scss");
+	CIQ.loadStylesheet(_css.href, styleSheetsLoaded);
 } else {
-	CIQ.loadStylesheet(basePath + "cryptoiq.css", function () {
-		if (CIQ.MarketDepth) {
-			CIQ.MarketDepth.mdStyleSheetLoaded = true;
-			CIQ.MarketDepth.hmStyleSheetLoaded = true;
-		}
-	});
+	styleSheetsLoaded();
 }
 
 if (CIQ.UI && CIQ.UI.Layout) {

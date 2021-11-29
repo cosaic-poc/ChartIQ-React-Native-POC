@@ -1,9 +1,9 @@
 /**
- *	8.3.0
- *	Generation date: 2021-06-06T16:48:16.849Z
+ *	8.4.0
+ *	Generation date: 2021-11-29T15:42:32.590Z
  *	Client name: sonyl test
  *	Package Type: Technical Analysis
- *	License type: annual
+ *	License type: trial
  *	Expiration date: "2022/01/31"
  */
 
@@ -99,6 +99,7 @@ CIQ.Animation =
 			return console.warn(
 				"No CIQ.ChartEngine provided. Cannot properly create CIQ.Animation instance"
 			);
+		this.cssRequired = true;
 		var params = {
 			stayPut: false,
 			ticksFromEdgeOfScreen: 5,
@@ -124,6 +125,14 @@ CIQ.Animation =
 			nextBoundary = null;
 		}
 
+		if (CIQ.UI) {
+			CIQ.UI.observeProperty("animation", stx.layout, ({ value }) => {
+				if (params.tension) {
+					stx.chart.tension = value ? animationParameters.tension : 0;
+				}
+			});
+		}
+
 		stx.addEventListener(["symbolChange", "layout"], function (obj) {
 			initMarketSessionFlags();
 		});
@@ -146,9 +155,11 @@ CIQ.Animation =
 			if (
 				!chart ||
 				!chart.defaultChartStyleConfig ||
-				chart.defaultChartStyleConfig == "none"
-			)
+				chart.defaultChartStyleConfig == "none" ||
+				!this.layout.animation
+			) {
 				return;
+			}
 
 			if (params !== undefined) {
 				if (params.animationEntry || params.secondarySeries) return;
@@ -164,7 +175,6 @@ CIQ.Animation =
 						bar.Close = record.Close;
 						if (record.LastSize) bar.LastSize = record.LastSize;
 						if (record.LastTime) bar.LastTime = record.LastTime;
-
 						// Reset properties to close if Open, High and Low have been added and changed during animation process
 						if (record.Open === undefined && bar.Open !== undefined)
 							bar.Open = record.Close;
@@ -173,12 +183,17 @@ CIQ.Animation =
 						if (record.Low === undefined && bar.Low !== undefined)
 							bar.Low = record.Close;
 
-						self.updateCurrentMarketData({
-							Close: bar.Close,
-							DT: bar.DT,
-							LastSize: bar.LastSize,
-							LastTime: bar.LastTime
-						});
+						self.updateCurrentMarketData(
+							{
+								Close: bar.Close,
+								DT: bar.DT,
+								LastSize: bar.LastSize,
+								LastTime: bar.LastTime
+							},
+							null,
+							null,
+							{ animationLastBar: true, fromTrade: true }
+						);
 						self.createDataSet(null, null, { appending: true });
 						return;
 					}
@@ -315,9 +330,10 @@ CIQ.Animation =
 								session !== "" &&
 								(!this.layout.marketSessions ||
 									!this.layout.marketSessions[session]);
-							nextBoundary = chart.market[
-								filterSession ? "getNextOpen" : "getNextClose"
-							](dtToFilter);
+							nextBoundary =
+								chart.market[filterSession ? "getNextOpen" : "getNextClose"](
+									dtToFilter
+								);
 						}
 					}
 					if (filterSession) {
@@ -366,7 +382,12 @@ CIQ.Animation =
 								!animationParameters.stayPut
 							) {
 								this.nextMicroPixels = this.micropixels;
-								chart.scroll++;
+								if (
+									chart.scroll >=
+									chart.maxTicks -
+										this.preferences.whitespace / this.layout.candleWidth
+								)
+									chart.scroll++;
 							}
 							chart.animatingHorizontalScroll = linearChart; // When the chart advances we also animate the horizontal scroll by incrementing micropixels
 							chart.previousDataSetLength = chart.dataSet.length;
@@ -400,7 +421,9 @@ CIQ.Animation =
 		});
 
 		stx.prepend("renderYAxis", function (chart) {
-			if (this.grabbingScreen || !this.isHome()) return;
+			if (this.grabbingScreen || !this.isHome() || !this.layout.animation) {
+				return;
+			}
 			// When display style doesn't support animation
 			var supportedChartType =
 				this.mainSeriesRenderer && this.mainSeriesRenderer.supportsAnimation;
@@ -468,7 +491,8 @@ CIQ.Animation =
 				this.chart.dataSet &&
 				this.chart.dataSet.length &&
 				this.mainSeriesRenderer &&
-				this.mainSeriesRenderer.supportsAnimation
+				this.mainSeriesRenderer.supportsAnimation &&
+				this.layout.animation
 			) {
 				if (flashingColorThrottleCounter % flashingColorThrottle === 0) {
 					flashingColorIndex++;

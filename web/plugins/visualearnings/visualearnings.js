@@ -1,9 +1,9 @@
 /**
- *	8.3.0
- *	Generation date: 2021-06-06T16:48:16.849Z
+ *	8.4.0
+ *	Generation date: 2021-11-29T15:42:32.590Z
  *	Client name: sonyl test
  *	Package Type: Technical Analysis
- *	License type: annual
+ *	License type: trial
  *	Expiration date: "2022/01/31"
  */
 
@@ -28,18 +28,18 @@
 import { CIQ } from "../../js/componentUI.js";
 import config from "./config.js";
 
-var _css;
-
+let _css;
 if (
 	typeof define === "undefined" &&
 	typeof module === "object" &&
 	typeof require === "function"
 ) {
-	_css = require("./visualearnings.css");
+	require("./visualearnings.css");
 } else if (typeof define === "function" && define.amd) {
-	define(["./visualearnings.css"], function (m1) {
-		_css = m1;
-	});
+	define(["./visualearnings.css"], () => {});
+} else {
+	_css = new URL("./visualearnings.css", import.meta.url);
+	if (import.meta.webpack) _css = null;
 }
 
 function Estimize() {
@@ -1653,16 +1653,19 @@ CIQ.VisualEarnings = function (params) {
 		);
 	}
 	new CIQ.UI.VisualEarnings(params.context);
-	var basePath = CIQ.ChartEngine.pluginBasePath + "visualearnings/";
+
 	var cb = function () {
 		estimize.enable();
 	};
+
+	function clearStyles() {
+		params.stx.clearStyles();
+	}
+
 	if (_css) {
-		CIQ.addInternalStylesheet(_css, "visualearnings.css");
+		CIQ.loadStylesheet(_css.href, clearStyles);
 	} else {
-		CIQ.loadStylesheet(basePath + "visualearnings.css", function () {
-			params.stx.clearStyles();
-		});
+		clearStyles();
 	}
 
 	if (params.menuContainer) {
