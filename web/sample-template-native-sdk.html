@@ -198,12 +198,10 @@ To use this template, move or copy it to the root folder of your library.
 			}
 		}
 
-		// stxx.attachQuoteFeed(quoteFeedSimulator)
 		stxx.chart.xAxis.displayGridLines = false;
 
 		stxx.chart.yAxis.displayGridLines = false;
 
-		// stxx.setChartType("mountain");
 		stxx.setPeriodicity({
 			periodicity: 1,
 			interval: 1,
@@ -214,7 +212,6 @@ To use this template, move or copy it to the root folder of your library.
 			window.ReactNativeWebView.postMessage(JSON.stringify({hud: CIQ.MobileBridge.getHudDetails(), symbol: stxx.chart.symbol, dataSet: stxx.chart.dataSet}))
 		});
 
-		// stxx.loadChart("AAPL");
 
 	</script>
 
