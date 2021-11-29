@@ -178,7 +178,7 @@ To use this template, move or copy it to the root folder of your library.
 		// Object.assign(config.quoteFeeds[0].behavior, { refreshInterval: 5 });
 		// If you want to modify anything in the config directly please do so in chartiq/js/defaultConfiguration.js
 		Object.assign(config.enabledAddOns, { fullScreen: false, rangeSlider: false });
-
+		Object.assign(config.quoteFeeds[0].behavior, { refreshInterval: 1 });
 		// Create the chart...
 		let stxx = config.createChart();
 
@@ -198,25 +198,23 @@ To use this template, move or copy it to the root folder of your library.
 			}
 		}
 
-		stxx.attachQuoteFeed(quoteFeedSimulator, {
-			refreshInterval: 1
-		});
+		// stxx.attachQuoteFeed(quoteFeedSimulator)
 		stxx.chart.xAxis.displayGridLines = false;
 
 		stxx.chart.yAxis.displayGridLines = false;
 
-		stxx.setChartType("mountain");
+		// stxx.setChartType("mountain");
 		stxx.setPeriodicity({
 			periodicity: 1,
 			interval: 1,
-			timeUnit: 'second'
+			timeUnit: 'minute'
 		});
 		
 		CIQ.ChartEngine.prototype.append("draw", () => {
 			window.ReactNativeWebView.postMessage(JSON.stringify({hud: CIQ.MobileBridge.getHudDetails(), symbol: stxx.chart.symbol, dataSet: stxx.chart.dataSet}))
 		});
 
-		stxx.loadChart("AAPL");
+		// stxx.loadChart("AAPL");
 
 	</script>
 

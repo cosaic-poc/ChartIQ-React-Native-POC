@@ -9,11 +9,13 @@
     "test": "jest",
     "lint": "eslint .",
     "prestart": "cd web && npm install && npm start",
-    "postinstall": "cd web && npm install; cd ../ios && pod install",
+    "//postinstall": "cd web && npm install; cd ../ios && pod install",
     "chartiq": "cd web && npm start & npm run ios"
   },
   "dependencies": {
-    "react": "16.13.1",
+    "@babel/preset-env": "^7.16.4",
+    "@react-native-community/cli-platform-ios": "^6.2.0",
+    "react": "17.0.1",
     "react-native": "^0.64.2",
     "react-native-webview": "^11.6.2"
   },
@@ -25,7 +27,8 @@
     "eslint": "^6.5.1",
     "jest": "^25.1.0",
     "metro-react-native-babel-preset": "^0.59.0",
-    "react-test-renderer": "16.13.1"
+    "react-test-renderer": "17.0.1",
+    "typescript": "^4.5.2"
   },
   "jest": {
     "preset": "react-native"
