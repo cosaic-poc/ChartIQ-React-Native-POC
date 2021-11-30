@@ -24,6 +24,12 @@ The top-left "AAPL" and ticking price are passed to the React component via post
 
 `npm run chartiq` is a convenience that I wrote to both start the Express webserver to serve up the webview, as well as begin the iOS simulator. Please modify as needed or ignore it completely and run `npm start` in [web](./web) and `npm run ios` in the root. Let me know which one worked best for you. 
 
+## A More True-to-Life Branch
+
+[This branch](https://github.com/ChartIQ/ChartIQ-React-Native-POC/tree/UI) has more to it that may be useful in that it contains some UI elements, again as a proof-of-concept.
+
+![](./_assets/UI.gif)
+
 ## Documentation
 
 https://documentation.chartiq.com
