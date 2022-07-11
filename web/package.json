@@ -1,0 +1,26 @@
+{
+	"name": "chartiq",
+	"version": "8.4.0",
+	"description": "Enterprise grade HTML5 Charting Library by ChartIQ",
+	"private": true,
+	"main": "js/chartiq.js",
+	"files": [
+		"css/**/*",
+		"examples/**/*",
+		"js/**/*",
+		"mobile/**/*",
+		"modules/**/*",
+		"plugins/**/*"
+	],
+	"author": {
+		"name": "ChartIQ",
+		"email": "support@chartiq.com"
+	},
+	"dependencies": {
+		"express": "^4.17.1",
+		"nodemon": "^2.0.15"
+	},
+	"scripts": {
+		"start": "nodemon server.js"
+	}
+}
