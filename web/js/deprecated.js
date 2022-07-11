@@ -1,10 +1,10 @@
 /**
- *	8.4.0
- *	Generation date: 2021-11-29T15:42:32.590Z
+ *	8.7.0
+ *	Generation date: 2022-06-10T18:37:49.036Z
  *	Client name: sonyl test
- *	Package Type: Technical Analysis
+ *	Package Type: Technical Analysis e98f22c
  *	License type: trial
- *	Expiration date: "2022/01/31"
+ *	Expiration date: "2022/12/31"
  */
 
 /***********************************************************
@@ -1299,10 +1299,11 @@ CIQ.ChartEngine.prototype.setPeriodicityV2 = function (
  * data – If the xaxis coordinate is in the past, then a reference to the chart data element for that date<br>
  *
  * @param  {object} [chart] The chart to print the xaxis
- * @return {CIQ.ChartEngine.XAxisLabel[]}			axisRepresentation that can be passed in to {@link CIQ.ChartEngine#drawXAxis}
+ * @return {CIQ.ChartEngine.XAxisLabel[]}			axisRepresentation that can be passed in to {@link CIQ.ChartEngine.AdvancedInjectable#drawXAxis}
  * @memberof CIQ.ChartEngine
- * @since 3.0.0 Using x axis formatter now is available for year and month boundaries.
- * @deprecated As of 8.4.0.  Use {@link CIQ.ChartEngine#createSpacedDateXAxis}.
+ * @since
+ * - 3.0.0 Using x-axis formatter is now available for year and month boundaries.
+ * - 8.4.0 By default, x-axis labeling is based on calendar priority (see {@link CIQ.ChartEngine#createSpacedDateXAxis}). To retain the legacy x-axis, see {@tutorial Upgradelog_8.3.0-8.4.0} for additional details.
  */
 CIQ.ChartEngine.prototype.createTickXAxisWithDates = function (chart) {
 	logAggressive(
@@ -1983,6 +1984,29 @@ CIQ.ChartEngine.prototype.construct = function () {
 					setValue(this, "barsHaveWidth", val);
 				};
 			})(this)
+		},
+		/**
+		 * Set to zero to avoid resize checking loop. See {@link CIQ.ChartEngine#setResizeTimer} for more details.
+		 *
+		 * @type number
+		 * @default
+		 * @alias resizeDetectMS
+		 * @deprecated 8.6.0 Use CIQ.resizeDetectInterval instead.
+		 * @memberof CIQ.ChartEngine.prototype
+		 */
+		resizeDetectMS: {
+			get: () => {
+				log(
+					"CIQ.ChartEngine.prototype.resizeDetectMS has been deprecated. Use CIQ.resizeDetectInterval instead."
+				);
+				return CIQ.resizeDetectInterval;
+			},
+			set: (val) => {
+				log(
+					"CIQ.ChartEngine.prototype.resizeDetectMS has been deprecated. Use CIQ.resizeDetectInterval instead."
+				);
+				CIQ.resizeDetectInterval = val;
+			}
 		}
 	});
 
@@ -2328,7 +2352,7 @@ CIQ.ChartEngine.prototype.construct = function () {
 		 * @type number
 		 * @default
 		 * @memberof CIQ.ChartEngine.XAxis#
-		 * @deprecated As of 8.4.0.
+		 * @since 8.4.0 By default, x-axis labeling is based on calendar priority. To retain the legacy x-axis, see {@tutorial Upgradelog_8.3.0-8.4.0} for additional details.
 		 */
 		idealTickSizePixels: {
 			enumerable: true,
@@ -2374,7 +2398,7 @@ CIQ.ChartEngine.prototype.construct = function () {
 		 * // masterData is in 1 second intervals for this particular example.
 		 * stxx.chart.xAxis.timeUnit = CIQ.SECOND;
 		 * stxx.chart.xAxis.timeUnitMultiplier = 5;
-		 * @deprecated As of 8.4.0.
+		 * @since 8.4.0 By default, x-axis labeling is based on calendar priority. To retain the legacy x-axis, see {@tutorial Upgradelog_8.3.0-8.4.0} for additional details.
 		 */
 		timeUnit: {
 			enumerable: true,
@@ -2405,7 +2429,7 @@ CIQ.ChartEngine.prototype.construct = function () {
 		 * // masterData is in 1 second intervals for this particular example.
 		 * stxx.chart.xAxis.timeUnit = CIQ.SECOND;
 		 * stxx.chart.xAxis.timeUnitMultiplier = 5;
-		 * @deprecated As of 8.4.0.
+		 * @since 8.4.0 By default, x-axis labeling is based on calendar priority. To retain the legacy x-axis, see {@tutorial Upgradelog_8.3.0-8.4.0} for additional details.
 		 */
 		timeUnitMultiplier: {
 			enumerable: true,
@@ -2485,6 +2509,38 @@ if (typeof window != "undefined") {
 		}
 	});
 }
+
+/* Easing cubics from
+	http://gizma.com/easing/#expo1
+	t = current time (t should move from zero to d)
+	b = starting value
+	c = change in value (b + c = ending value )
+	d = duration
+	*/
+
+// Deprecated since 8.6.0. Use CIQ.EaseMachine.easeInOutQuad instead.
+Math.easeInOutQuad = function (t, b, c, d) {
+	log(
+		"Math.easeInOutQuad has been deprecated. Use CIQ.EaseMachine.easeInOutQuad instead."
+	);
+	CIQ.EaseMachine.easeInOutQuad(t, b, c, d);
+};
+
+// Deprecated since 8.6.0. Use CIQ.EaseMachine.easeInOutCubic instead.
+Math.easeInOutCubic = function (t, b, c, d) {
+	log(
+		"Math.easeInOutCubic has been deprecated. Use CIQ.EaseMachine.easeInOutCubic instead."
+	);
+	CIQ.EaseMachine.easeInOutCubic(t, b, c, d);
+};
+
+// Deprecated since 8.6.0. Use CIQ.EaseMachine.easeOutCubic instead.
+Math.easeOutCubic = function (t, b, c, d) {
+	log(
+		"Math.easeOutCubic has been deprecated. Use CIQ.EaseMachine.easeOutCubic instead."
+	);
+	CIQ.EaseMachine.easeOutCubic(t, b, c, d);
+};
 
 
 
@@ -3103,7 +3159,7 @@ if (typeof $ === "function" && $.fn) {
 	 *
 	 * Checks `innerText` to see if it needs to be changed before changing it. Efficient because
 	 * it doesn't change the DOM unless it needs to. Note that this is a setter function only. It
-	 * is not meant to replace the getter aspect of jQuery's built in `text()` function.
+	 * is not meant to replace the getter aspect of jQuery's built-in `text()` function.
 	 *
 	 * @param {string} str The text to which `innerText` is changed if `innerText` is not already
 	 * 		the same as this text.
@@ -3198,7 +3254,7 @@ CIQ.UI.allContexts = function () {
  * {@tutorial Web Component Interface}.
  *
  * @param {Object} params Parameters.
- * @param {String} [params.selector] The selector to effect the observable (adding class,
+ * @param {String} [params.selector] The selector to affect the observable (adding class,
  * 		setting value).
  * @param {Object} params.obj The object to observe.
  * @param {String} [params.member] The member of the object to observe. Pass an array to

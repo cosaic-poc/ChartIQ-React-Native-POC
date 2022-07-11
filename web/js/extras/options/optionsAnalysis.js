@@ -1,10 +1,10 @@
 /**
- *	8.4.0
- *	Generation date: 2021-11-29T15:42:32.590Z
+ *	8.7.0
+ *	Generation date: 2022-06-10T18:37:49.036Z
  *	Client name: sonyl test
- *	Package Type: Technical Analysis
+ *	Package Type: Technical Analysis e98f22c
  *	License type: trial
- *	Expiration date: "2022/01/31"
+ *	Expiration date: "2022/12/31"
  */
 
 /***********************************************************
@@ -19,7 +19,7 @@
 /* eslint-disable no-extra-parens */
 
 
-import { CIQ } from "../../js/components.js";
+import { CIQ } from "../../../js/components.js";
 const OptionsAnalysis = {
 	configure: (config) => {
 		const root = config.root || document;
@@ -214,9 +214,10 @@ const OptionsAnalysis = {
 		dropdownsToReplace.parentNode.replaceChild(newDropdown, dropdownsToReplace);
 	},
 	ready: (stx) => {
-		if (stx) OptionsAnalysis.chartReady = true;
+		if (stx) OptionsAnalysis.chartReady = stx;
 		else OptionsAnalysis.slidersReady = true;
 		if (!OptionsAnalysis.chartReady || !OptionsAnalysis.slidersReady) return;
+		if (!stx) stx = OptionsAnalysis.chartReady;
 		const { config } = OptionsAnalysis;
 		const root = config.root || document;
 		Array.from(root.querySelectorAll("cq-lookup-filters cq-filter")).forEach(
@@ -233,9 +234,7 @@ const OptionsAnalysis = {
 		});
 		const histPrice = document.createElement("cq-chart-title-date");
 		histPrice.className = "ciq-chart-title-hist-price";
-		document
-			.querySelector("cq-chart-title cq-chart-price")
-			.appendChild(histPrice);
+		root.querySelector("cq-chart-title cq-chart-price").appendChild(histPrice);
 		stx.chart.xAxis.minimumLabelWidth = 20;
 		stx.tapForHighlighting = false;
 		const sliderArray = Array.from(root.querySelectorAll("cq-double-slider"));

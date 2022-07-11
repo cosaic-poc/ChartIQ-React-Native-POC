@@ -1,10 +1,10 @@
 /**
- *	8.4.0
- *	Generation date: 2021-11-29T15:42:32.590Z
+ *	8.7.0
+ *	Generation date: 2022-06-10T18:37:49.036Z
  *	Client name: sonyl test
- *	Package Type: Technical Analysis
+ *	Package Type: Technical Analysis e98f22c
  *	License type: trial
- *	Expiration date: "2022/01/31"
+ *	Expiration date: "2022/12/31"
  */
 
 /***********************************************************
@@ -19,7 +19,7 @@
 /* eslint-disable no-extra-parens */
 
 
-import {CIQ} from "../js/componentUI.js";
+import {CIQ as __CIQ_} from "../js/componentUI.js";
 
 
 let __js_webcomponents_abstractMarker_ = (_exports) => {
@@ -81,8 +81,15 @@ class AbstractMarker extends CIQ.UI.BaseComponent {
 	 * @since 7.5.0
 	 */
 	connectedCallback() {
-		this.type = this.getAttribute("cq-type") || "helicopter";
+		if (this.attached) return;
+		super.connectedCallback();
 		this.init();
+	}
+
+	adoptedCallback() {
+		super.adoptedCallback();
+		CIQ.UI.flattenInheritance(this, AbstractMarker);
+		this.constructor = AbstractMarker;
 	}
 
 	/**
@@ -93,7 +100,7 @@ class AbstractMarker extends CIQ.UI.BaseComponent {
 	 * @since 7.5.0
 	 */
 	init() {
-		if (this.attached) return;
+		this.type = this.getAttribute("cq-type") || "helicopter";
 		const { markups } = this.constructor;
 		this.addDefaultMarkup(this, markups[this.type]);
 	}
@@ -159,21 +166,22 @@ if (!CIQ.Marker) {
 		    <cq-close class="ciq-tight"></cq-close>
 			<div class="sample ciq-show">
 				<div cq-desktop="">
-					<div><translate original="$1 Trades">$1 Trades</translate></div>
-					<div><translate original="Use code ">Use code </translate><strong><translate original="Sample">Sample</translate></strong></div>
-					<a target="_blank" href="https://yourURL?codeSample&desktop"><translate original="Click to learn more">Click to learn more</translate></a>
+					<div>$1 Trades</div>
+					<div>Use code <strong>Sample</strong></div>
+					<a target="_blank" href="https://yourURL?codeSample&desktop">Click to learn more</a>
 				</div>
 				<div cq-phone="">
-					<div><translate original="$1 Trades">$1 Trades</translate></div>
-					<a target="_blank" href="https://yourURL?codeSample&mobile"><translate original="Click to learn more">Click to learn more</translate></a>
+					<div>$1 Trades</div>
+					<a target="_blank" href="https://yourURL?codeSample&mobile">Click to learn more</a>
 				</div>
 			</div>
 		</cq-advertisement>
 	 *
 	 */
 	class Advertisement extends CIQ.UI.ModalTag {
-		constructor() {
-			super();
+		adoptedCallback() {
+			super.adoptedCallback();
+			CIQ.UI.flattenInheritance(this, Advertisement);
 		}
 
 		/**
@@ -204,7 +212,7 @@ if (!CIQ.Marker) {
 
 		makeMarker() {
 			if (this.markerExists) return;
-			new CIQ.Marker({
+			CIQ.Marker({
 				stx: this.context.stx,
 				xPositioner: "none",
 				label: "advertisement",
@@ -331,6 +339,12 @@ var CIQ = typeof _CIQ !== "undefined" ? _CIQ : _exports.CIQ;
  * @namespace WebComponents.cq-aggregation-dialog
  */
 class AggregationDialog extends CIQ.UI.DialogContentTag {
+	adoptedCallback() {
+		super.adoptedCallback();
+		CIQ.UI.flattenInheritance(this, AggregationDialog);
+		this.constructor = AggregationDialog;
+	}
+
 	/**
 	 * Opens the nearest {@link WebComponents.cq-dialog} to display your dialog.
 	 * @alias open
@@ -388,25 +402,25 @@ AggregationDialog.markup = `
 		<cq-close></cq-close>
 		<div style="text-align:center;margin-top:10px;">
 			<div class="ciqkagi">
-				<i>Enter value and hit "Enter"</i>
+				<em>Enter value and hit "Enter"</em>
 				<p>
 					<input name="kagi" stxtap="Layout.setAggregationEdit('kagi')">
 				</p>
 			</div>
 			<div class="ciqrenko">
-				<i>Enter value and hit "Enter"</i>
+				<em>Enter value and hit "Enter"</em>
 				<p>
 					<input name="renko" stxtap="Layout.setAggregationEdit('renko')">
 				</p>
 			</div>
 			<div class="ciqlinebreak">
-				<i>Enter value and hit "Enter"</i>
+				<em>Enter value and hit "Enter"</em>
 				<p>
 					<input name="priceLines" stxtap="Layout.setAggregationEdit('priceLines')">
 				</p>
 			</div>
 			<div class="ciqrangebars">
-				<i>Enter value and hit "Enter"</i>
+				<em>Enter value and hit "Enter"</em>
 				<p>
 					<input name="range" stxtap="Layout.setAggregationEdit('rangebars')">
 				</p>
@@ -482,6 +496,32 @@ if (!CIQ.Marker) {
 			 * @type {object}
 			 * @alias messages
 			 * @memberof WebComponents.cq-attribution#
+			 * @example <caption>Default object.</caption>
+			 * {
+			 *	sources: {
+			 *		simulator: "Simulated data.",
+			 *		demo: "Demo data.",
+			 *		xignite: '<a target="_blank" href="https://www.xignite.com">Market Data</a> by Xignite.',
+			 *		fis_mm: '<a target="_blank" href="https://www.fisglobal.com/">Market Data</a> by FIS MarketMap.',
+			 *		Twiggs: 'Twiggs MF Formula courtesy <a target="_blank" href="https://www.incrediblecharts.com/indicators/twiggs_money_flow.php">IncredibleCharts</a>.'
+			 *	},
+			 *	exchanges: {
+			 *		RANDOM: "Data is randomized.",
+			 *		"REAL-TIME": "Data is real-time.",
+			 *		DELAYED: "Data delayed 15 min.",
+			 *		RATES: "Yield data latest from source, bid/ask simulated.",
+			 *		BATS: "BATS BZX real-time.",
+			 *		EOD: "End of day data."
+			 *	}
+			 * @example <caption>Override or augment the messages object.</caption>
+			 * var messages =document.querySelector("cq-attribution").messages;
+			 * messages.exchanges.CUSTOMEX='Text for custom exchange';
+			 * messages.sources.CUSTOMSOURCE='Text for custom source';
+			 * @example <caption>Set the attribution object on your quote feed for the above override.</caption>
+			 * cb({
+			 * quotes:[--array of quote elements here--],
+			 * attribution: { source: "CUSTOMSOURCE", exchange: "CUSTOMEX" }
+			 * });
 			 */
 			this.messages = {
 				sources: {
@@ -503,6 +543,12 @@ if (!CIQ.Marker) {
 					EOD: "End of day data."
 				}
 			};
+		}
+
+		adoptedCallback() {
+			super.adoptedCallback();
+			CIQ.UI.flattenInheritance(this, Attribution);
+			this.constructor = Attribution;
 		}
 
 		insert(stx, panel) {
@@ -559,8 +605,7 @@ if (!CIQ.Marker) {
 				if (source + exchange != chartAttrib.attr("lastAttrib")) {
 					chartAttrib.find("cq-attrib-source").html(source);
 					chartAttrib.find("cq-attrib-quote-type").html(exchange);
-					if (CIQ.I18N && CIQ.I18N.localized)
-						CIQ.I18N.translateUI(null, chartAttrib[0]);
+					if (stx.translateUI) stx.translateUI(chartAttrib[0]);
 					chartAttrib.attr("lastAttrib", source + exchange);
 				}
 			}
@@ -576,8 +621,7 @@ if (!CIQ.Marker) {
 					var attrib = this.insert(stx, sd.panel);
 					attrib.find("cq-attrib-source").html(source);
 					attrib.find("cq-attrib-quote-type").html(exchange);
-					if (CIQ.I18N && CIQ.I18N.localized)
-						CIQ.I18N.translateUI(null, attrib[0]);
+					if (stx.translateUI) stx.translateUI(attrib[0]);
 					sd.attribution = attrib;
 				}
 			}
@@ -594,6 +638,80 @@ if (!CIQ.Marker) {
 	`;
 	CIQ.UI.addComponentDefinition("cq-attribution", Attribution);
 }
+
+};
+
+
+let __js_webcomponents_chartInstructions_ = (_exports) => {
+
+/* global _CIQ, _timezoneJS, _SplinePlotter */
+
+var CIQ = typeof _CIQ !== "undefined" ? _CIQ : _exports.CIQ;
+
+/**
+ * This element contains hidden text that can be read aloud by a screen reader to announce chart features or instructions.
+ * By default the text is not visible to a user but is listed in the accessbility tree.
+ *
+ * If you would like to provide custom instructions, pass in your own text in a `<p>` tag.
+ * @memberof CIQ.UI.WebComponents
+ * @since 8.7.0
+ */
+class ChartInstructions extends CIQ.UI.ContextTag {
+	setContext() {
+		this.addDefaultMarkup();
+		this.content = this.querySelector("span") || this.firstElementChild;
+		this.instructions = this.querySelector("p") || this.content;
+
+		const { config: { hotkeyConfig = {} } = {} } = this.context;
+
+		if (hotkeyConfig.hotkeys) {
+			const keyConfigs = hotkeyConfig.hotkeys.filter((conf) => conf.ariaLabel);
+			this.setHotKeyCommands(keyConfigs);
+		}
+	}
+
+	/**
+	 * Filtered hotKey configurations from defaultConfiguration based on ariaLabel property.
+	 * This will create new entries for the hotkeys and add
+	 * their instructions to the text content already provided.
+	 * @param {object[]} configurations Hotkey configs from the config.hotKeyConfig hotkeys
+	 */
+	setHotKeyCommands(configurations) {
+		const list = document.createElement("UL");
+		this.instructions.innerText +=
+			" The following is a list of keyboard commands available to interact with the chart.";
+		const elements = configurations.map((configuration) => {
+			const { commands, label, ariaLabel } = configuration;
+			const combos = [];
+			commands.forEach((command) =>
+				combos.push(
+					command
+						.split("+")
+						.map((key) => key.replace("Key", ""))
+						.join(" + ")
+				)
+			);
+			const formattedCombos =
+				combos.length > 1 ? combos.join(" or ") : combos[0];
+			return `${label}. ${ariaLabel}. Hotkeys press ${formattedCombos}. `;
+		});
+
+		elements.forEach((element) => {
+			const item = document.createElement("LI");
+			item.innerText = element;
+			list.append(item);
+		});
+		this.content.append(list);
+	}
+}
+
+ChartInstructions.markup = `
+<span>
+	<p>ChartIQ interactive chart component. Instructions for use with screen readers.</p>
+</span>
+`;
+
+CIQ.UI.addComponentDefinition("cq-chart-instructions", ChartInstructions);
 
 };
 
@@ -652,6 +770,12 @@ var CIQ = typeof _CIQ !== "undefined" ? _CIQ : _exports.CIQ;
  * </cq-study-legend>
  */
 class ChartLegend extends CIQ.UI.ContextTag {
+	adoptedCallback() {
+		super.adoptedCallback();
+		CIQ.UI.flattenInheritance(this, ChartLegend);
+		this.constructor = ChartLegend;
+	}
+
 	/**
 	 * Adds the default markup.
 	 *
@@ -691,7 +815,7 @@ ChartLegend.markup = `
 					<div class="ciq-icon ciq-close"></div>
 				</cq-item>
 			</template>
-	</cq-study-legend>
+		</cq-study-legend>
 	`;
 CIQ.UI.addComponentDefinition("cq-chart-legend", ChartLegend);
 
@@ -717,7 +841,7 @@ var CIQ = typeof _CIQ !== "undefined" ? _CIQ : _exports.CIQ;
  * `<cq-symbol></cq-symbol>` will display `chart.symbol`.<br>
  * `<cq-symbol-description></cq-symbol-description>` will display the `chart.symbolDisplay`. See {@link CIQ.ChartEngine.Chart#symbolDisplay} for details on how to set this value.
  *
- * Set attribute `cq-browser-tab` to true in order to get the stock symbol and latest price to update in the browser tab.
+ * Set attribute `cq-browser-tab` to true to get the stock symbol and latest price to update in the browser tab.
  *
  * Set member `previousClose` to the prior day's closing price in order to calculate and display change.
  * If `previousClose` is not set, then `iqPrevClose` from the `dataSet` will be the default.<br>
@@ -808,13 +932,20 @@ class ChartTitle extends CIQ.UI.ModalTag {
 		this.update();
 	}
 
+	adoptedCallback() {
+		super.adoptedCallback();
+		CIQ.UI.flattenInheritance(this, ChartTitle);
+		this.constructor = ChartTitle;
+	}
+
 	disconnectedCallback() {
-		if (this.context)
+		if (this.context) {
 			CIQ.UI.unobserveProperty(
 				"symbolObject",
 				this.context.stx.chart,
 				this.listener
 			);
+		}
 		super.disconnectedCallback();
 	}
 
@@ -958,7 +1089,7 @@ class ChartTitle extends CIQ.UI.ModalTag {
 			if (!previousClose && previousClose !== 0)
 				previousClose = this.previousClose;
 
-			if (changeDiv && (currentPrice || currentPrice === 0)) {
+			if (changeDiv && (currentPrice || currentPrice == 0)) {
 				todaysChange = CIQ.fixPrice(currentPrice - previousClose);
 				todaysChangePct = (todaysChange / previousClose) * 100;
 				if (previousClose <= 0 || currentPrice < 0) {
@@ -1013,7 +1144,7 @@ class ChartTitle extends CIQ.UI.ModalTag {
 				this.title += "\u25bc " + txtChange;
 			}
 			if (doUpdateBrowserTab) {
-				document.title = this.title;
+				this.ownerDocument.title = this.title;
 			}
 		}
 	}
@@ -1023,7 +1154,7 @@ ChartTitle.markup = `
 		<cq-symbol></cq-symbol>
 		<cq-menu class="ciq-menu ciq-period">
 			<span><cq-clickable stxbind="Layout.periodicity">1D</cq-clickable></span>
-			<cq-menu-dropdown>
+			<cq-menu-dropdown cq-lift>
 				<cq-menu-container cq-name="menuPeriodicity"></cq-menu-container>
 			</cq-menu-dropdown>
 		</cq-menu>
@@ -1117,6 +1248,12 @@ class ChartcontrolGroup extends CIQ.UI.ModalTag {
 		super.connectedCallback();
 	}
 
+	adoptedCallback() {
+		super.adoptedCallback();
+		CIQ.UI.flattenInheritance(this, ChartcontrolGroup);
+		this.constructor = ChartcontrolGroup;
+	}
+
 	setContext(context) {
 		this.addDefaultMarkup();
 		var node = this.node;
@@ -1199,6 +1336,11 @@ class Clickable extends CIQ.UI.ContextTag {
 		});
 	}
 
+	adoptedCallback() {
+		super.adoptedCallback();
+		CIQ.UI.flattenInheritance(this, Clickable);
+	}
+
 	/**
 	 * Runs a method on the clickable component.
 	 *
@@ -1226,7 +1368,7 @@ class Clickable extends CIQ.UI.ContextTag {
 		}
 
 		var clickable = this;
-		document.querySelectorAll(selector).forEach(function (i) {
+		this.ownerDocument.querySelectorAll(selector).forEach(function (i) {
 			if (i[method])
 				i[method].call(i, {
 					context: clickable.context,
@@ -1270,6 +1412,11 @@ class Close extends CIQ.UI.BaseComponent {
 		}
 		CIQ.UI.stxtap(this, closure);
 		super.connectedCallback();
+	}
+
+	adoptedCallback() {
+		super.adoptedCallback();
+		CIQ.UI.flattenInheritance(this, Close);
 	}
 
 	/**
@@ -1401,6 +1548,11 @@ class Comparison extends CIQ.UI.ModalTag {
 		];
 	}
 
+	adoptedCallback() {
+		super.adoptedCallback();
+		CIQ.UI.flattenInheritance(this, Comparison);
+	}
+
 	/**
 	 * Initializes all the children UI elements that make up `<cq-comparison>`.
 	 * @alias configureUI
@@ -1432,7 +1584,7 @@ class Comparison extends CIQ.UI.ModalTag {
 		// Add the keystroke claim
 		this.addClaim(this);
 
-		const keystrokeHub = document.body.keystrokeHub;
+		const keystrokeHub = this.ownerDocument.body.keystrokeHub;
 		if (!keystrokeHub) return;
 
 		let menu = this.querySelector("cq-menu.cq-comparison-new");
@@ -1440,7 +1592,7 @@ class Comparison extends CIQ.UI.ModalTag {
 			// Extend the internal menu's hide function so we can do some cleanup
 			let menuHide = menu.hide.bind(menu);
 			menu.hide = () => {
-				const keystrokeHub = document.body.keystrokeHub;
+				//const keystrokeHub = document.body.keystrokeHub;
 				// Treat the legend like a modal so keyboard navigation is returned after using colorPicker
 				keystrokeHub.removeActiveModal(this);
 				keystrokeHub.tabOrderSelect();
@@ -1465,7 +1617,7 @@ class Comparison extends CIQ.UI.ModalTag {
 	 * The attribute cq-focused will be added to the currently focused tag. This can then be
 	 * queried later, such as when a user hits enter.
 	 *
-	 * @param {undefined} hub Unused parameter
+	 * @param {CIQ.UI.KeystrokeHub} hub The hub that processed the key
 	 * @param {string} key Key that was stroked
 	 * @param {object} e The event object
 	 * @return {boolean}
@@ -1529,7 +1681,7 @@ class Comparison extends CIQ.UI.ModalTag {
 	/**
 	 * Picks a color to display the new comparison as.
 	 * Loops through preset colors and picks the next one on the list.
-	 * If the all colors are taken then the last color will be repeated.
+	 * If all colors are taken, then the last color will be repeated.
 	 * @alias pickSwatchColor
 	 * @memberof WebComponents.cq-comparison#
 	 */
@@ -1890,6 +2042,12 @@ var CIQ = typeof _CIQ !== "undefined" ? _CIQ : _exports.CIQ;
  * </cq-comparison>
  */
 class ComparisonLookup extends CIQ.UI.ContextTag {
+	adoptedCallback() {
+		super.adoptedCallback();
+		CIQ.UI.flattenInheritance(this, ComparisonLookup);
+		this.constructor = ComparisonLookup;
+	}
+
 	/**
 	 * Adds the default markup.
 	 *
@@ -2010,7 +2168,7 @@ class CVPController extends CIQ.UI.ContextTag {
 			writable: false
 		});
 
-		var tmpl = document.querySelector(
+		var tmpl = this.ownerDocument.querySelector(
 			'template[cq-cvp-controller], template[cvp-controller="true"]'
 		);
 
@@ -2023,6 +2181,11 @@ class CVPController extends CIQ.UI.ContextTag {
 		}
 
 		super.connectedCallback();
+	}
+
+	adoptedCallback() {
+		super.adoptedCallback();
+		CIQ.UI.flattenInheritance(this, CVPController);
 	}
 
 	emit(eventName, value) {
@@ -2075,7 +2238,7 @@ class CVPController extends CIQ.UI.ContextTag {
 
 	pickColor(activator) {
 		var node = CIQ.UI.$(activator.node);
-		var colorPicker = document.querySelector("cq-color-picker");
+		var colorPicker = this.ownerDocument.querySelector("cq-color-picker");
 		var cvpController = this;
 		var overrides = node.attr("cq-overrides");
 
@@ -2186,7 +2349,10 @@ let __js_webcomponents_dataDialog_ = (_exports) => {
 
 
 var CIQ = typeof _CIQ !== "undefined" ? _CIQ : _exports.CIQ;
-
+/**
+ * Dialog form that allows users to upload CSV files to be loaded into the chart.
+ * @namespace WebComponents.cq-data-dialog
+ */
 class DataDialog extends CIQ.UI.DialogContentTag {
 	constructor() {
 		super();
@@ -2194,6 +2360,18 @@ class DataDialog extends CIQ.UI.DialogContentTag {
 		this.swatchColors = CIQ.UI.defaultSwatchColors;
 	}
 
+	adoptedCallback() {
+		super.adoptedCallback();
+		CIQ.UI.flattenInheritance(this, DataDialog);
+		this.constructor = DataDialog;
+	}
+
+	/**
+	 * Aborts the import of a file.
+	 * If that is the only file loaded then the form will reset to its default state.
+	 * @param {Event} e Submit event
+	 * @memberof WebComponents.cq-data-dialog
+	 */
 	abortImport(e) {
 		const self = this;
 		const targetClose = e.target.nodeName === "CQ-CLOSE";
@@ -2226,6 +2404,10 @@ class DataDialog extends CIQ.UI.DialogContentTag {
 		self.resetTabSelect();
 	}
 
+	/**
+	 * Closes dialog and resets it to the default state.
+	 * @memberof WebComponents.cq-data-dialog
+	 */
 	close() {
 		this.abortImport({ target: this.querySelector("cq-close") });
 		this.channelWrite("channel.dataLoader", false, this.context.stx);
@@ -2235,6 +2417,10 @@ class DataDialog extends CIQ.UI.DialogContentTag {
 		super.close();
 	}
 
+	/**
+	 * Gets FormData from fields and appends that data to the {@link CIQ.CSVReader}
+	 * @memberof WebComponents.cq-data-dialog
+	 */
 	getFormData() {
 		const appendFormData = (fieldSet, reader) => {
 			return (field) => {
@@ -2263,10 +2449,20 @@ class DataDialog extends CIQ.UI.DialogContentTag {
 		}
 	}
 
+	/**
+	 * Hides the dialog without clearing data.
+	 * @memberof WebComponents.cq-data-dialog
+	 */
 	hide() {
 		this.channelWrite("channel.dataLoader", false, this.context.stx);
 	}
 
+	/**
+	 * Imports the data if the dialog is in a valid state.
+	 * Closes dialog after successfully importing data.
+	 * @param {Event} e Submit event. Default is prevented.
+	 * @memberof WebComponents.cq-data-dialog
+	 */
 	importData(e) {
 		e.preventDefault();
 		const { dialog } = this;
@@ -2282,6 +2478,11 @@ class DataDialog extends CIQ.UI.DialogContentTag {
 		dialog.close();
 	}
 
+	/**
+	 * Parses files uploaded by the user.
+	 * @async
+	 * @memberof WebComponents.cq-data-dialog
+	 */
 	async loadData() {
 		this.validateFileInput()();
 		if (this.warning.getAttribute("cq-active")) return;
@@ -2296,6 +2497,11 @@ class DataDialog extends CIQ.UI.DialogContentTag {
 		this.showData();
 	}
 
+	/**
+	 * Realigns tab select from the KeystrokeHub
+	 * @memberof WebComponents.cq-data-dialog
+	 * @private
+	 */
 	resetTabSelect() {
 		const {
 			uiManager: { keystrokeHub }
@@ -2304,6 +2510,10 @@ class DataDialog extends CIQ.UI.DialogContentTag {
 		keystrokeHub.highlightAlign();
 	}
 
+	/**
+	 * Constructs and displays form for loaded files.
+	 * @memberof WebComponents.cq-data-dialog
+	 */
 	showData() {
 		const {
 			context: { stx, config = {} },
@@ -2363,13 +2573,13 @@ class DataDialog extends CIQ.UI.DialogContentTag {
 					periodicity.append(opt);
 				});
 
-			const tr = frag.querySelector("thead tr");
+			const fieldsSection = frag.querySelector(".data-fields ul");
 			let { fields = [] } = reader;
 
 			fields.forEach((cell) => {
-				const th = document.createElement("th");
-				th.innerText = cell;
-				tr.append(th);
+				const item = document.createElement("li");
+				item.innerText = cell;
+				fieldsSection.append(item);
 			});
 
 			const display = frag.querySelector("[name=display]");
@@ -2405,6 +2615,11 @@ class DataDialog extends CIQ.UI.DialogContentTag {
 		this.resetTabSelect();
 	}
 
+	/**
+	 * Sets UIContext for the component
+	 * @param {CIQ.UI.UIContext} context UIContext for the given chart
+	 * @memberof WebComponents.cq-data-dialog
+	 */
 	setContext(context) {
 		this.context = context;
 		this.addDefaultMarkup();
@@ -2508,6 +2723,7 @@ class DataDialog extends CIQ.UI.DialogContentTag {
 	 * Validation function for File Input.
 	 * **NOTE** Not the same as the validation for the form
 	 * @returns function Funtion that runs on file input change event
+	 * @memberof WebComponents.cq-data-dialog
 	 */
 	validateFileInput() {
 		const self = this;
@@ -2550,6 +2766,7 @@ class DataDialog extends CIQ.UI.DialogContentTag {
 	 * @param {string} title Title text of warning to display.
 	 * @param {string} text Body text of warning to display.
 	 * @param {boolean} display Should be valid property from validiity
+	 * @memberof WebComponents.cq-data-dialog
 	 */
 	warn(title, text, valid) {
 		this.warningTitle.innerText = title;
@@ -2564,8 +2781,10 @@ class DataDialog extends CIQ.UI.DialogContentTag {
  * By default the file input only accepts the extensions listed here.
  *
  * For more information about extension and MIME types see https://developer.mozilla.org/en-US/docs/Web/HTTP/Basics_of_HTTP/MIME_types/Common_types
+ * @memberOf WebComponents.cq-data-dialog
  * @static
- * @memberof WebComponents.cq-data-dialog
+ * @type array
+ * @alias mimeTypes
  */
 DataDialog.mimeTypes = [
 	"text/csv",
@@ -2602,11 +2821,7 @@ DataDialog.markup = `
 			</div>
 			<div class="data-fields">
 				<label>Data Fields:</label>
-				<table>
-					<thead>
-						<tr></tr>
-					</thead>
-				</table>
+				<ul class="content-justify-end"></ul>
 			</div>
 			<div class="data-display">
 				<label>Display As:</label>
@@ -2708,17 +2923,44 @@ class Dialog extends CIQ.UI.BaseComponent {
 		}
 		CIQ.UI.stxtap(this, handleTap);
 
-		var uiManager = CIQ.UI.getUIManager();
+		var uiManager = CIQ.UI.getUIManager(this);
 		uiManager.registerForResize(this);
 		this.uiManager = uiManager;
 
 		if (!this.hasAttribute("cq-no-claim")) this.addClaim(this);
+
+		if (!this.hasAttribute("tabindex")) this.setAttribute("tabindex", "0");
+	}
+
+	adoptedCallback() {
+		super.adoptedCallback();
+		CIQ.UI.flattenInheritance(this, Dialog);
 	}
 
 	disconnectedCallback() {
 		if (!this.hasAttribute("cq-no-claim")) this.removeClaim(this);
 		this.uiManager.unregisterForResize(this);
 		super.disconnectedCallback();
+	}
+
+	/**
+	 * Finds the first element in `items` that has a `cq-focused` attribute or a name attribute
+	 * that matches the value of `activeElementName`. If found, that element is focused.
+	 *
+	 * @param {NodeList} items A list of elements that are selectable via keyboard navigation.
+	 *
+	 * @memberof WebComponents.cq-dialog
+	 * @alias refreshFocus
+	 * @since 8.7.0
+	 */
+	refreshFocus() {
+		const items = this.getKeyboardSelectableItems();
+		let focused = this.findFocused(items)[0];
+		if (!focused)
+			focused = Array.from(items || []).find((item) =>
+				item.matches("[name=" + this.activeElementName + "]")
+			);
+		if (focused) this.focusItem(focused);
 	}
 
 	getKeyboardSelectableItems() {
@@ -2795,7 +3037,7 @@ class Dialog extends CIQ.UI.BaseComponent {
 	closeActiveMenu() {
 		const activeMenu = this.querySelector("*.stxMenuActive");
 		if (activeMenu) {
-			const uiManager = CIQ.UI.getUIManager();
+			const uiManager = CIQ.UI.getUIManager(this);
 			if (uiManager) uiManager.closeMenu(activeMenu);
 			return true;
 		}
@@ -2854,6 +3096,11 @@ class Dialog extends CIQ.UI.BaseComponent {
 			if (typeof this.hide == "function") this.hide();
 		});
 		this.active = false;
+		// Remove the opener and allow it to be closed like any other dialog
+		if (this.opener) {
+			delete this.opener.keepOpen;
+			delete this.opener;
+		}
 		if (
 			this.uiManager.overlay &&
 			this.uiManager.overlay.hasAttribute("cq-active")
@@ -2867,23 +3114,24 @@ class Dialog extends CIQ.UI.BaseComponent {
 
 		// blur any input boxes that are inside the dialog we're closing, to get rid of soft keyboard
 		this.node.find("input").each(function () {
-			if (this == document.activeElement) this.blur();
+			if (this == this.ownerDocument.activeElement) this.blur();
 		});
 
 		// Blur any focused elements
 		this.removeFocused();
 		// Remove this dialog from the active index
-		const keystrokeHub = document.body.keystrokeHub;
+		const keystrokeHub = this.ownerDocument.body.keystrokeHub;
 		if (keystrokeHub) keystrokeHub.removeActiveModal(this);
+	}
+
+	launchColorPicker() {
+		if (this.uiManager) this.uiManager.closeMenu(null, "CQ-MENU");
 	}
 
 	open(params) {
 		this.uiManager.openMenu(this, params);
-		if (CIQ.I18N && CIQ.I18N.localized)
-			CIQ.I18N.translateUI(null, this.node[0]);
-
 		// Capture context to be able to later notify dialog closing in channel
-		const { context } = params || {};
+		const { context, opener } = params || {};
 		if (!context || !context.config) {
 			this.onClose = null;
 			return;
@@ -2893,12 +3141,19 @@ class Dialog extends CIQ.UI.BaseComponent {
 			config: { channels },
 			stx
 		} = context;
+
+		if (stx.translateUI) stx.translateUI(this.node[0]);
+
 		this.onClose = () => {
 			this.channelWrite(channels.dialog || "channel.dialog", {}, stx);
 			this.onClose = null;
 			// If Dialog content has a hide method, call it.
 			if (this.firstElementChild.hide) this.firstElementChild.hide();
 		};
+		if (opener) {
+			this.opener = opener;
+			this.opener.keepOpen = true;
+		}
 	}
 
 	resize() {
@@ -2960,7 +3215,7 @@ class Dialog extends CIQ.UI.BaseComponent {
 		}
 
 		// Set this dialog as active for tab navigation
-		const keystrokeHub = document.body.keystrokeHub;
+		const keystrokeHub = this.ownerDocument.body.keystrokeHub;
 		if (keystrokeHub) keystrokeHub.addActiveModal(this);
 	}
 
@@ -3066,6 +3321,12 @@ class DoubleSlider extends CIQ.UI.BaseComponent {
 		if (this.attached) return;
 		super.connectedCallback();
 		this.init();
+	}
+
+	adoptedCallback() {
+		super.adoptedCallback();
+		CIQ.UI.flattenInheritance(this, DoubleSlider);
+		this.constructor = DoubleSlider;
 	}
 
 	init() {
@@ -3294,6 +3555,12 @@ var CIQ = typeof _CIQ !== "undefined" ? _CIQ : _exports.CIQ;
  * @since 6.2.0
  */
 class DrawingContext extends CIQ.UI.DialogContentTag {
+	adoptedCallback() {
+		super.adoptedCallback();
+		CIQ.UI.flattenInheritance(this, DrawingContext);
+		this.constructor = DrawingContext;
+	}
+
 	/**
 	 * Open the context menu as a dialog.
 	 *
@@ -3374,6 +3641,12 @@ var CIQ = typeof _CIQ !== "undefined" ? _CIQ : _exports.CIQ;
  * @since 3.0.9
  */
 class FibSettingsDialog extends CIQ.UI.DialogContentTag {
+	adoptedCallback() {
+		super.adoptedCallback();
+		CIQ.UI.flattenInheritance(this, FibSettingsDialog);
+		this.constructor = FibSettingsDialog;
+	}
+
 	/**
 	 * Adds a custom fib level
 	 * @memberOf WebComponents.cq-fib-settings-dialog
@@ -3563,6 +3836,12 @@ var CIQ = typeof _CIQ !== "undefined" ? _CIQ : _exports.CIQ;
  * @since 8.2.0
  */
 class FloatingWindow extends CIQ.UI.ContextTag {
+	adoptedCallback() {
+		super.adoptedCallback();
+		CIQ.UI.flattenInheritance(this, FloatingWindow);
+		this.constructor = FloatingWindow;
+	}
+
 	/**
 	 * Initializes the context of the floating window component. Dynamically adds a listener for
 	 * the "floatingWindow" event based on the `type` parameter of the event (see
@@ -3674,8 +3953,8 @@ class FloatingWindow extends CIQ.UI.ContextTag {
 			this.documentationWindow.bodyEl.appendChild(actionButton);
 		}
 
-		if (CIQ.I18N && CIQ.I18N.localized)
-			CIQ.I18N.translateUI(null, this.documentationWindow.w);
+		if (this.context.stx.translateUI)
+			this.context.stx.translateUI(this.documentationWindow.w);
 
 		this.documentationWindow
 			.toggle(true)
@@ -3726,7 +4005,7 @@ class DocWindow {
 		const w = document.createElement("div");
 		w.innerHTML = this.constructor.markup;
 		w.classList.add("ciq-window");
-		document.body.append(w);
+		(container.ownerDocument || document).body.append(w);
 		w.tag = tag;
 		w.docWindow = this;
 		Object.assign(this, {
@@ -3810,15 +4089,18 @@ class DocWindow {
 				startResize()
 			);
 		});
-		document.addEventListener("mousemove", this.onMouseMove.bind(this));
-		document.addEventListener("mouseup", this.onMouseUp.bind(this));
+		w.ownerDocument.addEventListener("mousemove", this.onMouseMove.bind(this));
+		w.ownerDocument.addEventListener("mouseup", this.onMouseUp.bind(this));
 
 		qs(".ciq-window-close").addEventListener(
 			"click",
 			this.toggle.bind(this, false)
 		);
 
-		window.addEventListener("resize", this.ensureVisible.bind(this));
+		w.ownerDocument.defaultView.addEventListener(
+			"resize",
+			this.ensureVisible.bind(this)
+		);
 
 		const self = this;
 		function startResize() {
@@ -3906,7 +4188,7 @@ class DocWindow {
 	ensureVisible() {
 		if (!this.isOpen) return;
 		const { x, y, width } = this.w.getBoundingClientRect();
-		const { innerWidth, innerHeight } = window;
+		const { innerWidth, innerHeight } = this.w.ownerDocument.defaultView;
 
 		if (y > innerHeight - 20) {
 			this.y = innerHeight - 20;
@@ -3978,7 +4260,10 @@ class DocWindow {
 	 * @since 8.2.0
 	 */
 	clampX(value) {
-		return Math.min(Math.max(value, 0), window.innerWidth - this.w.offsetWidth);
+		return Math.min(
+			Math.max(value, 0),
+			this.w.ownerDocument.defaultView.innerWidth - this.w.offsetWidth
+		);
 	}
 
 	/**
@@ -4007,7 +4292,9 @@ class DocWindow {
 		const margin = 8;
 		return Math.min(
 			Math.max(n, 0),
-			window.innerHeight - this.titleBarEl.offsetHeight - margin
+			this.w.ownerDocument.defaultView.innerHeight -
+				this.titleBarEl.offsetHeight -
+				margin
 		);
 	}
 
@@ -4062,11 +4349,12 @@ class DocWindow {
 				? yDiff + startHeight
 				: height || startHeight;
 
-			if (this.x + this.width - margin > window.innerWidth) {
-				this.width = window.innerWidth - this.x - margin;
+			const win = this.w.ownerDocument.defaultView;
+			if (this.x + this.width - margin > win.innerWidth) {
+				this.width = win.innerWidth - this.x - margin;
 			}
-			if (this.y + this.height - margin > window.innerHeight) {
-				this.height = window.innerHeight - this.y - margin;
+			if (this.y + this.height - margin > win.innerHeight) {
+				this.height = win.innerHeight - this.y - margin;
 			}
 		}
 
@@ -4135,8 +4423,8 @@ class DocWindow {
 	/**
 	 * Toggles the display state &mdash; expanded or collapsed &mdash; of the floating window.
 	 *
-	 * In the expanded state, the full floating window is displayed; in the collapsed state, just
-	 * the floating window title bar.
+	 * In the expanded state, the full floating window is displayed; in the collapsed state, only
+	 * the floating window title bar appears.
 	 *
 	 * @alias toggleCollapse
 	 * @memberof WebComponents.cq-floating-window.DocWindow#
@@ -4214,9 +4502,11 @@ DocWindow.markup = `
 DocWindow.get = function (params) {
 	let w;
 	if (params.tag) {
-		w = Array.from(document.querySelectorAll(".ciq-window")).find(
-			(el) => el.tag === params.tag
-		);
+		w = Array.from(
+			(params.container.ownerDocument || document).querySelectorAll(
+				".ciq-window"
+			)
+		).find((el) => el.tag === params.tag);
 		if (w) {
 			w.docWindow.setProps(params);
 			return w.docWindow;
@@ -4267,8 +4557,20 @@ class GridSizePicker extends CIQ.UI.BaseComponent {
 	connectedCallback() {
 		if (this.attached) return;
 		this.innerHTML = this.render();
-		this.generateTable(2, 2);
-		this.highlightTable(1, 1);
+		this.columns = 2;
+		this.rows = 2;
+		this.generateTable(this.columns, this.rows);
+		this.highlightTable(this.columns - 1, this.rows - 1);
+		this.querySelector("table").addEventListener("mouseleave", () => {
+			this.generateTable(this.columns + 1, this.rows + 1);
+			this.highlightTable(this.columns, this.rows);
+		});
+	}
+
+	adoptedCallback() {
+		super.adoptedCallback();
+		CIQ.UI.flattenInheritance(this, GridSizePicker);
+		this.constructor = GridSizePicker;
 	}
 
 	get maxcols() {
@@ -4313,7 +4615,7 @@ class GridSizePicker extends CIQ.UI.BaseComponent {
 		columns = columns || 1;
 		rows = rows || 1;
 
-		for (let idx = 1; idx <= rows; idx++) {
+		for (let idx = 1; idx <= Math.min(rows, this.maxrows); idx++) {
 			let tmpRow;
 			if (parentElem.childNodes[idx - 1]) {
 				tmpRow = parentElem.childNodes[idx - 1];
@@ -4321,7 +4623,7 @@ class GridSizePicker extends CIQ.UI.BaseComponent {
 				tmpRow = document.createElement("tr");
 				parentElem.appendChild(tmpRow);
 			}
-			for (let jdx = 1; jdx <= columns; jdx++) {
+			for (let jdx = 1; jdx <= Math.min(columns, this.maxcols); jdx++) {
 				if (!tmpRow.childNodes[jdx - 1]) {
 					let tmpCell = document.createElement("td");
 					tmpCell.dataset.row = idx;
@@ -4348,11 +4650,15 @@ class GridSizePicker extends CIQ.UI.BaseComponent {
 	}
 
 	triggerUpdateGridEvent(columns, rows) {
-		document.querySelector("body").dispatchEvent(
+		this.columns = +columns;
+		this.rows = +rows;
+		const context = this.closest("cq-context, [cq-context]");
+		context.dispatchEvent(
 			new CustomEvent("update-grid", {
 				detail: {
 					columns: columns,
-					rows: rows
+					rows: rows,
+					container: this.closest("cq-context")
 				},
 				bubbles: true,
 				composed: true
@@ -4368,7 +4674,12 @@ class GridSizePicker extends CIQ.UI.BaseComponent {
 				gridCell.classList.remove("highlight");
 			}
 		}
-		this.querySelector(".row.count").innerHTML = rows;
+		const rowEl = this.querySelector(".row.count");
+		const multEl = this.querySelector(".multiply");
+		const hideRows = this.maxrows < 2;
+		rowEl.style.display = hideRows ? "none" : "";
+		multEl.style.display = hideRows ? "none" : "";
+		rowEl.innerHTML = rows;
 		this.querySelector(".column.count").innerHTML = columns;
 	}
 
@@ -4485,6 +4796,11 @@ var CIQ = typeof _CIQ !== "undefined" ? _CIQ : _exports.CIQ;
  * <cq-heading cq-filter=" " cq-filter-min=20>Studies</cq-heading>
  */
 class Heading extends CIQ.UI.ContextTag {
+	adoptedCallback() {
+		super.adoptedCallback();
+		CIQ.UI.flattenInheritance(this, Heading);
+	}
+
 	setContext() {
 		if (!this.hasAttribute("cq-filter")) return;
 
@@ -4499,6 +4815,7 @@ class Heading extends CIQ.UI.ContextTag {
 		const input = document.createElement("input");
 		input.type = "search";
 		input.placeholder = placeholder;
+		input.setAttribute("tabindex", "-1");
 		searchWrapper.appendChild(input);
 		this.searchWrapper = searchWrapper;
 
@@ -4562,9 +4879,9 @@ let __js_webcomponents_headsupDynamic_ = (_exports) => {
 var CIQ = typeof _CIQ !== "undefined" ? _CIQ : _exports.CIQ;
 
 /**
- * The dynamic heads up display web component `<cq-hu-dynamic>`.
+ * The dynamic heads-up display web component `<cq-hu-dynamic>`.
  *
- * An encapsulation of the markup of a dynamic heads up display.
+ * An encapsulation of the markup of a dynamic heads-up display.
  *
  * @namespace WebComponents.cq-hu-dynamic
  * @since 7.5.0
@@ -4615,6 +4932,17 @@ var CIQ = typeof _CIQ !== "undefined" ? _CIQ : _exports.CIQ;
  * </cq-hu-dynamic>
  */
 class HeadsUpDynamic extends CIQ.UI.ContextTag {
+	adoptedCallback() {
+		super.adoptedCallback();
+		CIQ.UI.flattenInheritance(this, HeadsUpDynamic);
+		this.constructor = HeadsUpDynamic;
+	}
+
+	disconnectedCallback() {
+		super.disconnectedCallback();
+		this.attached = true; // prevent recursive recreation
+	}
+
 	/**
 	 * Creates an instance of {@link CIQ.UI.HeadsUp}. Subscribes to the `headsUp` channel
 	 * which provides messages to start and stop the marker.
@@ -4701,7 +5029,7 @@ var CIQ = typeof _CIQ !== "undefined" ? _CIQ : _exports.CIQ;
 /**
  * The static heads up display web component `<cq-hu-static>`.
  *
- * An encapsulation of the markup of a static heads up marker. The static heads up marker does
+ * An encapsulation of the markup of a static heads-up marker. The static heads-up marker does
  * not follow the mouse cursor.
  *
  * @namespace WebComponents.cq-hu-static
@@ -4726,6 +5054,17 @@ var CIQ = typeof _CIQ !== "undefined" ? _CIQ : _exports.CIQ;
  * </cq-hu-static>
  */
 class HeadsUpStatic extends CIQ.UI.ContextTag {
+	adoptedCallback() {
+		super.adoptedCallback();
+		CIQ.UI.flattenInheritance(this, HeadsUpStatic);
+		this.constructor = HeadsUpStatic;
+	}
+
+	disconnectedCallback() {
+		super.disconnectedCallback();
+		this.attached = true; // prevent recursive recreation
+	}
+
 	/**
 	 * Creates an instance of {@link CIQ.UI.HeadsUp}. Subscribes to the `headsUp` channel
 	 * which provides messages to start and stop the marker.
@@ -4783,9 +5122,77 @@ let __js_webcomponents_help_ = (_exports) => {
 var CIQ = typeof _CIQ !== "undefined" ? _CIQ : _exports.CIQ;
 
 /**
- * Help web component `<cq-help>`.
- *
- * cq-help web component will display help if available. Long-press time is set in stxx.longHoldTime
+ * Help web component `<cq-help>` displays help if available. Long-press time is set in the [stxx.longHoldTime]{@link https://documentation.chartiq.com/CIQ.ChartEngine.html#callbacks%5B%60longhold%60%5D} function.
+ * 
+ * **Configuring help pop-ups**
+ * 
+ * The *chartiq/examples/help/* folder contains image files and the *helpContent.js* file for configuring help pop ups.
+ * 
+ * ```js
+ * import { CIQ } from "../../js/chartiq.js";
+ * CIQ.Help = CIQ.Help || function () {};
+ * CIQ.Help.Message = "Glowing dots indicate which items have help available. At any time, long press a feature to make the help window appear.";
+ * CIQ.Help.Actions = {
+ * 		close: {
+ * 			label: "Exit Help",
+ * 			action: "close" // Close is handled by the floating window
+ *		},
+ *		enable: {
+ *			label: "Enable This Feature",
+ *			action: function (target) {
+ *				// Click the target (parent of the <cq-help> element)
+ *				target.dispatchEvent(new Event("stxtap"));
+ *      	}
+ *   	}
+ * };
+ * CIQ.Help.Content = {
+ * 		drawing_tools_toggle: {
+ *      title: "Toggle: Drawing Tools",
+ *      content:
+ *			"Toggles display of the drawing tools palette. Drawing tools allow you to add custom markings and annotations to the chart."
+ *   	},
+ *		drawing_palette_rectangle: {
+ *      title: "Drawing Tool: Rectangle",
+ *      content:
+ *          "<img src='./examples/help/rectangle.png' width='200' style='float:right; margin:1em;'/> Add a rectangle shape onto the chart."
+ *		},
+ *		drawing_palette_annotation: {
+ *			title: "Drawing Tool: Annotation",
+ *			content: "Add text annotations onto the chart."
+ *		},
+ *		drawing_palette_arrow: {
+ *			title: "Drawing Tool: Arrow",
+ *			content: "Add an arrow shape onto the chart."
+ *		},
+ *		drawing_palette_line: {
+ *			title: "Drawing Tool: Line",
+ *			content: "Add a line at any angle or position across the chart."
+ *		},
+ *		drawing_palette_horizontal: {
+ *			title: "Drawing Tool: Horizontal",
+ *			content: "Add a horizontal line at any point onto the chart."
+ *		},
+ *		drawing_palette_vertical: {
+ *			title: "Drawing Tool: Vertical",
+ *			content: "Add a vertical line at any point onto the chart."
+ *		},
+ *		drawing_palette_segment: {
+ *			title: "Drawing Tool: Segment",
+ *			content: "Add a line segment onto the chart."
+ *		},
+ *		default: {
+ *			title: "Help not available.",
+ *			content: "No documentation for this topic could be found.",
+ *			actions: [CIQ.Help.Actions.close]
+ *		}
+ * };
+```
+
+ * - `CIQ.Help.Content` defines the content object. 
+ * - Properties such as `drawing_palette_rectangle` match with an identifier set in the HTML. 
+ * - The help author adds `title` and `content`.
+ * - Actions are optional.
+ * 
  * @namespace WebComponents.cq-help
  * @example
  * <cq-help help-id="rectangle">
@@ -4795,8 +5202,7 @@ var CIQ = typeof _CIQ !== "undefined" ? _CIQ : _exports.CIQ;
 class Help extends CIQ.UI.ContextTag {
 	connectedCallback() {
 		if (this.attached) return;
-
-		this.addDefaultMarkup();
+		super.connectedCallback();
 
 		["mousedown", "pointerdown", "touchstart"].forEach((eventName) =>
 			this.addEventListener(eventName, this.mouseTouchDown, { passive: false })
@@ -4804,8 +5210,12 @@ class Help extends CIQ.UI.ContextTag {
 		["mouseup", "pointerup", "touchend", "touchmove"].forEach((eventName) =>
 			this.addEventListener(eventName, this.mouseTouchUp, { passive: false })
 		);
+	}
 
-		super.connectedCallback();
+	adoptedCallback() {
+		super.adoptedCallback();
+		CIQ.UI.flattenInheritance(this, Help);
+		this.constructor = Help;
 	}
 
 	disconnectedCallback() {
@@ -4819,6 +5229,7 @@ class Help extends CIQ.UI.ContextTag {
 	}
 
 	setContext() {
+		this.addDefaultMarkup();
 		const attributeName = "help-active";
 		let { topNode, stx } = this.context;
 		if (CIQ.Help && !topNode.hasAttribute(attributeName))
@@ -4987,6 +5398,12 @@ var CIQ = typeof _CIQ !== "undefined" ? _CIQ : _exports.CIQ;
  * </cq-toggle>
  */
 class InfoToggle extends CIQ.UI.ContextTag {
+	adoptedCallback() {
+		super.adoptedCallback();
+		CIQ.UI.flattenInheritance(this, InfoToggle);
+		this.constructor = InfoToggle;
+	}
+
 	/**
 	 * Adds the default markup. Sets the toggle tooltip. Subscribes to the `headsUp` and
 	 * `crosshair` channels. Appends a [cq-hu-dynamic]{@link WebComponents.cq-hu-dynamic} or
@@ -5201,6 +5618,11 @@ var CIQ = typeof _CIQ !== "undefined" ? _CIQ : _exports.CIQ;
  * </cq-info-toggle-dropdown>
  */
 class InfoToggleDropdown extends CIQ.UI.ContextTag {
+	adoptedCallback() {
+		super.adoptedCallback();
+		CIQ.UI.flattenInheritance(this, InfoToggleDropdown);
+	}
+
 	/**
 	 * Sets the status of the drop-down toggle; that is, whether the drop-down toggle is active or
 	 * inactive.
@@ -5392,7 +5814,7 @@ class InfoToggleDropdown extends CIQ.UI.ContextTag {
 		CIQ.UI.stxtap(this.optionsMenu, selectItem);
 
 		if (CIQ.isMobile) this.querySelector("cq-menu").style.display = "none";
-		this.initInfoComponents(context);
+		this.initInfoComponents(context.topNode);
 		this.applyValues(channels);
 	}
 
@@ -5441,11 +5863,8 @@ class InfoToggleDropdown extends CIQ.UI.ContextTag {
 	 * @private
 	 * @since 8.2.0
 	 */
-	initInfoComponents(context) {
-		const charts = Array.from(
-			context.topNode.querySelectorAll(".ciq-chart-area")
-		);
-		charts.forEach((chartContainer) => {
+	initInfoComponents(container) {
+		container.querySelectorAll(".ciq-chart-area").forEach((chartContainer) => {
 			this.options.forEach((option) => {
 				const [, type] = option.getAttribute("cq-member").split("-");
 				if (type && !chartContainer.querySelector(`cq-hu-${type}`)) {
@@ -5656,7 +6075,7 @@ class InstantChart extends HTMLElement {
 			self.setAttribute("cq-event-flag", "");
 			self.style.visibility = "";
 
-			document.body.dispatchEvent(self.signalEvent);
+			self.ownerDocument.body.dispatchEvent(self.signalEvent);
 		});
 	}
 	disconnectedCallback() {
@@ -5701,6 +6120,12 @@ if (!CIQ.I18N) {
 	 * </cq-dialog>
 	 */
 	class LanguageDialog extends CIQ.UI.DialogContentTag {
+		adoptedCallback() {
+			super.adoptedCallback();
+			CIQ.UI.flattenInheritance(this, LanguageDialog);
+			this.constructor = LanguageDialog;
+		}
+
 		/**
 		 * Closes dialog box.
 		 *
@@ -5709,7 +6134,7 @@ if (!CIQ.I18N) {
 		 * @since 4.0.0
 		 */
 		close() {
-			const langDialog = document.querySelector("cq-language-dialog");
+			const langDialog = this.ownerDocument.querySelector("cq-language-dialog");
 			if (langDialog) langDialog.closest("cq-dialog,cq-menu").close();
 		}
 
@@ -5733,6 +6158,7 @@ if (!CIQ.I18N) {
 			const template = this.node.find("template");
 			const { languages } = CIQ.I18N;
 			if (!languages) return;
+			const self = this;
 
 			function switchToLanguage(langCode) {
 				return function () {
@@ -5742,7 +6168,7 @@ if (!CIQ.I18N) {
 						stx.changeOccurred("preferences");
 						CIQ.I18N.localize(stx, langCode);
 						stx.draw();
-					});
+					}, self);
 				};
 			}
 			for (let langCode in languages) {
@@ -5752,10 +6178,12 @@ if (!CIQ.I18N) {
 				CIQ.UI.stxtap(node[0], switchToLanguage(langCode));
 			}
 			// Set the main dialog as keyboard active to reset the highlight when this panel reloads
-			if (document.body.keystrokeHub) {
-				let { tabActiveModals } = document.body.keystrokeHub;
+			if (this.ownerDocument.body.keystrokeHub) {
+				let { tabActiveModals } = this.ownerDocument.body.keystrokeHub;
 				if (tabActiveModals[0])
-					document.body.keystrokeHub.setKeyControlElement(tabActiveModals[0]);
+					this.ownerDocument.body.keystrokeHub.setKeyControlElement(
+						tabActiveModals[0]
+					);
 			}
 		}
 	}
@@ -5790,6 +6218,11 @@ var CIQ = typeof _CIQ !== "undefined" ? _CIQ : _exports.CIQ;
  * <cq-loader></cq-loader>
  */
 class Loader extends CIQ.UI.ContextTag {
+	adoptedCallback() {
+		super.adoptedCallback();
+		CIQ.UI.flattenInheritance(this, Loader);
+	}
+
 	setContext(context) {
 		this.context.setLoader(this);
 	}
@@ -5913,14 +6346,14 @@ if (!CIQ.ChartEngine.Driver) {
 	 * }
 	 * ````
 	 *
-	 * - The placeholder is programmatically set based on the width of the chart. 
+	 * - The placeholder is programmatically set based on the width of the chart.
 	 * On larger screens "Enter Symbol" is used, but on smaller screens only "Symbol" is used.
 	 * As such, it is not sufficient to set a placeholder value on the HTML, as it will be overwritten by the Web Component logic.
 	 * The following script will update the placeholder according to breakpoint values set in placeholderMapping.
-	 * It should be placed inside the [onWebComponentsReady]{@tutorial Chart Configuration} callback provided in the 
+	 * It should be placed inside the [onWebComponentsReady]{@tutorial Chart Configuration} callback provided in the
 	 * `defaultConfiguration` object to ensure it is executed once all Web Components have been properly initialized.
 	 * The approach here is to add a second breakpoint channel listener for the lookup component that overwrites the value set by default in the library.
-	 * 
+	 *
 	 * ```
 	 * function setLookupPlaceholders(placeholderMapping = {
 	 *     "break-lg": "Change symbol",
@@ -5935,7 +6368,7 @@ if (!CIQ.ChartEngine.Driver) {
 	 *            channels.breakpoint || "channel.breakpoint",
 	 *            (breakPoint) => {
 	 *                     const symbolValue = placeholderMapping[breakpoint] || "Change symbol";
-	 * 
+	 *
 	 *                     const symbolInput = el.querySelector("input");
 	 *                     symbolInput.setAttribute("placeholder", symbolValue);
 	 *          );
@@ -5983,6 +6416,12 @@ if (!CIQ.ChartEngine.Driver) {
 			this.overrideIsActive = false;
 		}
 
+		adoptedCallback() {
+			super.adoptedCallback();
+			CIQ.UI.flattenInheritance(this, Lookup);
+			this.constructor = Lookup;
+		}
+
 		/**
 		 * With the decoupling of the uiHelper to the Lookup.Driver you must be sure to include both an argument for maxResults and the closure to handle the results.
 		 * maxResults must either be a number or a string to result in default value of 100.
@@ -6025,6 +6464,10 @@ if (!CIQ.ChartEngine.Driver) {
 				this.removeFocused(this.filterElements);
 				// Remove keyboard control from scroll
 				this.resultList[0].keyboardNavigation = null;
+			} else {
+				// Reset the hilight. In the event that tab navigation is activated while the lookup is open
+				const keystrokeHub = this.ownerDocument.body.keystrokeHub;
+				if (keystrokeHub) setTimeout(() => keystrokeHub.highlightAlign(), 250);
 			}
 			this.closest("cq-dialog,cq-menu").close();
 		}
@@ -6040,6 +6483,20 @@ if (!CIQ.ChartEngine.Driver) {
 		initialize() {
 			this.addDefaultMarkup();
 			var node = this.node;
+
+			this.label = this.querySelector("label");
+			this.labelName = this.getAttribute("label-name");
+			this.labelText = this.getAttribute("label-text");
+
+			if (this.label && this.labelText && this.labelName) {
+				const { config: { chartId = "" } = {} } = this.context;
+				this.label.id = chartId
+					? `${this.labelName}-${chartId}`
+					: this.labelName;
+				this.label.innerText = this.labelText;
+				if (chartId) this.setAttribute("aria-labelledby", this.label.id);
+			}
+
 			this.resultList = node.find("cq-scroll");
 
 			this.input = node.find("input");
@@ -6070,9 +6527,9 @@ if (!CIQ.ChartEngine.Driver) {
 							f.classList.remove("true");
 						});
 						this.classList.add("true");
-						var translate = this.querySelector("translate");
+						var translate = this.querySelector("cq-translate");
 						if (translate) {
-							// if the filter text has been translated then it will be in a <translate> tag
+							// if the filter text has been translated then it will be in a <cq-translate> tag
 							self.currentFilter = translate.getAttribute("original");
 						} else {
 							self.currentFilter = this.innerHTML;
@@ -6106,14 +6563,15 @@ if (!CIQ.ChartEngine.Driver) {
 
 			var input = this.input[0];
 			var result = false;
-			var focused = document.activeElement === input; // If focused then we need to allow the input box to get most keystrokes
+			var activeElement = this.ownerDocument.activeElement;
+			var focused = activeElement === input; // If focused then we need to allow the input box to get most keystrokes
 			// Rejecting alt key combinations only when the input is out of focus because some special chars can be typed with an alt key
 			if (
 				!focused &&
 				(e.altKey ||
-					(document.activeElement &&
-						(document.activeElement.tagName == "INPUT" ||
-							document.activeElement.tagName == "TEXTAREA")))
+					(activeElement &&
+						(activeElement.tagName == "INPUT" ||
+							activeElement.tagName == "TEXTAREA")))
 			) {
 				return false; // either an alt key combination was pressed or some other input has focus
 			}
@@ -6347,8 +6805,10 @@ if (!CIQ.ChartEngine.Driver) {
 				for (var j = 0; j < item.display.length; j++) {
 					nodeText += "<SPAN>" + item.display[j] + "</SPAN>";
 				}
+
 				var node = document.createElement("cq-item");
 				node.innerHTML = nodeText;
+				node.setAttribute("role", "menuitem");
 				this.resultList.append(node);
 				node.selectFC = closure(this, item.data);
 				CIQ.UI.stxtap(node, node.selectFC);
@@ -6447,12 +6907,21 @@ if (!CIQ.ChartEngine.Driver) {
 	}
 
 	Lookup.markup = `
+		<label></label>
 		<cq-lookup-input cq-no-close>
-			<input type="text" spellcheck="false" autocomplete="off" autocorrect="off" autocapitalize="none" name="symbol" placeholder="">
+			<input type="text"
+				spellcheck="false"
+				autocomplete="off"
+				autocorrect="off"
+				autocapitalize="none"
+				name="symbol"
+				placeholder=""
+				tabindex="-1"
+			>
 			<cq-lookup-icon></cq-lookup-icon>
 		</cq-lookup-input>
 		<cq-lookup-results>
-			<cq-lookup-filters cq-no-close>
+			<cq-lookup-filters cq-no-close role="group" aria-label="Filters">
 				<cq-filter class="true">ALL</cq-filter>
 				<cq-filter>STOCKS</cq-filter>
 				<cq-filter>FX</cq-filter>
@@ -6460,7 +6929,7 @@ if (!CIQ.ChartEngine.Driver) {
 				<cq-filter>FUNDS</cq-filter>
 				<cq-filter>FUTURES</cq-filter>
 			</cq-lookup-filters>
-			<cq-scroll></cq-scroll>
+			<cq-scroll role="menu" aria-label="Results"></cq-scroll>
 		</cq-lookup-results>
 	`;
 	CIQ.UI.addComponentDefinition("cq-lookup", Lookup);
@@ -6524,7 +6993,7 @@ class Menu extends HTMLElement {
 
 	connectedCallback() {
 		if (this.attached) return;
-		this.uiManager = CIQ.UI.getUIManager();
+		this.uiManager = CIQ.UI.getUIManager(this);
 
 		this.attached = true;
 
@@ -6538,6 +7007,10 @@ class Menu extends HTMLElement {
 		}
 		this.addEventListener("stxtap", handleCaptureTap, true);
 		CIQ.UI.stxtap(this, handleTap);
+	}
+
+	adoptedCallback() {
+		CIQ.UI.flattenInheritance(this, Menu);
 	}
 
 	/**
@@ -6574,7 +7047,7 @@ class Menu extends HTMLElement {
 		this.active = false;
 		// blur any input boxes that are inside the menu we're closing, to get rid of soft keyboard
 		this.querySelectorAll("input").forEach(function (i) {
-			if (i == document.activeElement) i.blur();
+			if (i == i.ownerDocument.activeElement) i.blur();
 		});
 		// Disable keyboardNavigation controls in the dropdown
 		const dropdown = this.querySelector("cq-menu-dropdown");
@@ -6585,10 +7058,12 @@ class Menu extends HTMLElement {
 				dropdown.querySelectorAll("[cq-focused]")
 			);
 		}
-		if (document.body.keystrokeHub) {
-			let { tabActiveModals } = document.body.keystrokeHub;
+		if (this.ownerDocument.body.keystrokeHub) {
+			let { tabActiveModals } = this.ownerDocument.body.keystrokeHub;
 			if (tabActiveModals[0])
-				document.body.keystrokeHub.setKeyControlElement(tabActiveModals[0]);
+				this.ownerDocument.body.keystrokeHub.setKeyControlElement(
+					tabActiveModals[0]
+				);
 		}
 
 		// Close the lookup component
@@ -6661,16 +7136,18 @@ class Menu extends HTMLElement {
 			if (insideDropdown) return;
 
 			var child = false;
-			var parents = CIQ.climbUpDomTree(this.parentElement, "cq-menu,cq-dialog");
+			var parents = CIQ.climbUpDomTree(this.parentElement, "cq-menu");
 			for (var i = 0; i < parents.length; i++) {
 				if (parents[i].active) child = true;
 			}
-			if (!child) uiManager.closeMenu(); // close all menus unless we're the child of an active menu (cascading)
+			if (!child) uiManager.closeMenu(null, "CQ-MENU, CQ-COLOR-PICKER"); // close all menus or color pickers, unless we're the child of an active menu (cascading)
 
 			this.open();
 
 			if (this.focusElement && !CIQ.isMobile) {
-				const el = this.querySelector(this.focusElement);
+				let el = this.querySelector(this.focusElement);
+				if (!el && this.lifts)
+					el = this.lifts[0].querySelector(this.focusElement);
 				if (el) el.focus();
 			}
 		}
@@ -6714,6 +7191,11 @@ var CIQ = typeof _CIQ !== "undefined" ? _CIQ : _exports.CIQ;
  * </cq-menu>
  */
 class MenuContainer extends CIQ.UI.ContextTag {
+	adoptedCallback() {
+		super.adoptedCallback();
+		CIQ.UI.flattenInheritance(this, MenuContainer);
+	}
+
 	/**
 	 * Obtains the name of the menu and the items contained in the menu. Adds the default
 	 * markup.
@@ -6818,12 +7300,15 @@ class MessageToaster extends CIQ.UI.ContextTag {
 		this.messagePosition = this.getAttribute("defaultPosition") || "top";
 		this.messageTransition = this.getAttribute("defaultTransition") || ""; // Default is no transition
 		this.displayTimer = null;
-		this.contextNode = null;
+	}
+
+	adoptedCallback() {
+		super.adoptedCallback();
+		CIQ.UI.flattenInheritance(this, MessageToaster);
 	}
 
 	setContext() {
 		const { stx } = this.context;
-		this.contextNode = this.context.topNode;
 
 		// Listen for notification events from the chartEngine
 		stx.addEventListener("notification", (params) => {
@@ -6863,7 +7348,7 @@ class MessageToaster extends CIQ.UI.ContextTag {
 	 */
 	positionElement(messageElement) {
 		const canvasBounds = this.context.stx.chart.canvas.getBoundingClientRect();
-		const contextBounds = this.contextNode.getBoundingClientRect();
+		const contextBounds = this.context.topNode.getBoundingClientRect();
 		const bottomAlign = messageElement.classList.contains("align-bottom");
 
 		let offsetTop = canvasBounds.top - contextBounds.top;
@@ -6983,11 +7468,11 @@ class MessageToaster extends CIQ.UI.ContextTag {
 	displayNextMessage() {
 		if (!this.messageQueue.length) return;
 
-		let messageNodes = this.contextNode.querySelector(".cq-toast-message");
+		let messageNodes = this.context.topNode.querySelector(".cq-toast-message");
 		if (!messageNodes) {
 			let nextMessage = this.messageQueue[0];
 			// Toast Message nodes are added to the body to ensure they appear over all other UI elements (e.g. Dialogs)
-			this.contextNode.appendChild(nextMessage);
+			this.context.topNode.appendChild(nextMessage);
 			nextMessage.isDisplayed = true;
 			if (nextMessage.displayTime !== 0) {
 				this.displayTimer = window.setTimeout(
@@ -7184,6 +7669,11 @@ class Palette extends CIQ.UI.ContextTag {
 		super.connectedCallback();
 	}
 
+	adoptedCallback() {
+		super.adoptedCallback();
+		CIQ.UI.flattenInheritance(this, Palette);
+	}
+
 	init() {
 		this.isDragging = false;
 		this.minHeight = parseInt(this.getAttribute("min-height"), 10);
@@ -7286,7 +7776,7 @@ class Palette extends CIQ.UI.ContextTag {
 	}
 
 	detach(xPos, yPos) {
-		let breakSm = document.body.classList.contains("break-sm");
+		let breakSm = this.ownerDocument.body.classList.contains("break-sm");
 		// Never detach on small screens
 		if (this.docked === "true" && !breakSm) {
 			this.docked = "false";
@@ -7335,9 +7825,9 @@ class Palette extends CIQ.UI.ContextTag {
 			parentBounds = this.paletteDock.getChartBoundsOffset();
 		}
 		// Get the xyz values in px
-		const transformValue = this.style.transform.split(/\w+\(|\);?/);
+		const transformValue = this.style.transform.match(/-?[0-9]{1,5}(?=px)/g);
 		// Parse out the integer values from the style
-		const coordinates = transformValue[1].split(/,\s?/g).map(function (val) {
+		const coordinates = transformValue.map(function (val) {
 			return parseInt(val);
 		});
 		// Apply the offsets normally produced by the mouse pointer. Nneeded to satisfy setTransformPosition
@@ -7455,6 +7945,11 @@ class PaletteDock extends CIQ.UI.ContextTag {
 	connectedCallback() {
 		if (this.attached) return;
 		super.connectedCallback();
+	}
+
+	adoptedCallback() {
+		super.adoptedCallback();
+		CIQ.UI.flattenInheritance(this, PaletteDock);
 	}
 
 	initListeners() {
@@ -7647,7 +8142,7 @@ class PaletteDock extends CIQ.UI.ContextTag {
 		this.setChartDimensions();
 		this.setVerticalPaletteHeight();
 
-		let breakSm = document.body.classList.contains("break-sm");
+		let breakSm = this.ownerDocument.body.classList.contains("break-sm");
 		// Palettes can move out of view or the display context can change to mobile,
 		// so adjust the floating palettes on resize
 		var palettes = this.querySelectorAll('[docked="false"]');
@@ -7681,9 +8176,9 @@ class PaletteDock extends CIQ.UI.ContextTag {
 		);
 	}
 
-	// Resize chart to accomodate palette gutters
+	// Resize chart to accommodate palette gutters
 	setChartDimensions() {
-		const chartContainer = this.context.stx.chart.container;
+		const chartContainer = this.context.stx.container;
 		const { top, left, width, height } = this.getChartBounds();
 
 		const { config } = this.context;
@@ -7761,6 +8256,11 @@ var CIQ = typeof _CIQ !== "undefined" ? _CIQ : _exports.CIQ;
  * </cq-undo-section>
  */
 class Redo extends CIQ.UI.ContextTag {
+	adoptedCallback() {
+		super.adoptedCallback();
+		CIQ.UI.flattenInheritance(this, Redo);
+	}
+
 	/**
 	 * Finds {@link WebComponents.cq-undo} and pairs with it to find the last undo and reverse it.
 	 * @param {WebComponents.cq-undo} A cq-undo webcomponent
@@ -7840,7 +8340,7 @@ class Scroll extends CIQ.UI.BaseComponent {
 		// Setting CSS in constructor will throw exception when calling document.createElement (done in plugins)
 		// So set default CSS here when connected instead.
 		this.style.overflowY = "auto";
-		this.uiManager = CIQ.UI.getUIManager();
+		this.uiManager = CIQ.UI.getUIManager(this);
 		if (this.uiManager.length > 0) this.uiManager = this.uiManager[0];
 
 		// prevent mousewheel event from propagating up to parents, such as when embedded
@@ -7860,7 +8360,13 @@ class Scroll extends CIQ.UI.BaseComponent {
 		this.resize();
 	}
 
+	adoptedCallback() {
+		super.adoptedCallback();
+		CIQ.UI.flattenInheritance(this, Scroll);
+	}
+
 	disconnectedCallback() {
+		if (this.doNotDisconnect) return;
 		CIQ.UI.removeResizeListener(this);
 		super.disconnectedCallback();
 	}
@@ -7894,7 +8400,8 @@ class Scroll extends CIQ.UI.BaseComponent {
 	 * @return {boolean}
 	 */
 	keyStroke(hub, key, e) {
-		const activeElements = document.querySelectorAll(".stxMenuActive *");
+		const activeElements =
+			this.ownerDocument.querySelectorAll(".stxMenuActive *");
 		if (
 			!this.keyboardNavigation &&
 			!Array.from(activeElements).includes(this)
@@ -8073,6 +8580,12 @@ var CIQ = typeof _CIQ !== "undefined" ? _CIQ : _exports.CIQ;
  * </cq-share-button>
  */
 class ShareButton extends CIQ.UI.ContextTag {
+	adoptedCallback() {
+		super.adoptedCallback();
+		CIQ.UI.flattenInheritance(this, ShareButton);
+		this.constructor = ShareButton;
+	}
+
 	setContext() {
 		this.addDefaultMarkup();
 		CIQ.safeClickTouch(this, () => this.tap());
@@ -8092,7 +8605,7 @@ class ShareButton extends CIQ.UI.ContextTag {
 				context.stx
 			);
 		} else {
-			const shareDialog = document.querySelector("cq-share-dialog");
+			const shareDialog = this.ownerDocument.querySelector("cq-share-dialog");
 			if (shareDialog && shareDialog.open) shareDialog.open({ context });
 		}
 	}
@@ -8141,6 +8654,12 @@ if (!CIQ.Share) {
 	 * </cq-dialog>
 	 */
 	class ShareDialog extends CIQ.UI.DialogContentTag {
+		adoptedCallback() {
+			super.adoptedCallback();
+			CIQ.UI.flattenInheritance(this, ShareDialog);
+			this.constructor = ShareDialog;
+		}
+
 		open(params) {
 			this.addDefaultMarkup();
 			this.setState("share-create");
@@ -8157,10 +8676,12 @@ if (!CIQ.Share) {
 			this.node.find("div[cq-share-dialog-div]")[0].className = state;
 
 			// Set the main dialog as keyboard active to reset the highlight when this panel changes state
-			if (document.body.keystrokeHub) {
-				let { tabActiveModals } = document.body.keystrokeHub;
+			if (this.ownerDocument.body.keystrokeHub) {
+				let { tabActiveModals } = this.ownerDocument.body.keystrokeHub;
 				if (tabActiveModals[0])
-					document.body.keystrokeHub.setKeyControlElement(tabActiveModals[0]);
+					this.ownerDocument.body.keystrokeHub.setKeyControlElement(
+						tabActiveModals[0]
+					);
 			}
 		}
 
@@ -8174,7 +8695,7 @@ if (!CIQ.Share) {
 			var stx = this.context.stx;
 			var self = this;
 			self.setState("share-generate");
-			var shareDialog = document.querySelector(
+			var shareDialog = this.ownerDocument.querySelector(
 				"cq-share-dialog .share-link-div"
 			);
 			if (shareDialog) shareDialog.innerHTML = "";
@@ -8222,15 +8743,17 @@ if (!CIQ.Share) {
 				}
 			);
 			// Set the main dialog as keyboard active to reset the highlight when this panel reloads
-			if (document.body.keystrokeHub) {
-				let { tabActiveModals } = document.body.keystrokeHub;
+			if (this.ownerDocument.body.keystrokeHub) {
+				let { tabActiveModals } = this.ownerDocument.body.keystrokeHub;
 				if (tabActiveModals[0])
-					document.body.keystrokeHub.setKeyControlElement(tabActiveModals[0]);
+					this.ownerDocument.body.keystrokeHub.setKeyControlElement(
+						tabActiveModals[0]
+					);
 			}
 		}
 
 		copy() {
-			var shareDialog = document.querySelector(
+			var shareDialog = this.ownerDocument.querySelector(
 				"cq-share-dialog .share-link-div"
 			);
 			if (!shareDialog) return;
@@ -8240,7 +8763,7 @@ if (!CIQ.Share) {
 			tempInputElem.value = linkToCopy;
 			tempInputElem.contentEditable = true;
 			tempInputElem.readOnly = true;
-			document.body.appendChild(tempInputElem);
+			this.ownerDocument.body.appendChild(tempInputElem);
 			tempInputElem.focus();
 			tempInputElem.select();
 			if (!CIQ.isIE) {
@@ -8251,8 +8774,8 @@ if (!CIQ.Share) {
 				s.addRange(range);
 				tempInputElem.setSelectionRange(0, linkToCopy.length);
 			}
-			document.execCommand("copy");
-			document.body.removeChild(tempInputElem);
+			this.ownerDocument.execCommand("copy");
+			this.ownerDocument.body.removeChild(tempInputElem);
 			this.setState("share-copied");
 		}
 	}
@@ -8300,6 +8823,12 @@ var CIQ = typeof _CIQ !== "undefined" ? _CIQ : _exports.CIQ;
  * </cq-show-range>
  */
 class ShowRange extends CIQ.UI.ContextTag {
+	adoptedCallback() {
+		super.adoptedCallback();
+		CIQ.UI.flattenInheritance(this, ShowRange);
+		this.constructor = ShowRange;
+	}
+
 	/**
 	 * Proxies UI requests for span changes to the chart engine.
 	 *
@@ -8328,7 +8857,8 @@ class ShowRange extends CIQ.UI.ContextTag {
 		if (self.context.loader) self.context.loader.show();
 		var params = {
 			multiplier: multiplier,
-			base: base
+			base: base,
+			padding: 40
 		};
 		if (interval) {
 			params.periodicity = {
@@ -8380,6 +8910,11 @@ var CIQ = typeof _CIQ !== "undefined" ? _CIQ : _exports.CIQ;
  * @since 7.5.0
  */
 class SideNav extends CIQ.UI.ContextTag {
+	adoptedCallback() {
+		super.adoptedCallback();
+		CIQ.UI.flattenInheritance(this, SideNav);
+	}
+
 	/**
 	 * Subscribes to the `sidenav`, `breakpoint`, and `tfc` channels. Sets the side navigation
 	 * availability based on the contents of the channels.
@@ -8411,7 +8946,10 @@ class SideNav extends CIQ.UI.ContextTag {
 
 			node.classList[show ? "add" : "remove"]("active");
 
-			this.channelWrite(sidenavSizeChannel, show ? node.offsetWidth : 0);
+			this.channelWrite(
+				sidenavSizeChannel,
+				show ? node.getBoundingClientRect().width : 0
+			);
 		};
 
 		this.channelSubscribe(sidenavChannel, setActive);
@@ -8445,6 +8983,11 @@ class SidePanel extends CIQ.UI.ContextTag {
 	constructor() {
 		super();
 		this.callbacks = [];
+	}
+
+	adoptedCallback() {
+		super.adoptedCallback();
+		CIQ.UI.flattenInheritance(this, SidePanel);
 	}
 
 	setContext(context) {
@@ -8610,13 +9153,20 @@ var CIQ = typeof _CIQ !== "undefined" ? _CIQ : _exports.CIQ;
  * </cq-menu>
  */
 class Studies extends CIQ.UI.ContextTag {
+	adoptedCallback() {
+		super.adoptedCallback();
+		CIQ.UI.flattenInheritance(this, Studies);
+		this.constructor = Studies;
+	}
+
 	disconnectedCallback() {
-		if (this.context)
+		if (this.context) {
 			CIQ.UI.unobserveProperty(
 				"studyLibraryHash",
 				this.context.stx.chart,
 				this.listener
 			);
+		}
 		super.disconnectedCallback();
 	}
 
@@ -8757,7 +9307,7 @@ class Studies extends CIQ.UI.ContextTag {
 			} else {
 				// legacy use when config is not available
 				params.context = self.context;
-				const dialog = document.querySelector("cq-study-dialog");
+				const dialog = self.ownerDocument.querySelector("cq-study-dialog");
 				dialog.addWhenDone = addWhenDone;
 				dialog.open(params);
 			}
@@ -8828,6 +9378,12 @@ var CIQ = typeof _CIQ !== "undefined" ? _CIQ : _exports.CIQ;
  * @since  4.1.0 cq-study-context is now required (cq-dialog[cq-study-context] no longer works)
  */
 class StudyContext extends CIQ.UI.DialogContentTag {
+	adoptedCallback() {
+		super.adoptedCallback();
+		CIQ.UI.flattenInheritance(this, StudyContext);
+		this.constructor = StudyContext;
+	}
+
 	setContext(context) {
 		this.addDefaultMarkup();
 		this.classList.add("ciq-context-menu");
@@ -8873,8 +9429,8 @@ if (!CIQ.Studies) {
 	 * Requires {@link CIQ.UI.StudyEdit}.
 	 *
 	 * Optional Attributes:
-	 * - `cq-study-axis` &mdash; Displays UI for selecting the Y-axis position (left, right, etc.),
-	 *   color and for inverting the y-axis *if not shared with the primary axis*.
+	 * - `cq-study-axis` &mdash; Displays UI for selecting the y-axisposition (left, right, etc.),
+	 *   color and for inverting the y-axis *if not shared with the primary-axis*.
 	 * - `cq-study-panel` &mdash; Displays UI for selecting the panel for the study (own, shared,
 	 *   etc.) and whether it is rendered as an underlay (under the primary chart) or an overlay
 	 *   (over the primary chart). Set this attribute to "alias" to have the panel names listed as
@@ -8884,7 +9440,7 @@ if (!CIQ.Studies) {
 	 * @since
 	 * - 5.2.0 Optional Attributes `cq-study-axis` and `cq-study-panel` are now available.
 	 * - 6.3.0 `cq-study-axis` now also provides a check box allowing users to invert study y-axis
-	 * 		if not shared with the primary axis.
+	 * 		if not shared with the primary-axis.
 	 *
 	 * @example <caption> Here is an example of how to create a study dialog. We add the
 	 * <code>cq-study-axis</code> and <code>cq-study-panel</code> attributes to enable form fields
@@ -8961,9 +9517,9 @@ if (!CIQ.Studies) {
 		}
 
 		closeActiveMenu(node) {
-			const hub = document.body.keystrokeHub;
+			const hub = this.ownerDocument.body.keystrokeHub;
 			const activeMenu = this.querySelector("*.stxMenuActive");
-			const uiManager = CIQ.UI.getUIManager();
+			const uiManager = CIQ.UI.getUIManager(this);
 			if (
 				!activeMenu ||
 				!hub ||
@@ -8974,6 +9530,12 @@ if (!CIQ.Studies) {
 			hub.tabActiveElement = null;
 			hub.highlightHide();
 			uiManager.closeMenu(activeMenu);
+		}
+
+		adoptedCallback() {
+			super.adoptedCallback();
+			CIQ.UI.flattenInheritance(this, StudyDialog);
+			this.constructor = StudyDialog;
 		}
 
 		disconnectedCallback() {
@@ -9043,10 +9605,14 @@ if (!CIQ.Studies) {
 			this.selectTemplates();
 
 			super.open(params);
-			params.axisSelect = this.getAttribute("cq-study-axis");
-			if (params.axisSelect === "") params.axisSelect = true;
-			params.panelSelect = this.getAttribute("cq-study-panel");
-			if (params.panelSelect === "") params.panelSelect = true;
+			if (!("axisSelect" in params)) {
+				params.axisSelect = this.getAttribute("cq-study-axis");
+				if (params.axisSelect === "") params.axisSelect = true;
+			}
+			if (!("panelSelect" in params)) {
+				params.panelSelect = this.getAttribute("cq-study-panel");
+				if (params.panelSelect === "") params.panelSelect = true;
+			}
 
 			if (typeof params.addWhenDone !== "undefined")
 				this.addWhenDone = params.addWhenDone;
@@ -9469,6 +10035,7 @@ if (!CIQ.Studies) {
 	 * Optionally only show studies needing custom Removal. cq-custom-removal-only
 	 * Optionally only show overlays. cq-overlays-only
 	 * Optionally only show studies in this panel. cq-panel-only
+	 * Optionally only show signalling studies. cq-signal-studies-only
 	 * Optionally clone to all panels. cq-clone-to-panels="Plots" or whatever name you choose
 	 * Optionally specify selector for which nodes have content. cq-content-keys
 	 *
@@ -9483,7 +10050,9 @@ if (!CIQ.Studies) {
 	 * "true" to be selectable with these keys.
 	 *
 	 * @namespace WebComponents.cq-study-legend
-	 * @since 8.3.0 Enabled internal keyboard navigation and selection.
+	 * @since
+	 * - 8.3.0 Enabled internal keyboard navigation and selection.
+	 * - 8.6.0 added `cq-signal-studies-only` flag.
 	 *
 	 * @example
 	 * <caption>
@@ -9504,8 +10073,8 @@ if (!CIQ.Studies) {
 	 *
 	 * @example
 	 * <caption>
-	 *     Here is an example of how to create a study legend inside a drop down menu. We use the
-	 *     <code>cq-no-close</code> attribute so that drop down is not closed when the user removes
+	 *     Here is an example of how to create a study legend inside a dropdown menu. We use the
+	 *     <code>cq-no-close</code> attribute so that dropdown is not closed when the user removes
 	 *     a study from the list.
 	 * </caption>
 	 * <cq-menu class="ciq-menu ciq-studies collapse">
@@ -9545,9 +10114,6 @@ if (!CIQ.Studies) {
 		connectedCallback() {
 			if (this.attached) return;
 			super.connectedCallback();
-			if (this.node.attr("cq-clone-to-panels") !== undefined) {
-				this.closest("cq-context").classList.add("stx-panel-legend");
-			}
 
 			if (!this.hasAttribute("cq-no-claim")) this.addClaim(this);
 			// Update the keyboard navigation. New study legend components can be added at runtime.
@@ -9560,15 +10126,23 @@ if (!CIQ.Studies) {
 			}
 		}
 
+		adoptedCallback() {
+			super.adoptedCallback();
+			CIQ.UI.flattenInheritance(this, StudyLegend);
+		}
+
 		disconnectedCallback() {
-			// Update the keyboard navigation. Need to remove this element from the index now that it's detached
-			if (this.context && this.context.config && this.context.config.channels) {
-				this.channelWrite(
-					this.context.config.channels.keyboardNavigation ||
-						"channel.keyboardNavigation",
-					{ action: "registerElements" }
-				);
+			if (this.context) {
+				// Update the keyboard navigation. Need to remove this element from the index now that it's detached
+				if (this.context.config && this.context.config.channels) {
+					this.channelWrite(
+						this.context.config.channels.keyboardNavigation ||
+							"channel.keyboardNavigation",
+						{ action: "registerElements" }
+					);
+				}
 			}
+			super.disconnectedCallback();
 		}
 
 		/**
@@ -9603,7 +10177,7 @@ if (!CIQ.Studies) {
 			let isActive = this.classList.contains("ciq-active");
 			// If newState is undefined, toggle the active state
 			newState = typeof newState === "undefined" ? !isActive : newState;
-			const keystrokeHub = document.body.keystrokeHub;
+			const keystrokeHub = this.ownerDocument.body.keystrokeHub;
 			if (newState) {
 				this.classList.add("ciq-active");
 				// Treat the legend like a modal so keyboard navigation is returned after using colorPicker
@@ -9659,7 +10233,7 @@ if (!CIQ.Studies) {
 			} else if (key === "Tab" || key === "Esc" || key === "Escape") {
 				this.removeFocused(items);
 				this.setActiveState(false);
-				const keystrokeHub = document.body.keystrokeHub;
+				const keystrokeHub = this.ownerDocument.body.keystrokeHub;
 				if (keystrokeHub) keystrokeHub.tabOrderSelect();
 			}
 		}
@@ -9714,6 +10288,7 @@ if (!CIQ.Studies) {
 			var overlaysOnly = this.hasAttribute("cq-overlays-only");
 			var panelOnly = this.hasAttribute("cq-panel-only");
 			var customRemovalOnly = this.hasAttribute("cq-custom-removal-only");
+			var signalStudiesOnly = this.hasAttribute("cq-signal-studies-only");
 			var markerLabel = this.node.attr("cq-marker-label");
 			var panelName = null;
 			var holder = this.node.parents(".stx-holder")[0];
@@ -9726,8 +10301,35 @@ if (!CIQ.Studies) {
 					if (customRemovalOnly && !sd.study.customRemoval) continue;
 					if (panelOnly && sd.panel != panelName) continue;
 					if (overlaysOnly && !sd.overlay && !sd.underlay) continue;
+					if (markerLabel && sd.signalData && !sd.signalData.reveal) continue;
+					if (!markerLabel && CIQ.xor(signalStudiesOnly, sd.signalData))
+						continue;
 					var newChild = CIQ.UI.makeFromTemplate(this.template, true);
 					newChild.find("cq-label").html(sd.inputs.display);
+
+					// For SignalIQ - Display a show/hide switch when rendered outside of the plot legend
+					if (
+						sd.signalData &&
+						sd.signalData.hide &&
+						!holder &&
+						panelName !== "chart"
+					) {
+						var toggle = document.createElement("span");
+						toggle.className = "ciq-switch";
+						toggle.setAttribute("keyboard-selectable-child", "true");
+						if (!sd.disabled) newChild.addClass("ciq-active");
+						let handleClickTouch = function (sd, stx) {
+							return (e) => {
+								sd.toggleDisabledState(stx);
+								e.target.parentElement.classList[
+									sd.disabled ? "remove" : "add"
+								]("ciq-active");
+							};
+						};
+						CIQ.safeClickTouch(toggle, handleClickTouch(sd, stx));
+						newChild.append(toggle);
+					}
+
 					var close = newChild.find(".ciq-close");
 					if (sd.permanent) {
 						close.hide();
@@ -9736,7 +10338,7 @@ if (!CIQ.Studies) {
 						CIQ.UI.stxtap(close[0], closeStudy(this, sd));
 					}
 					var edit = newChild.find(".ciq-edit")[0];
-					if (edit && !sd.editFunction) {
+					if (edit && (sd.permanent || !sd.editFunction)) {
 						edit.style.visibility = "hidden";
 					} else if (sd.editFunction) {
 						// If there isn't an edit button, put the edit function on the parent so it responds to a keyboard navigation click
@@ -9767,8 +10369,8 @@ if (!CIQ.Studies) {
 				this.node.css("display", "none");
 				this.node.parents("div.stx-panel-legend").css("width", "0px");
 			}
-			if (CIQ.I18N && CIQ.I18N.localized)
-				CIQ.I18N.translateUI(null, this.node[0]);
+			if (this.context.stx.translateUI)
+				this.context.stx.translateUI(this.node[0]);
 
 			function hasKeys(node, keys) {
 				// checks if key is not template as in frameworks such as React or Angular
@@ -9788,7 +10390,8 @@ if (!CIQ.Studies) {
 		setContext(context) {
 			if (this.init) return;
 			var self = this;
-			if (self.node.attr("cq-clone-to-panels") !== undefined) {
+			if (this.node.attr("cq-clone-to-panels") !== undefined) {
+				self.closest("cq-context").classList.add("stx-panel-legend");
 				self.spawnPanelLegend();
 				context.stx.append("stackPanel", function (display, name) {
 					self.spawnPanelLegend();
@@ -9822,7 +10425,15 @@ if (!CIQ.Studies) {
 				if (legendHolder) {
 					var panelLegend = legendHolder.querySelector(this.nodeName);
 					if (!panelLegend) {
-						panelLegend = this.cloneNode(true);
+						if (this.ownerDocument !== document) {
+							const templ = document.createElement("template");
+							templ.innerHTML = this.outerHTML;
+							document.body.append(templ);
+							panelLegend = CIQ.UI.makeFromTemplate(templ)[0];
+							templ.remove();
+						} else {
+							panelLegend = this.cloneNode(true);
+						}
 						panelLegend.setAttribute(
 							"cq-marker-label",
 							this.getAttribute("cq-clone-to-panels")
@@ -9867,6 +10478,11 @@ var CIQ = typeof _CIQ !== "undefined" ? _CIQ : _exports.CIQ;
  * @namespace WebComponents.cq-study-output
  */
 class StudyOutput extends CIQ.UI.BaseComponent {
+	adoptedCallback() {
+		super.adoptedCallback();
+		CIQ.UI.flattenInheritance(this, StudyOutput);
+	}
+
 	initialize(params) {
 		this.params = params;
 	}
@@ -9902,6 +10518,11 @@ var CIQ = typeof _CIQ !== "undefined" ? _CIQ : _exports.CIQ;
  * @namespace WebComponents.cq-study-parameter
  */
 class StudyParameter extends CIQ.UI.DialogContentTag {
+	adoptedCallback() {
+		super.adoptedCallback();
+		CIQ.UI.flattenInheritance(this, StudyParameter);
+	}
+
 	initialize(params) {
 		this.params = params;
 	}
@@ -9988,6 +10609,10 @@ class Swatch extends HTMLElement {
 		});
 	}
 
+	adoptedCallback() {
+		CIQ.UI.flattenInheritance(this, Swatch);
+	}
+
 	/**
 	 * Attempts to identify the default color for the associated chart. It does so by traversing
 	 * up the parent stack and looking for any component that has a context. Or you can set
@@ -10059,7 +10684,7 @@ class Swatch extends HTMLElement {
 	 */
 	launchColorPicker() {
 		CIQ.UI.containerExecute(this, "launchColorPicker");
-		var colorPicker = document.querySelector("cq-color-picker");
+		var colorPicker = this.ownerDocument.querySelector("cq-color-picker");
 		if (colorPicker) {
 			colorPicker.callback = (function (self) {
 				return function (color) {
@@ -10120,6 +10745,12 @@ if (!CIQ.ThemeHelper) {
 	 * </cq-dialog>
 	 */
 	class ThemeDialog extends CIQ.UI.DialogContentTag {
+		adoptedCallback() {
+			super.adoptedCallback();
+			CIQ.UI.flattenInheritance(this, ThemeDialog);
+			this.constructor = ThemeDialog;
+		}
+
 		/**
 		 * Applies changes to all charts on the screen.
 		 *
@@ -10248,9 +10879,9 @@ if (!CIQ.ThemeHelper) {
 			};
 			CIQ.UI.contextsForEach(function () {
 				this.stx.updateListeners("theme");
-			});
+			}, this);
 			var self = this;
-			document.querySelectorAll("cq-themes").forEach(function (t) {
+			this.ownerDocument.querySelectorAll("cq-themes").forEach(function (t) {
 				theme.builtIn = t.currentLoadedBuiltIn;
 				t.addCustom(theme, self.initiatingMenu);
 			});
@@ -10378,6 +11009,11 @@ var CIQ = typeof _CIQ !== "undefined" ? _CIQ : _exports.CIQ;
  * </cq-section>
  */
 class ThemePiece extends CIQ.UI.BaseComponent {
+	adoptedCallback() {
+		super.adoptedCallback();
+		CIQ.UI.flattenInheritance(this, ThemePiece);
+	}
+
 	setBoolean(result) {
 		CIQ.UI.containerExecute(
 			this,
@@ -10457,6 +11093,12 @@ class Themes extends CIQ.UI.ContextTag {
 		super.connectedCallback();
 	}
 
+	adoptedCallback() {
+		super.adoptedCallback();
+		CIQ.UI.flattenInheritance(this, Themes);
+		this.constructor = Themes;
+	}
+
 	setContext({ config }) {
 		if (!config) return; // grid does not provide config
 		const {
@@ -10511,8 +11153,8 @@ class Themes extends CIQ.UI.ContextTag {
 			this.makeTap(newMenuItem[0], loadBuiltIn(this, className));
 			this.builtInMenu.append(newMenuItem);
 		}
-		if (CIQ.I18N && CIQ.I18N.localized)
-			CIQ.I18N.translateUI(null, this.builtInMenu[0]);
+		if (this.context.stx.translateUI)
+			this.context.stx.translateUI(this.builtInMenu[0]);
 
 		if (this.customMenu.length && this.customTemplate.length) {
 			var customThemes = this.params.customThemes;
@@ -10537,8 +11179,8 @@ class Themes extends CIQ.UI.ContextTag {
 	/**
 	 * Initialize the web component
 	 * @param {Object} params Parameters
-	 * @param {Object} [params.builtInThemes] Object map of built in theme names, display names
-	 * @param {Object} [params.defaultTheme] The default built in theme to use
+	 * @param {Object} [params.builtInThemes] Object map of built-in theme names, display names
+	 * @param {Object} [params.defaultTheme] The default built-in theme to use
 	 * @param {Object} [params.nameValueStore] A {@link CIQ.NameValueStore} object for fetching and saving theme state
 	 * @param {string} [params.id] id which can be used to disambiguate when multiple charts are on the screen
 	 * @memberof WebComponents.cq-themes
@@ -10622,6 +11264,9 @@ class Themes extends CIQ.UI.ContextTag {
 		this.contextContainers.forEach((container) =>
 			container.classList.add(name)
 		);
+		this.context.topNode.setCurrentThemeClass = (container) => {
+			container.classList.add(name);
+		};
 	}
 
 	removeThemeClass(name) {
@@ -10660,7 +11305,7 @@ class Themes extends CIQ.UI.ContextTag {
 
 	removeTheme(themeName) {
 		var saved = false;
-		document.querySelectorAll("cq-themes").forEach(function (t) {
+		this.ownerDocument.querySelectorAll("cq-themes").forEach(function (t) {
 			delete t.params.customThemes[themeName];
 			t.configureMenu();
 			if (!saved) {
@@ -10741,6 +11386,12 @@ if (!CIQ.timeZoneMap) {
 	 * @namespace WebComponents.cq-timezone-dialog
 	 */
 	class TimezoneDialog extends CIQ.UI.DialogContentTag {
+		adoptedCallback() {
+			super.adoptedCallback();
+			CIQ.UI.flattenInheritance(this, TimezoneDialog);
+			this.constructor = TimezoneDialog;
+		}
+
 		/**
 		 * Opens the dialog and sets the time zone selected by the user.
 		 *
@@ -10890,6 +11541,11 @@ class Toggle extends CIQ.UI.ContextTag {
 			classes: {},
 			callbacks: []
 		};
+	}
+
+	adoptedCallback() {
+		super.adoptedCallback();
+		CIQ.UI.flattenInheritance(this, Toggle);
 	}
 
 	disconnectedCallback() {
@@ -11262,6 +11918,11 @@ if (!CIQ.Drawing) {
 			this.noToolSelectedText = "";
 		}
 
+		adoptedCallback() {
+			super.adoptedCallback();
+			CIQ.UI.flattenInheritance(this, DrawingToolbar);
+		}
+
 		clearDrawings() {
 			this.context.stx.clearDrawings(null, false);
 		}
@@ -11371,7 +12032,7 @@ if (!CIQ.Drawing) {
 
 		pickFillColor(activator) {
 			var node = CIQ.UI.$(activator.node);
-			var colorPicker = document.querySelector("cq-color-picker");
+			var colorPicker = this.ownerDocument.querySelector("cq-color-picker");
 			if (!colorPicker) {
 				console.log(
 					"DrawingToolbar.prototype.pickFillColor: no ColorPicker available"
@@ -11389,7 +12050,7 @@ if (!CIQ.Drawing) {
 
 		pickLineColor(activator) {
 			var node = CIQ.UI.$(activator.node);
-			var colorPicker = document.querySelector("cq-color-picker");
+			var colorPicker = this.ownerDocument.querySelector("cq-color-picker");
 			if (!colorPicker) {
 				console.log(
 					"DrawingToolbar.prototype.pickLineColor: no ColorPicker available"
@@ -11637,8 +12298,10 @@ if (!CIQ.Drawing) {
 					if (elements[i] == "cq-fill-color") none.show();
 				}
 				elements = CIQ.Drawing[toolName].prototype.$controls;
-				for (i = 0; elements && i < elements.length; i++) {
-					this.node.find(elements[i]).addClass("ciq-active");
+				if (elements) {
+					for (i = 0; i < elements.length; i++) {
+						this.node.find(elements[i]).addClass("ciq-active");
+					}
 				}
 			}
 			this.sync();
@@ -11685,6 +12348,11 @@ class Undo extends CIQ.UI.ContextTag {
 		CIQ.UI.stxtap(this, function () {
 			self.undo();
 		});
+	}
+
+	adoptedCallback() {
+		super.adoptedCallback();
+		CIQ.UI.flattenInheritance(this, Undo);
 	}
 
 	/**
@@ -11851,6 +12519,12 @@ var CIQ = typeof _CIQ !== "undefined" ? _CIQ : _exports.CIQ;
  * </cq-dialog>
  */
 class ViewDialog extends CIQ.UI.DialogContentTag {
+	adoptedCallback() {
+		super.adoptedCallback();
+		CIQ.UI.flattenInheritance(this, ViewDialog);
+		this.constructor = ViewDialog;
+	}
+
 	open(params) {
 		this.addDefaultMarkup();
 		this.querySelector("input").value = "";
@@ -11858,7 +12532,7 @@ class ViewDialog extends CIQ.UI.DialogContentTag {
 	}
 
 	/**
-	 * Saves the new view. This updates all cq-view menus on the screen, and persists the view in the nameValueStore.
+	 * Saves the new view. This updates all cq-view menus on the screen and persists the view in the nameValueStore.
 	 * @alias save
 	 * @memberof WebComponents.cq-view-dialog
 	 */
@@ -11869,7 +12543,7 @@ class ViewDialog extends CIQ.UI.DialogContentTag {
 		let madeChange = false;
 		this.updateContext();
 		const layout = this.context.stx.exportLayout();
-		document.querySelectorAll("cq-views").forEach(function (v) {
+		this.ownerDocument.querySelectorAll("cq-views").forEach(function (v) {
 			const obj = v.params.viewObj;
 			let view;
 
@@ -11897,15 +12571,14 @@ class ViewDialog extends CIQ.UI.DialogContentTag {
 	}
 
 	updateContext() {
-		let activeChart = this.context.topNode.querySelector(
+		const { topNode } = this.context;
+		let activeChart = topNode.querySelector(
 			"cq-context-wrapper.active cq-context"
 		);
 
 		if (!activeChart) {
-			const multiChartContainer =
-				this.context.topNode.parentNode.closest("cq-context");
-			if (multiChartContainer) {
-				activeChart = multiChartContainer.querySelector(
+			if (topNode.multiChartContainer) {
+				activeChart = topNode.multiChartContainer.querySelector(
 					"cq-context-wrapper.active cq-context"
 				);
 			}
@@ -12042,7 +12715,6 @@ class Views extends CIQ.UI.ContextTag {
 			template: "template[cq-view]"
 		});
 		this.params.template = this.querySelector(this.params.template);
-		this.params.template.remove();
 		var self = this;
 		if (this.params.nameValueStore)
 			this.params.nameValueStore.get("stx-views", function (err, obj) {
@@ -12054,10 +12726,16 @@ class Views extends CIQ.UI.ContextTag {
 
 	connectedCallback() {
 		super.connectedCallback();
-		this.addDefaultMarkup();
+	}
+
+	adoptedCallback() {
+		super.adoptedCallback();
+		CIQ.UI.flattenInheritance(this, Views);
+		this.constructor = Views;
 	}
 
 	setContext({ config }) {
+		this.addDefaultMarkup();
 		if (config && config.menuViewConfig) {
 			this.initialize(config.menuViewConfig);
 		}
@@ -12076,7 +12754,7 @@ class Views extends CIQ.UI.ContextTag {
 			return function (e) {
 				e.stopPropagation();
 				var saved = false;
-				document.querySelectorAll("cq-views").forEach(function (v) {
+				self.ownerDocument.querySelectorAll("cq-views").forEach(function (v) {
 					v.params.viewObj.views.splice(i, 1);
 					if (!saved) {
 						if (v.params.nameValueStore)
@@ -12141,9 +12819,9 @@ class Views extends CIQ.UI.ContextTag {
 						params: { context }
 					});
 				} else {
-					document.querySelector("cq-view-dialog").open({ context });
+					self.ownerDocument.querySelector("cq-view-dialog").open({ context });
 				}
-				const uiManager = CIQ.UI.getUIManager();
+				const uiManager = CIQ.UI.getUIManager(this);
 				const viewMenu = context.topNode.querySelector(".ciq-views");
 				if (uiManager && viewMenu) uiManager.closeMenu(viewMenu);
 			});
@@ -12190,7 +12868,7 @@ const CIQ = typeof _CIQ !== "undefined" ? _CIQ : _exports.CIQ;
 		<div class="ciq-drawing-dialog-setting">
 			<div class="ciq-heading">Price Buckets</div>
 			<div class="stx-data">
-				<input type="number" min="1" step="1"
+				<input type="number" min="1" step="1">
 			</div>
 		</div
 	</cq-scroll>
@@ -12200,6 +12878,12 @@ const CIQ = typeof _CIQ !== "undefined" ? _CIQ : _exports.CIQ;
  * @since 8.4.0
  */
 class VolumeProfileSettingsDialog extends CIQ.UI.DialogContentTag {
+	adoptedCallback() {
+		super.adoptedCallback();
+		CIQ.UI.flattenInheritance(this, VolumeProfileSettingsDialog);
+		this.constructor = VolumeProfileSettingsDialog;
+	}
+
 	/**
 	 * Ensures that when the dialog is opened the input field is populated with the correct value.
 	 * Also installs a listener to report changes to the value so the drawing can get updated.
@@ -12221,8 +12905,10 @@ class VolumeProfileSettingsDialog extends CIQ.UI.DialogContentTag {
 			'div[fieldname="Price Buckets"] input'
 		);
 		inputField.value = settings.priceBuckets;
+		if (inputField.changeHandler)
+			inputField.removeEventListener("change", inputField.changeHandler);
 
-		inputField.addEventListener("change", ({ target }) => {
+		inputField.changeHandler = ({ target }) => {
 			const intVal = parseInt(target.value);
 			if (isNaN(intVal)) return;
 
@@ -12231,9 +12917,10 @@ class VolumeProfileSettingsDialog extends CIQ.UI.DialogContentTag {
 				bubbles: true,
 				cancelable: true
 			});
-
 			this.opener.dispatchEvent(event);
-		});
+		};
+
+		inputField.addEventListener("change", inputField.changeHandler);
 	}
 }
 
@@ -12243,7 +12930,7 @@ VolumeProfileSettingsDialog.markup = `
 		<div class="ciq-drawing-dialog-setting" fieldname="Price Buckets">
 			<div class="ciq-heading">Price Buckets</div>
 			<div class="stx-data">
-				<input type="number" min="1" step="1"
+				<input type="number" min="1" step="1">
 			</div>
 		</div
 	</cq-scroll>
@@ -12314,7 +13001,7 @@ class WaveParameters extends CIQ.UI.ContextTag {
 	}
 
 	set template(attribute) {
-		return this.setAttribute("template", attribute);
+		this.setAttribute("template", attribute);
 	}
 
 	static templates() {
@@ -12409,7 +13096,7 @@ class WaveParameters extends CIQ.UI.ContextTag {
 	connectedCallback() {
 		if (this.attached) return;
 		this.template = "Grand Supercycle";
-		var tmpl = document.querySelector(
+		var tmpl = this.ownerDocument.querySelector(
 			'template[cq-wave-parameters], template[cq-wave-parameters="true"]'
 		);
 		CIQ.UI.makeFromTemplate(tmpl, this);
@@ -12425,8 +13112,9 @@ class WaveParameters extends CIQ.UI.ContextTag {
 		super.connectedCallback();
 	}
 
-	disconnectedCallback() {
-		super.disconnectedCallback();
+	adoptedCallback() {
+		super.adoptedCallback();
+		CIQ.UI.flattenInheritance(this, WaveParameters);
 	}
 
 	activate() {
@@ -12556,6 +13244,12 @@ if (!Dialog) {
 			this.build();
 		}
 
+		adoptedCallback() {
+			super.adoptedCallback();
+			CIQ.UI.flattenInheritance(this, ColorPicker);
+			this.constructor = ColorPicker;
+		}
+
 		build() {
 			this.addDefaultMarkup();
 			var node = this.node;
@@ -12610,6 +13304,7 @@ if (!Dialog) {
 			this.cqOverrides.children(":not(template)").remove();
 			var context =
 				activator.context || this.context || CIQ.UI.getMyContext(this);
+			this.uiManager = context.uiManager;
 
 			var closure = function (self, override) {
 				return function () {
@@ -12632,14 +13327,15 @@ if (!Dialog) {
 
 			// ensure color picker doesn't go off right edge of screen
 			var dims = CIQ.elementDimensions(this, { border: true });
-			var docWidth = CIQ.guaranteedSize(document).width;
+			var doc = this.ownerDocument || document;
+			var docWidth = CIQ.guaranteedSize(doc).width;
 			var w =
 				dims.width ||
 				oneSwatchDims.width * this.colors.children()[0].children.length;
 			if (x + w > docWidth) x = docWidth - w - 20; // 20 for a little whitespace and padding
 
 			// or bottom of screen
-			var docHeight = CIQ.guaranteedSize(document).height;
+			var docHeight = CIQ.guaranteedSize(doc).height;
 			var h =
 				dims.height ||
 				oneSwatchDims.height * this.colors.children().length + overrideHeight;
@@ -12805,7 +13501,7 @@ if (!Palette) {
 	 *
 	 * Inherits from `<cq-palette>`. Palette components must be placed within a `<cq-palette-dock>` component.
 	 *
-	 * This works in conjuction with the [cq-drawing-settings]{@link WebComponents.cq-drawing-settings} component
+	 * This works in conjunction with the [cq-drawing-settings]{@link WebComponents.cq-drawing-settings} component
 	 * and replaces the [cq-toolbar]{@link WebComponents.cq-toolbar} component, providing additional functionality
 	 * and an improved user experience.
 	 *
@@ -12813,7 +13509,7 @@ if (!Palette) {
 	 * `cq-item` element. Combinations take the form Alt+key (upper- or lowercase); for example, Alt+a or
 	 * Alt+A &mdash; in either case, the key combination works whether the key is shifted or not. Users can also
 	 * add the modifier Ctrl to the keystroke combination. For example, both Alt+R and Ctrl+Alt+R activate the
-	 * Rectangle tool. The added Ctrl modifier helps provide a unique keystoke combination in the event the Alt+key
+	 * Rectangle tool. The added Ctrl modifier helps provide a unique keystroke combination in the event the Alt+key
 	 * combination is assigned to a function in the web browser or to an application on the user's system.
 	 *
 	 * @namespace WebComponents.cq-drawing-palette
@@ -12904,6 +13600,12 @@ if (!Palette) {
 			};
 			// Stores a list of keyboard shortcuts.
 			this.toolShortcuts = {};
+		}
+
+		adoptedCallback() {
+			super.adoptedCallback();
+			CIQ.UI.flattenInheritance(this, DrawingPalette);
+			this.constructor = DrawingPalette;
 		}
 
 		setupKeyboardActivation(context) {
@@ -13041,16 +13743,22 @@ if (!Palette) {
 			this.addEventListener(
 				"contextmenu",
 				function (event) {
+					const targetElem = event.target.hasAttribute("cq-tool-group")
+						? event.target
+						: event.target.parentElement;
 					event.preventDefault();
-					if (event.target.getAttribute("cq-tool-group") !== null) {
+					if (
+						targetElem !== null &&
+						targetElem.getAttribute("cq-tool-group") !== null
+					) {
 						// Only concerned with elements that have a cq-tool-group property
-						let targetRect = event.target.getBoundingClientRect();
+						let targetRect = targetElem.getBoundingClientRect();
 						// Need to position the context menu relative to the parent because the palette can change position
 						let parentRect = this.getBoundingClientRect();
 						this.showToolContextMenu(
-							event.target.getAttribute("cq-tool"),
-							targetRect.top + targetRect.height - parentRect.top,
-							targetRect.left - parentRect.left
+							targetElem.getAttribute("cq-tool"),
+							event.clientY + targetRect.height - parentRect.top,
+							event.clientX - parentRect.left
 						);
 					}
 				}.bind(this)
@@ -13075,15 +13783,28 @@ if (!Palette) {
 				this.channelSubscribe(
 					this.channels.drawing || "channel.drawing",
 					(value) => {
+						const currentVectorType = stx.currentVectorParameters.vectorType;
 						if (value) {
 							this.resetScroller();
-							if (!stx.currentVectorParameters.vectorType) {
+							if (!currentVectorType) {
 								// setting value to "" signals that crosshairs should be disabled
 								stx.changeVectorType(this.priorVectorType || "");
 							}
+							this.setActiveTool(currentVectorType || "notool");
 						} else {
-							// remember what the previous drawing tool was and to re-enable it when the toolbar is reopened
-							this.priorVectorType = stx.currentVectorParameters.vectorType;
+							const { multiChartContainer } = this.container.topNode;
+							if (
+								multiChartContainer &&
+								CIQ.getFromNS(this, "context.config.soloActive.onDraw")
+							) {
+								Array.from(
+									multiChartContainer.querySelectorAll("cq-drawing-palette")
+								).forEach((palette) => {
+									palette.priorVectorType = currentVectorType;
+								});
+							} else {
+								this.priorVectorType = currentVectorType;
+							}
 							// setting value to null signals that normal crosshair behavior should return
 							stx.changeVectorType(null);
 						}
@@ -13127,6 +13848,11 @@ if (!Palette) {
 				}.bind(this)
 			);
 
+			// Stop propagation on pointerdown to prevent enabling any drawing tools as a result of clicking the menu
+			addToFavorites.addEventListener("pointerdown", (event) =>
+				event.stopPropagation()
+			);
+
 			let contextMenu = document.createElement("div");
 			contextMenu.appendChild(addToFavorites);
 			contextMenu.className = "tool-context-menu";
@@ -13149,6 +13875,11 @@ if (!Palette) {
 			scroller.refresh();
 		}
 
+		setActiveTool(toolName) {
+			const toolButton = this.querySelector(`cq-item[cq-tool=${toolName}]`);
+			if (toolButton) this.tool({ node: toolButton });
+		}
+
 		setActiveButton(activeNode) {
 			this.node.find(".ciq-tool.active").removeClass("active");
 			var activeToolLabel = "";
@@ -13160,7 +13891,9 @@ if (!Palette) {
 			activeNode.classList.add("active");
 			// Don't want to automatically show the palette when using the mobile menu
 			if (
-				!CIQ.trulyVisible(document.querySelector(".ciq-mobile-palette-toggle"))
+				!CIQ.trulyVisible(
+					this.ownerDocument.querySelector(".ciq-mobile-palette-toggle")
+				)
 			)
 				this.togglePalette();
 		}
@@ -13178,7 +13911,7 @@ if (!Palette) {
 			this.paletteDock.handleResize({ resizeChart: true });
 		}
 
-		setEvenOdd(groupName) {
+		setEvenOdd() {
 			// Give an 'odd' class to odd number buttons in filtered list.
 			var nodes = this.querySelectorAll(".tool-group cq-scroll cq-item");
 			var odd = false;
@@ -13191,7 +13924,7 @@ if (!Palette) {
 
 		// Add the favorite badge to relevant tools
 		// Add a favorite toggle star to each tool for use in list view and mobile layout
-		setFavorites() {
+		setFavorites(propagateSettings = true) {
 			var toolButtons = this.querySelectorAll(".tool-group [cq-tool]");
 			for (
 				var toolButtonIdx = 0;
@@ -13211,6 +13944,9 @@ if (!Palette) {
 						"touchstart",
 						this.handleFavoriteClick.bind(this),
 						{ capture: true, passive: false }
+					);
+					favMarker.addEventListener("pointerdown", (event) =>
+						event.stopPropagation()
 					);
 					toolButton.appendChild(favMarker);
 				}
@@ -13233,6 +13969,43 @@ if (!Palette) {
 					);
 				}
 			}
+			this.sortToolButtons();
+			const { multiChartContainer } = this.context.topNode;
+			if (propagateSettings && multiChartContainer) {
+				// synchronize favourites in other open palettes.
+				multiChartContainer.getCharts().forEach((chart) => {
+					const contextContainer = chart.uiContext.topNode;
+					const wrapper = contextContainer.closest("cq-context-wrapper");
+					if (!wrapper || contextContainer === this.context.topNode) return;
+					const drawingPalette =
+						contextContainer.querySelector("cq-drawing-palette");
+
+					setTimeout(() => {
+						drawingPalette.loadToolSettings();
+						drawingPalette.setFavorites(false);
+					});
+				});
+			}
+		}
+
+		// Sort buttons in order defined by the config, grouping those marked favorite first.
+		sortToolButtons() {
+			const toolContainer = this.querySelector(".tool-group cq-scroll");
+			const scrollbar = toolContainer.querySelector(".ps__rail-x, .ps__rail-y");
+			for (let tool of this.context.config.drawingTools) {
+				const toolElem = this.querySelector(
+					".tool-group [cq-tool=" + tool.tool + "]"
+				);
+				if (
+					toolElem &&
+					!toolElem.getAttribute("cq-tool-group").includes("favorite")
+				) {
+					// insertBefore automatically detaches the element from its current position and reattaches it at the bottom above the scrollbar
+					if (scrollbar) toolContainer.insertBefore(toolElem, scrollbar);
+					else toolContainer.appendChild(toolElem);
+				}
+			}
+			this.setEvenOdd();
 		}
 
 		handleFavoriteClick(event) {
@@ -13279,7 +14052,7 @@ if (!Palette) {
 				this.toolSettings.toolGroup
 			);
 			this.querySelector(".tool-group cq-scroll").top();
-			this.setEvenOdd(groupName);
+			this.setEvenOdd();
 			for (
 				var i = 0;
 				i < this.callbacks.length;
@@ -13325,7 +14098,7 @@ if (!Palette) {
 			this.setActiveButton(buttonRef);
 			var stx = this.context.stx;
 			stx.clearMeasure();
-			stx.changeVectorType(toolName);
+			stx.changeVectorType(toolName == "notool" ? "" : toolName);
 		}
 
 		noTool(activator, toolName) {
@@ -13451,7 +14224,7 @@ if (!Palette) {
 	 *
 	 * Inherits from `<cq-palette>`. Palette components must be placed within a `<cq-palette-dock>` component.
 	 *
-	 * This works in conjuction with the [cq-drawing-palette]{@link WebComponents.cq-drawing-palette} component
+	 * This works in conjunction with the [cq-drawing-palette]{@link WebComponents.cq-drawing-palette} component
 	 * and replaces the [cq-toolbar]{@link WebComponents.cq-toolbar} component, providing additional functionality
 	 * and an improved user experience.
 	 *
@@ -13588,6 +14361,12 @@ if (!Palette) {
 			});
 		}
 
+		adoptedCallback() {
+			super.adoptedCallback();
+			CIQ.UI.flattenInheritance(this, DrawingSettings);
+			this.constructor = DrawingSettings;
+		}
+
 		setContext(context) {
 			this.addDefaultMarkup();
 			this.init();
@@ -13695,8 +14474,10 @@ if (!Palette) {
 					if (elements[i] == "cq-fill-color") none.show();
 				}
 				elements = CIQ.Drawing[toolName].prototype.$controls;
-				for (i = 0; elements && i < elements.length; i++) {
-					this.node.find(elements[i]).addClass("ciq-active");
+				if (elements) {
+					for (i = 0; i < elements.length; i++) {
+						this.node.find(elements[i]).addClass("ciq-active");
+					}
 				}
 			}
 			if (toolName === "notool") {
@@ -13793,7 +14574,7 @@ if (!Palette) {
 
 		pickFillColor(activator) {
 			var node = CIQ.UI.$(activator.node);
-			var colorPicker = document.querySelector("cq-color-picker");
+			var colorPicker = this.ownerDocument.querySelector("cq-color-picker");
 			if (!colorPicker) {
 				console.log(
 					"DrawingToolbar.prototype.pickFillColor: no ColorPicker available"
@@ -13811,7 +14592,7 @@ if (!Palette) {
 
 		pickLineColor(activator) {
 			var node = CIQ.UI.$(activator.node);
-			var colorPicker = document.querySelector("cq-color-picker");
+			var colorPicker = this.ownerDocument.querySelector("cq-color-picker");
 			if (!colorPicker) {
 				console.log(
 					"DrawingToolbar.prototype.pickLineColor: no ColorPicker available"
@@ -14289,6 +15070,11 @@ if (!Scroll) {
 			super.connectedCallback();
 		}
 
+		adoptedCallback() {
+			super.adoptedCallback();
+			CIQ.UI.flattenInheritance(this, MenuDropDown);
+		}
+
 		disablekeyboardNavigation() {
 			if (this.keyboardNavigation) {
 				this.keyboardNavigation.setKeyControlElement();
@@ -14302,11 +15088,12 @@ if (!Scroll) {
 };
 
 
-let _exports = {CIQ};
+let _exports = {CIQ:__CIQ_};
 export {__js_webcomponents_abstractMarker_ as abstractMarker};
 export {__js_webcomponents_advertisement_ as advertisement};
 export {__js_webcomponents_aggregationDialog_ as aggregationDialog};
 export {__js_webcomponents_attribution_ as attribution};
+export {__js_webcomponents_chartInstructions_ as chartInstructions};
 export {__js_webcomponents_chartLegend_ as chartLegend};
 export {__js_webcomponents_chartTitle_ as chartTitle};
 export {__js_webcomponents_chartcontrolGroup_ as chartcontrolGroup};
@@ -14368,15 +15155,16 @@ export {__js_webcomponents_palette_drawingPalette_ as drawingPalette};
 export {__js_webcomponents_palette_drawingSettings_ as drawingSettings};
 export {__js_webcomponents_scroll_menuDropdown_ as menuDropdown};
 
-export {CIQ};
+export {__CIQ_ as CIQ};
 
 /* global __TREE_SHAKE__ */
 if (typeof __TREE_SHAKE__ === "undefined" || !__TREE_SHAKE__) {
-	(_exports.CIQ || CIQ).activateImports(
+	_exports.CIQ.activateImports(
 		__js_webcomponents_abstractMarker_,
 		__js_webcomponents_advertisement_,
 		__js_webcomponents_aggregationDialog_,
 		__js_webcomponents_attribution_,
+		__js_webcomponents_chartInstructions_,
 		__js_webcomponents_chartLegend_,
 		__js_webcomponents_chartTitle_,
 		__js_webcomponents_chartcontrolGroup_,

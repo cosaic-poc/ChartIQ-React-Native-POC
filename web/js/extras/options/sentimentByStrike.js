@@ -1,10 +1,10 @@
 /**
- *	8.4.0
- *	Generation date: 2021-11-29T15:42:32.590Z
+ *	8.7.0
+ *	Generation date: 2022-06-10T18:37:49.036Z
  *	Client name: sonyl test
- *	Package Type: Technical Analysis
+ *	Package Type: Technical Analysis e98f22c
  *	License type: trial
- *	Expiration date: "2022/01/31"
+ *	Expiration date: "2022/12/31"
  */
 
 /***********************************************************
@@ -24,7 +24,7 @@
 	==========================
 	Requires a quotefeed which creates an optionChain object in the masterData.  See examples/feeds/optionChainSimulator.js
 */
-import { CIQ } from "../../js/chartiq.js";
+import { CIQ } from "../../../js/chartiq.js";
 if (!CIQ.Studies) {
 	console.error(
 		"optionSentimentByStrike feature requires first activating studies feature."
@@ -163,7 +163,7 @@ if (!CIQ.Studies) {
 				let volume = volByStrike[i][j];
 				let pixel = pricePixels[i];
 				if (volume && pixel) {
-					let barBottom = Math.round(chartRight) - 0.5; //bottom x coordinate for the bar  -- remember bars are sideways so the bottom is on the x axis
+					let barBottom = Math.round(chartRight) - 0.5; //bottom x coordinate for the bar  -- remember bars are sideways so the bottom is on the x-axis
 					if (contractType == "both") {
 						let pixelShift = context.lineWidth / 2;
 						if (j === "call") pixelShift *= -1;

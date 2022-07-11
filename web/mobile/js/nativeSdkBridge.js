@@ -1,10 +1,10 @@
 /**
- *	8.4.0
- *	Generation date: 2021-11-29T15:42:32.590Z
+ *	8.7.0
+ *	Generation date: 2022-06-10T18:37:49.036Z
  *	Client name: sonyl test
- *	Package Type: Technical Analysis
+ *	Package Type: Technical Analysis e98f22c
  *	License type: trial
- *	Expiration date: "2022/01/31"
+ *	Expiration date: "2022/12/31"
  */
 
 /***********************************************************
@@ -1025,13 +1025,16 @@ CIQ.MobileBridge.redo = function () {
  * Adds a specific study to the chart.
  *
  * @param {string} studyName Study to add from the {@link CIQ.Studies.studyLibrary}.
- * @param {object} [inputs] Custom inputs for instantiating the study.
- * @param {object} [outputs] Custom outputs for instantiating the study.
- * @param {object} [parameters] Custom parameters if supported/required by the study.
+ * @param {string} [inputs] The JSON stringified list of study inputs.
+ * @param {string} [outputs] The JSON stringified list of study outputs.
+ * @param {string} [parameters] The JSON stringified list of study parameters.
  *
  * @memberof CIQ.MobileBridge
  */
 CIQ.MobileBridge.addStudy = function (studyName, inputs, outputs, parameters) {
+	if (inputs && inputs.length) inputs = JSON.parse(inputs);
+	if (outputs && outputs.length) outputs = JSON.parse(outputs);
+	if (parameters && parameters.length) parameters = JSON.parse(parameters);
 	CIQ.Studies.addStudy(stxx, studyName, inputs, outputs, parameters);
 };
 /**
@@ -1124,7 +1127,7 @@ CIQ.MobileBridge.getActiveStudies = function () {
 	if (this.isAndroid) {
 		return results;
 	}
-	// iOS has issue with circular references in javascript objects, we must avoid those references.
+	// iOS has issue with circular references in JavaScript objects, we must avoid those references.
 	function isUnique(arr) {
 		return function (key, value) {
 			if (typeof value === "object" && value !== null) {

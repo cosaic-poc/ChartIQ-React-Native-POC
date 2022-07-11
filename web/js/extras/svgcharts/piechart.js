@@ -1,10 +1,10 @@
 /**
- *	8.4.0
- *	Generation date: 2021-11-29T15:42:32.590Z
+ *	8.7.0
+ *	Generation date: 2022-06-10T18:37:49.036Z
  *	Client name: sonyl test
- *	Package Type: Technical Analysis
+ *	Package Type: Technical Analysis e98f22c
  *	License type: trial
- *	Expiration date: "2022/01/31"
+ *	Expiration date: "2022/12/31"
  */
 
 /***********************************************************
@@ -61,7 +61,7 @@ let warned = false;
  * 		The colors are assigned to the data array's elements *before* the sorting function is called. The default array is produced by the D3 function
  * 		`d3.quantize(t => d3.interpolateSpectral(t * 0.8 + 0.1), data.length).reverse()`. A function is useful for generating a color based on a scale.
  * 		An array is useful for assigning a color to a specific data record based on its location within the data array.
- * @param {function} [attributes.legend] Optional legend function. If set to `true`, will use the built in legend creator. If passed a function, will use that.
+ * @param {function|boolean} [attributes.legend] Optional legend function. If set to `true`, will use the built in legend creator. If passed a function, will use that.
  * 		Function has the following signature: `legendFunc(svg, pieData, color)`, where `svg` is the D3 SVG graphic being created,
  * 		`pieData` is the D3 data being rendered, and `color` is the D3 color function.
  * @param {string} [attributes.type=pie] Valid values are "pie" or "donut".

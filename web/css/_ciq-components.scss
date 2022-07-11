@@ -6,28 +6,38 @@ cq-context,
 	height: 100%;
 	width: 100%;
 
+	.ciq-chart-area{
+		outline: solid 2px transparent;
+		transition: outline 50ms 100ms;
+	}
+
+	&:focus {
+		outline: none;
+		&.disable-mouse-pointer{
+			.ciq-chart-area{
+				outline: solid 2px #398dff;
+				// Always hide the outline in a multichart environment
+				cq-context-wrapper & {
+					outline: solid 2px transparent;
+				}
+			}
+		}
+		&.cq-navigation-highlight-visible{
+			.ciq-chart-area{
+				outline: solid 2px transparent;
+			}
+		}
+	}
+
+
 	template {
 		display: none;
 	}
 }
 
-cq-context-wrapper {
-	position: relative;
-	border: solid transparent 2px;
-	flex-grow: 1;
 
-	&.active {
-		border-color: #398dff;
-	}
 
-	&  .ciq-chart-area,
-	& cq-side-panel {
-		top: 0;
-		bottom: 0;
-	}
-}
-
-/* --------------------------------------------------------- FIELDS, SELECTS, INPUTS --------------------------------------------------------- */
+/* --------------------------------------------------------- FIELDS, SELECTS, INPUTS, LABELS --------------------------------------------------------- */
 
 /* Inputs */
 
@@ -112,7 +122,7 @@ cq-dialog input,
 	cursor:pointer;
 
 	& span {
-		margin-top:7px;
+		margin-top:6px;
 		display:inline-block;
 		border:solid 1px $DEFAULT-border-medium;
 		position:relative;
@@ -136,6 +146,57 @@ cq-dialog input,
 		height:12px;
 		background-image:url(img/stx-sprite-ui.svg);
 		background-position: -580px -31px;
+	}
+}
+
+.ciq-switch {
+	appearance: none;	/* necessary to apply this style to checkbox elements */
+	position: relative;
+	width:28px;
+	height:28px;
+	cursor:pointer;
+
+	&:before {
+		content: "";
+		display:inline-block;
+		position: absolute;
+		top: 8px;
+		left: 3px;
+		width:22px;
+		height:12px;
+		text-align:center;
+		background-color: #999999;
+		border: none;
+		border-radius: 50px;
+	}
+
+	&:after {
+		content: "";
+		position: absolute;
+		top: 10px;
+		left: 5px;
+		width: 8px;
+		height: 8px;
+		background-color: #ffffff;
+		border-radius: 50%;
+		box-shadow: 2px 4px 6px rgba(0,0,0,0.2);
+		transition-property: left;
+		transition-duration: 200ms;
+	}
+
+	.ciq-active > &:before,
+	&:checked {
+		background-color: $DEFAULT-accent;
+	}
+
+	.ciq-active:hover &:before{
+		background-color: #2a51d0;
+	}
+
+	.ciq-active > &:after,
+	&:checked:after {
+		left: 15px;
+		box-shadow: -2px 4px 3px rgba(0,0,0,0.05);
 	}
 }
 
@@ -183,7 +244,9 @@ cq-loader.stx-show{
 	display:block;
 }
 
-
+.hide-label > label {
+	display: none;
+}
 
 /* --------------------------------------------------------- BUTTONS --------------------------------------------------------- */
 
@@ -265,7 +328,7 @@ cq-loader.stx-show{
 	height:25px;
 	cursor:pointer;
 	/* hide text */
-	font: 0/0 a;
+	font: 0/0 a, sans-serif;
 	text-shadow: none;
 	color: transparent;
 
@@ -342,7 +405,7 @@ cq-close {
 	width: 25px;
 	height: 25px;
 	cursor: pointer;
-	font: 0/0 a;
+	font: 0/0 a, sans-serif;
 	text-shadow: none;
 	color: transparent;
 }
@@ -583,6 +646,8 @@ cq-menu-dropdown {
 	z-index:6;
 	width:200px;
 	@include border-radius($soft-corners);
+	border-bottom-right-radius: 20px;
+	border-bottom-left-radius: 20px;
 
 	/* cq-menu can be once removed from the menu button but no further. Anything further is a sub-menu */
 	.stxMenuActive > &,
@@ -590,8 +655,8 @@ cq-menu-dropdown {
 		opacity: 1;
 		height:auto;
 		margin-top:0px;
-		padding-bottom:6px;
-		padding-top:10px;
+		padding-bottom: 9px;
+		padding-top: 10px;
 	}
 
 	.break-sm .stxMenuActive > &,
@@ -610,6 +675,10 @@ cq-menu-dropdown {
 		margin-top: 0;
 		padding: 0;
 		width: auto;
+	}
+
+	cq-item{
+		border-radius: 15px;
 	}
 }
 
@@ -633,6 +702,10 @@ cq-separator[cq-partial]{
 	border-top-style: dashed;
 }
 
+cq-menu.ciq-display .chart-aggregations cq-menu-container cq-separator{
+	display:none;
+}
+
 cq-col {
 	display: inline-block;
 	vertical-align: top;
@@ -652,10 +725,11 @@ cq-item {
 }
 
 cq-item, cq-heading, cq-placeholder {
-	padding:0 20px;
+	margin: 0 8px;
+	padding:0 10px;
 	clear: both;
-	line-height:27px;
-	height:27px;
+	line-height:28px;
+	height:28px;
 	display:block;
 }
 
@@ -731,7 +805,8 @@ cq-heading[cq-filter] {
 }
 
 cq-item .ciq-radio,
-cq-item .ciq-checkbox { /* Float checkboxes/radio buttons in menu items right */
+cq-item .ciq-checkbox,
+cq-item .ciq-switch { /* Float checkboxes/radio buttons in menu items right */
 	position:absolute;
 	right:10px;
 }
@@ -749,7 +824,7 @@ cq-section-dynamic{
 }
 cq-section-dynamic cq-item {
 	/* border-top: 1px dotted $DEFAULT-border-medium; */
-	width: 100%;
+	width: calc(100% - 16px); /* take off 16px for the margin */
 }
 
 cq-section-dynamic cq-heading,
@@ -760,6 +835,143 @@ cq-section-dynamic > div {
 cq-section-dynamic .ciq-icon { /* Delete button placement for custom item */
 	/*float: right;*/   /* Not working properly for firefox */
 	margin: 0 -3px 0 0;
+}
+
+$icon-height: -21px;
+$icon-candle: 0 * $icon-height;
+$icon-bar: 1 * $icon-height;
+$icon-colored-bar: 2 * $icon-height;
+$icon-line: 3 * $icon-height;
+$icon-hollow-candle: 4 * $icon-height;
+$icon-mountain: 5 * $icon-height;
+$icon-baseline-mountain: 6 * $icon-height;
+$icon-volume-candle: 7 * $icon-height;
+$icon-heikinashi: 8 * $icon-height;
+$icon-linebreak: 9 * $icon-height;
+$icon-range-bars: 10 * $icon-height;
+$icon-kagi: 11 * $icon-height;
+$icon-renko: 12 * $icon-height;
+$icon-vertex-line: 13 * $icon-height;
+$icon-step: 14 * $icon-height;
+$icon-colored-hlc: 15 * $icon-height;
+$icon-scatterplot: 16 * $icon-height;
+$icon-histogram: 17 * $icon-height;
+$icon-pandf: 18 * $icon-height;
+$icon-colored-line: 19 * $icon-height;
+$icon-colored-vertex-line: 20 * $icon-height;
+$icon-colored-mountain: 21 * $icon-height;
+$icon-colored-vertex-mountain: 22 * $icon-height;
+$icon-vertex-mountain: 23 * $icon-height;
+$icon-baseline-vertex-mountain: 24 * $icon-height;
+$icon-vertex-baseline: 25 * $icon-height;
+$icon-baseline-delta: 26 * $icon-height - 3px;
+$icon-hlc: 27 * $icon-height;
+$icon-step-mountain: 28 * $icon-height - 2px;
+$icon-colored-step-mountain: 29 * $icon-height - 2px;
+$icon-colored-vertex-step: 30 * $icon-height - 3px;
+$icon-colored-vertex-mountain-step: 31 * $icon-height - 3px;
+$icon-vertex-mountain-step: 32 * $icon-height - 3px;
+$icon-hlc-box: 33 * $icon-height - 4px;
+$icon-hlc-shaded-box: 34 * $icon-height - 5px;
+$icon-channel: 35 * $icon-height - 5px;
+$icon-generic: 36 * $icon-height - 5px;
+
+.ciq-display.ciq-display cq-clickable span[ciq-menu-icon] {
+	margin-left: 6px;
+	margin-right: 8px;
+}
+
+.ciq-menu-icon
+{
+	> span:first-child {
+		background-image: url(img/stx-sprite-chart-types.svg);
+		background-repeat: no-repeat;
+		background-size: 54px;
+		background-position-x: 0;
+		background-position-y: $icon-generic;
+		display: inline-block;
+		width: 24px;
+		height: 21px;
+		margin-right: 2px;
+		vertical-align: middle;
+
+		.ciq-night & {
+			background-position-x: -25px;
+		}
+	}
+	> div {
+		display: inline-block;
+	}
+}
+
+.break-md [stxbind="Layout.chartType"],
+.break-sm [stxbind="Layout.chartType"]{
+	[ciq-menu-icon] {
+		margin-top: 2px;
+	}
+}
+
+.ciq-menu-icon.ciq-menu-icon {
+	.ciq-icon-candle {
+		background-position-y: $icon-candle;
+	}
+	.ciq-icon-bar {
+		background-position-y: $icon-bar;
+	}
+	.ciq-icon-colored-bar {
+		background-position-y: $icon-colored-bar;
+	}
+	.ciq-icon-line {
+		background-position-y: $icon-line;
+	}
+	.ciq-icon-vertex-line  {
+		background-position-y: $icon-vertex-line;
+	}
+	.ciq-icon-step {
+		background-position-y: $icon-step;
+	}
+	.ciq-icon-mountain {
+		background-position-y: $icon-mountain;
+	}
+	.ciq-icon-baseline-delta {
+		background-position-y: $icon-baseline-delta;
+	}
+	.ciq-icon-hollow-candle {
+		background-position-y: $icon-hollow-candle;
+	}
+	.ciq-icon-volume-candle {
+		background-position-y: $icon-volume-candle;
+	}
+	.ciq-icon-colored-hlc {
+		background-position-y: $icon-colored-hlc;
+	}
+	.ciq-icon-scatterplot {
+		background-position-y: $icon-scatterplot;
+	}
+	.ciq-icon-histogram {
+		background-position-y: $icon-histogram;
+	}
+	.ciq-icon-heikinashi {
+		background-position-y: $icon-heikinashi;
+	}
+	.ciq-icon-kagi {
+		background-position-y: $icon-kagi;
+	}
+	.ciq-icon-linebreak {
+		background-position-y: $icon-linebreak;
+	}
+	.ciq-icon-renko {
+		background-position-y: $icon-renko;
+	}
+	.ciq-icon-rangebars {
+		background-position-y: $icon-range-bars;
+	}
+	.ciq-icon-pandf {
+		background-position-y: $icon-pandf;
+	}
+	.ciq-icon-generic {
+		background-position-y: $icon-generic;
+	}
 }
 
 
@@ -1086,7 +1298,11 @@ cq-toggle {
 	#{$hovering} &:hover:after {margin-top:5px;}
 }
 
-cq-toggle, div[cq-toolbar-action], cq-undo-section .ciq-icon-btn, cq-drawing-settings .ciq-icon-btn {
+cq-toggle,
+div[cq-toolbar-action],
+[cq-tooltip-activator],
+cq-undo-section .ciq-icon-btn,
+cq-drawing-settings .ciq-icon-btn {
 	position:relative;
 
 	& cq-tooltip {
@@ -1101,6 +1317,7 @@ cq-toggle, div[cq-toolbar-action], cq-undo-section .ciq-icon-btn, cq-drawing-set
 		width: auto;
 		min-width:44px;
 		height:auto;
+		line-height: normal;
 		left:-8px;
 		text-align:center;
 		font-weight:400;
@@ -1117,6 +1334,12 @@ cq-toggle, div[cq-toolbar-action], cq-undo-section .ciq-icon-btn, cq-drawing-set
 		top: calc(100% + 5px);
 		border:solid 1px darken( $DEFAULT-bg, 8% );
 	}
+}
+
+.ciq-display cq-tooltip {
+	white-space: nowrap;
+	line-height: normal;
+	margin-top: -4px;
 }
 
 /* toggles in the nav bar need some space */
@@ -1147,7 +1370,7 @@ cq-toggle, div[cq-toolbar-action], cq-undo-section .ciq-icon-btn, cq-drawing-set
 			margin: 6px auto 0 auto;
 			@include box-sizing(border-box);
 			border:solid 1px transparent;
-			font: 0/0 a; /* hide text */
+			font: 0/0 a, sans-serif; /* hide text */
 			text-shadow: none;
 			color: transparent;
 		}
@@ -1211,6 +1434,7 @@ cq-toggle, div[cq-toolbar-action], cq-undo-section .ciq-icon-btn, cq-drawing-set
 }
 .break-sm, .break-md {
 	& .ciq-menu.ciq-display > span:after {background-position: -350px -25px;}
+	& .ciq-menu.ciq-display > span[cq-toolbar-action]:after { display: none; }
 }
 .break-sm, .break-md {
 	& .ciq-menu.stx-markers > span:after {background-position: -100px -25px;}
@@ -1365,7 +1589,6 @@ cq-lookup-results{
 
 /* Period Menu */
 body .ciq-period {
-	min-width: 56px;
 	cq-menu-dropdown {
 		width:100px;
 	}
@@ -1777,7 +2000,7 @@ cq-menu-dropdown.ciq-line-style-menu cq-item.ciq-none {/* Center "none" option *
 	text-align: center;
 }
 
-span.ciq-line {/* Formatting for line styles */
+span.ciq-line, %span-ciq-line {/* Formatting for line styles */
 	display: block;
 	width: auto;
 	height: 0px;
@@ -1791,15 +2014,15 @@ span.ciq-line {/* Formatting for line styles */
 	position:relative;
 }
 /* Line style types */
-cq-toolbar-settings .ciq-solid-1 {@extend span.ciq-line; border-top-style: solid; border-top-width: 1px;}
-cq-toolbar-settings .ciq-dotted-1 {@extend span.ciq-line; border-top-style: dotted; border-top-width: 1px;}
-cq-toolbar-settings .ciq-dashed-1 {@extend span.ciq-line; border-top-style: dashed; border-top-width: 1px;}
-cq-toolbar-settings .ciq-solid-3 {@extend span.ciq-line; border-top-style: solid; border-top-width: 2px;}
-cq-toolbar-settings .ciq-dotted-3 {@extend span.ciq-line; border-top-style: dotted; border-top-width: 2px;}
-cq-toolbar-settings .ciq-dashed-3 {@extend span.ciq-line; border-top-style: dashed; border-top-width: 2px;}
-cq-toolbar-settings .ciq-solid-5 {@extend span.ciq-line; border-top-style: solid; border-top-width: 3px;}
-cq-toolbar-settings .ciq-dotted-5 {@extend span.ciq-line; border-top-style: dotted; border-top-width: 3px;}
-cq-toolbar-settings .ciq-dashed-5 {@extend span.ciq-line; border-top-style: dashed; border-top-width: 3px;}
+cq-toolbar-settings .ciq-solid-1 {@extend %span-ciq-line; border-top-style: solid; border-top-width: 1px;}
+cq-toolbar-settings .ciq-dotted-1 {@extend %span-ciq-line; border-top-style: dotted; border-top-width: 1px;}
+cq-toolbar-settings .ciq-dashed-1 {@extend %span-ciq-line; border-top-style: dashed; border-top-width: 1px;}
+cq-toolbar-settings .ciq-solid-3 {@extend %span-ciq-line; border-top-style: solid; border-top-width: 2px;}
+cq-toolbar-settings .ciq-dotted-3 {@extend %span-ciq-line; border-top-style: dotted; border-top-width: 2px;}
+cq-toolbar-settings .ciq-dashed-3 {@extend %span-ciq-line; border-top-style: dashed; border-top-width: 2px;}
+cq-toolbar-settings .ciq-solid-5 {@extend %span-ciq-line; border-top-style: solid; border-top-width: 3px;}
+cq-toolbar-settings .ciq-dotted-5 {@extend %span-ciq-line; border-top-style: dotted; border-top-width: 3px;}
+cq-toolbar-settings .ciq-dashed-5 {@extend %span-ciq-line; border-top-style: dashed; border-top-width: 3px;}
 
 span.ciq-line.ciq-selected {/* Formatting for selected line */
 	margin: 13px 0 0 0;
@@ -2097,9 +2320,6 @@ cq-hu-dynamic .ciq-hu-bg { /* HU BG Image Fill */
 	@include box-shadow(0px, 1px, 1px, rgba(0, 0, 0, .2));
 }
 
-cq-hu-dynamic .ciq-hu-stroke { /* HU BG Image Border */
-	opacity: 0;
-}
 cq-hu-dynamic > div {
 	position:absolute;
 	height:125px;
@@ -2302,7 +2522,7 @@ cq-hu-static {
 	border-radius: 0;
 	-webkit-border-radius: 0;
 	color: #000;
-	background-color: rgba(255,255,255,.7);
+	background-color: rgba(255,255,255,.9);
 	border: 2px solid #4ea1fe;
 	padding: 5px;
 }
@@ -2616,6 +2836,16 @@ cq-dialog[cq-study-context] {
 		color:$DEFAULT-text-strong;
 	}
 
+	cq-menu-dropdown {
+		border-radius: 0;
+
+		cq-item {
+			border-radius: 0;
+			margin: 0;
+			padding: 0 18px;
+		}
+	}
+
 	.ciq-btn {
 		width: 65px;
 
@@ -2725,7 +2955,7 @@ cq-share-copied {
 	position:absolute;
 	display:inline-block;
     cursor: pointer;
-	text-align:center;
+	text-align:left;
 	color:$DEFAULT-text-strong;
 }
 
@@ -2735,7 +2965,14 @@ cq-share-copied {
 	margin:0;
 }
 
-.stx-marker p {font-size:$font-size-button;}
+.stx-marker h4 {
+	font-size: 14px;
+}
+
+.stx-marker p {
+	font-size: 12px;
+	line-height: 16px;
+}
 
 .stx-marker .stx-marker-expand {
     width: 0;
@@ -2826,7 +3063,7 @@ cq-share-copied {
 	bottom:30px;
 	left:30px;
 	text-align:left;
-	background:rgba(255, 255, 255, 0.85);
+	background:rgba(255, 255, 255, 0.9);
 	opacity: 0;
 	transition: opacity .50s 0s;
 }
@@ -2835,8 +3072,12 @@ cq-share-copied {
 	width: 200px;
 	max-height:200px;
 	padding:11px;
-	outline: 1px solid rgba(0, 0, 0, 0.15);
+	border: 2px solid #4ea1fe;
 	opacity: 1;
+}
+
+.stx-marker.highlight .stx-marker-expand {
+	min-height: 1px; // prevent it from becoming excluded for alignment after moved off screen
 }
 
 .stx-marker.square p,
@@ -2850,6 +3091,7 @@ cq-share-copied {
 .stx-marker.callout .stx-marker-content {
 	position:relative;
 	display:inline-block;
+	width: 100%;
 	background:rgba(255, 255, 255, 0.65);
 	z-index: 0;
 }
@@ -2899,16 +3141,17 @@ cq-share-copied {
 }
 
 .stx-performance-marker.stx-marker-expand {
-	background: rgba(255,255,255,0.75);
+	background: rgba(255,255,255,0.9);
 	max-width: 200px;
 	max-height: 200px;
 	padding: 11px;
 	opacity: 1;
 	color: #000;
 	display: block;
-	outline: 1px solid rgba(255, 255, 255, 0.3);
+	border: 2px solid #4ea1fe;
 	overflow: auto;
 	position: absolute;
+	box-sizing: border-box;
 }
 
 /* --------------------------------------------------------- CHART AREA ELEMENTS --------------------------------------------------------- */
@@ -3363,8 +3606,8 @@ cq-flag {
 	background-image:url(img/languages.svg);
 	background-repeat:no-repeat;
 	margin-right: 6px;
-	margin-top: 6px;
-	margin-left: 4px;
+	margin-top: 5px;
+	margin-left: 1px;
 	border: solid #ddd 1px;
 }
 
@@ -3735,14 +3978,30 @@ cq-double-slider {
 		font-family: 'PT Sans Narrow', 'Roboto Condensed', sans-serif;
 	}
 
-	table, thead, tbody, tr, th, td {
+	table, thead, tbody, tr {
 		display: block;
+	}
+
+	thead {
+		text-align: right;
+
+		th:first-child {
+			text-align: left;
+		}
 	}
 
 	tbody {
 		overflow-y: auto;
-		height: calc(100% - 42px);
+		height: 100%;
 		position: relative;
+
+		th {
+			text-align: left;
+		}
+
+		td {
+			text-align: right;
+		}
 	}
 
 	td, th {
@@ -3751,10 +4010,6 @@ cq-double-slider {
 		padding: 2px 2px 0;
 		border-top: solid 1px #ccc;
 		text-align: right;
-
-		&:first-child {
-			text-align: left;
-		}
 	}
 
 	tr:after {
@@ -3785,6 +4040,54 @@ cq-double-slider {
 		}
 	}
 
+	label {
+		--track-size: calc(var(--thumb-size) * 2);
+		--track-padding: 2px;
+		--thumb-position: 0%;
+		--thumb-size: 0.5rem;
+		--thumb-color: white;
+		--thumb-highlight: hsl(0 0% 0% / 25%);
+		--slider-active: #398dff;
+		--thumb-color-highlight: var(--thumb-highlight);
+
+		margin: 0 0 6px 2px;
+		padding: 2px 4px;
+		border-radius: 15px;
+		display: flex;
+		> * {
+			margin: 1px 2px;
+		}
+		&:hover {
+			background: #efefef;
+			input[type="checkbox"]:checked {
+				background: #2a51d0;
+			}
+		}
+		input[type="checkbox"] {
+			appearance: none;
+			block-size: 16px;
+			inline-size: 24px;
+			border-radius: 50px;
+			align-items: center;
+			display: grid;
+			grid: 1fr / 1fr;
+			background: #999999;
+			&::before {
+				block-size: var(--thumb-size);
+				inline-size: var(--thumb-size);
+				background: var(--thumb-color);
+				border-radius: 50%;
+				margin: 0 4px;
+				content: "";
+				transform: translateX(var(--thumb-position));
+			}
+			&:checked {
+				--thumb-position: calc(var(--track-size) - 100%);
+				background: var(--slider-active);
+			}
+		}
+	}
+
 	.ciq-data-table-title {
 		font-size: 1.6rem;
 		font-weight: 800;
@@ -3792,7 +4095,9 @@ cq-double-slider {
 	}
 
 	cq-close {
-		margin: 8px 14px;
+		margin-top: 4px;
+		position: relative;
+		float: right;
 	}
 }
 
@@ -3802,6 +4107,7 @@ cq-double-slider {
 	width: 100%;
 	position: relative;
 	margin-top: 8px;
+	padding-bottom: 24px;
 }
 
 /* --------------------------------------------------------- FLOATING WINDOW --------------------------------------------------------- */
@@ -4038,6 +4344,11 @@ cq-keyboard-selected-highlight{
 	&.disabled{
 		display: none;
 	}
+
+	// Adding this as a seperate style to temporarily disable in a multichart environment
+	cq-context-wrapper & {
+		display: none;
+	}
 }
 
 .disable-mouse-pointer{
@@ -4151,9 +4462,6 @@ cq-data-dialog {
 				line-height: 2;
 				padding-top: 2px;
 			}
-			&.content-justify-end {
-				justify-content: flex-end;
-			}
 			& input[type="checkbox"] {
 				height: 13px;
 				width: 13px;
@@ -4167,9 +4475,18 @@ cq-data-dialog {
 			height: 1rem;
 		}
 
-		th {
-			margin: 0 0.5rem;
-			padding: 0.125rem 0.5rem;
+		ul {
+			list-style: none;
+			padding-inline-start: 2rem;
+			display: flex;
+			flex-flow: row wrap;
+			height: auto;
+			flex: 1;
+			li {
+				flex-grow: 4rem;
+				display: inline;
+				margin: 0 0.5rem;
+			}
 		}
 
 		& .secondary-options {
@@ -4192,6 +4509,11 @@ cq-data-dialog {
 		border-width: 1px;
 		border-style: solid;
 		padding: 0.25rem;
+	}
+
+	.content-justify-end {
+		justify-content: flex-end;
+		text-align: right;
 	}
 
 	.import {
@@ -4229,4 +4551,10 @@ cq-data-dialog {
 			}
 		}
 	}
+}
+
+
+/* --------------------------------- Chart Instructions -----------------------------------*/
+cq-chart-instructions {
+	font-size: 0;
 }

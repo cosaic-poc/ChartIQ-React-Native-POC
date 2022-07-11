@@ -1,10 +1,10 @@
 /**
- *	8.4.0
- *	Generation date: 2021-11-29T15:42:32.590Z
+ *	8.7.0
+ *	Generation date: 2022-06-10T18:37:49.036Z
  *	Client name: sonyl test
- *	Package Type: Technical Analysis
+ *	Package Type: Technical Analysis e98f22c
  *	License type: trial
- *	Expiration date: "2022/01/31"
+ *	Expiration date: "2022/12/31"
  */
 
 /***********************************************************
@@ -19,7 +19,7 @@
 /* eslint-disable no-extra-parens */
 
 
-import {CIQ} from "../js/chartiq.js";
+import {CIQ as __CIQ_} from "../js/chartiq.js";
 
 
 let __js_addons_standard_dataLoader_ = (_exports) => {
@@ -28,6 +28,15 @@ let __js_addons_standard_dataLoader_ = (_exports) => {
 
 var CIQ = typeof _CIQ !== "undefined" ? _CIQ : _exports.CIQ;
 
+/**
+ * Loads static data from uploaded files into the chart for easier consumption.
+ * @param {object} params Configuration parameters.
+ * @param {CIQ.ChartEngine} params.stx A reference to the chart engine that contains the chart for
+ * 		which the DataLoader is created.
+ * @constructor
+ * @name CIQ.DataLoader
+ * @since 8.4.0
+ */
 class DataLoader {
 	constructor(params) {
 		const { stx } = params;
@@ -49,6 +58,12 @@ class DataLoader {
 		}
 	}
 
+	/**
+	 * Formats data into OHLC format readable by the {@link CIQ.ChartEngine}
+	 * @param {CIQ.CSVReader} dataObj CIQ.CSVReader which contains the parsed data
+	 * @param {FormData} dataOptions FormData options that get the name of the imported data
+	 * @memberof CIQ.DataLoader
+	 */
 	formatData(dataObj, dataOptions) {
 		const { defaultPlotField } = this.stx.chart;
 		const { results, fields } = dataObj;
@@ -87,6 +102,11 @@ class DataLoader {
 		});
 	}
 
+	/**
+	 * Imports data from a {@link CIQ.CSVReader} and loads it into the chart based on FormData parameters.
+	 * @param {CIQ.CSVReader} dataObj CIQ.CSVReader that contains parsed data
+	 * @memberof CIQ.DataLoader
+	 */
 	importData(dataObj) {
 		const self = this;
 		const { stx } = this;
@@ -134,7 +154,9 @@ class DataLoader {
 	registerDataWarnings(series) {
 		const { stx } = this;
 		const warningEvt = stx.addEventListener("menu", ({ stx, menu }) => {
-			if (menu === document.querySelector("cq-menu.ciq-period")) {
+			if (
+				menu === stx.container.ownerDocument.querySelector("cq-menu.ciq-period")
+			) {
 				stx.dispatch("notification", {
 					message: "Changing Periodicity may lose loaded data",
 					displayTime: 3
@@ -201,13 +223,41 @@ class DataLoader {
 	}
 }
 
+/**
+ * Helper class to read loaded web files with a FileReader.
+ * @constructor
+ * @name CIQ.CSVReader
+ * @param {external:File} file Web file that the CSVReader should parse.
+ * @since 8.4.0
+ */
 class CSVReader {
 	constructor(file) {
 		const reader = new FileReader();
+		/**
+		 * @type {external:FileReader}
+		 * @alias reader
+		 * @memberof CIQ.CSVReader
+		 * @instance
+		 */
 		this.reader = reader;
+		/**
+		 * @type {external:File}
+		 * @alias file
+		 * @memberof CIQ.CSVReader
+		 * @instance
+		 */
 		this.file = file;
 	}
 
+	/**
+	 * Asynchronously parse a File with the FileReader.
+	 * Determines the linebreak and splits into arrays for fields and data.
+	 * On resolve returns the results of the file split based on identified line break.
+	 * @param {external:File} file File to passed to the FileReader and parsed.
+	 * @memberof CIQ.CSVReader
+	 * @async
+	 * @return {Promise<string[]>}
+	 */
 	async parse(file) {
 		const { reader } = this;
 		return new Promise((res, rej) => {
@@ -239,6 +289,13 @@ class CSVReader {
 		});
 	}
 
+	/**
+	 * Determines the line break on the File by checking for carriage and newLine return.
+	 * Progressively reads 5% ofthe file until it finds a value.
+	 * @param {string} data Raw parsed values from the FileReader
+	 * @memberof CIQ.CSVReader
+	 * @returns string Identified line break in the file which will be used to split results
+	 */
 	determineLineBreak(data) {
 		const { length } = data;
 		const carriage = "\r\n";
@@ -255,6 +312,12 @@ class CSVReader {
 		return lbreak;
 	}
 
+	/**
+	 * Splits data from the FileReader based on determined linebreak.
+	 * @param {string} data Parsed data from FileReader
+	 * @memberof CIQ.CSVReader
+	 * @returns string[] Split data from the FileReader
+	 */
 	splitResults(data) {
 		return data.split(this.determineLineBreak(data));
 	}
@@ -262,6 +325,30 @@ class CSVReader {
 
 CIQ.CSVReader = CIQ.CSVReader || CSVReader;
 CIQ.DataLoader = CIQ.DataLoader || DataLoader;
+
+/**
+ * Native Web File API. Files are an implementation of the Blob Object. From MDN:
+ > The File interface provides information about files and allows JavaScript in a web page to access their content.
+ >
+ > File objects are generally retrieved from a FileList object returned as a result of a user selecting files using the `<input>` element, from a drag and drop operation's DataTransfer object, or from the mozGetAsFile() API on an HTMLCanvasElement.
+ >
+ > A File object is a specific kind of a Blob, and can be used in any context that a Blob can. In particular, FileReader, URL.createObjectURL(), createImageBitmap(), and XMLHttpRequest.send() accept both Blobs and Files.
+ *
+ * @external File
+ * @see [File](https://developer.mozilla.org/en-US/docs/Web/API/File) at Mozilla Developer Network.
+ */
+/**
+ * Web API that will asynchronously read File or Blob Objects. From MDN:
+ >The FileReader object lets web applications asynchronously read the contents of files (or raw data buffers) stored on the user's computer, using File or Blob objects to specify the file or data to read.
+ >
+ > File objects may be obtained from a FileList object returned as a result of a user selecting files using the `<input>` element, from a drag and drop operation's DataTransfer object, or from the mozGetAsFile() API on an HTMLCanvasElement.
+ >
+ > FileReader can only access the contents of files that the user has explicitly selected, either using an HTML `<input type="file">` element or by drag and drop. It cannot be used to read a file by pathname from the user's file system. To read files on the client's file system by pathname, use the File System Access API. To read server-side files, use standard Ajax solutions, with CORS permission if reading cross-domain.
+
+
+ * @external FileReader
+ * @see [FileReader](https://developer.mozilla.org/en-US/docs/Web/API/FileReader) at Mozilla Developer Network.
+ */
 
 };
 
@@ -394,8 +481,8 @@ CIQ.ExtendedHours =
 		if (CIQ.UI) {
 			CIQ.UI.KeystrokeHub.addHotKeyHandler(
 				"extendedHours",
-				() => {
-					document.body.keystrokeHub.context.advertised.Layout.setExtendedHours();
+				({ stx }) => {
+					stx.container.ownerDocument.body.keystrokeHub.context.advertised.Layout.setExtendedHours();
 				},
 				stx
 			);
@@ -650,30 +737,30 @@ CIQ.FullScreen =
 
 		//Click event handler for the Full Screen button.
 		this.fullScreenToggle = function (e) {
+			var doc = e.target.ownerDocument;
 			// First check for availability of the requestFullScreen function
 			if (
-				document.documentElement.requestFullscreen ||
-				document.documentElement.webkitRequestFullscreen ||
-				document.documentElement.mozRequestFullscreen ||
-				document.documentElement.msRequestFullscreen
+				doc.documentElement.requestFullscreen ||
+				doc.documentElement.webkitRequestFullscreen ||
+				doc.documentElement.mozRequestFullscreen ||
+				doc.documentElement.msRequestFullscreen
 			) {
 				// Check if full screen is already enabled
-				if (this.getFullScreenElement()) {
-					if (document.exitFullscreen) document.exitFullscreen();
-					else if (document.webkitExitFullscreen)
-						document.webkitExitFullscreen();
-					else if (document.mozCancelFullScreen) document.mozCancelFullScreen();
-					else if (document.msExitFullscreen) document.msExitFullscreen();
+				if (this.getFullScreenElement(doc)) {
+					if (doc.exitFullscreen) doc.exitFullscreen();
+					else if (doc.webkitExitFullscreen) doc.webkitExitFullscreen();
+					else if (doc.mozCancelFullScreen) doc.mozCancelFullScreen();
+					else if (doc.msExitFullscreen) doc.msExitFullscreen();
 				} else {
 					// requestFullscreen methods need to be checked for again here because the browser will not allow the method to be stored in a local var
-					if (document.documentElement.requestFullscreen)
-						document.documentElement.requestFullscreen();
-					else if (document.documentElement.webkitRequestFullscreen)
-						document.documentElement.webkitRequestFullscreen();
-					else if (document.documentElement.mozRequestFullscreen)
-						document.documentElement.mozRequestFullscreen();
-					else if (document.documentElement.msRequestFullscreen)
-						document.documentElement.msRequestFullscreen();
+					if (doc.documentElement.requestFullscreen)
+						doc.documentElement.requestFullscreen();
+					else if (doc.documentElement.webkitRequestFullscreen)
+						doc.documentElement.webkitRequestFullscreen();
+					else if (doc.documentElement.mozRequestFullscreen)
+						doc.documentElement.mozRequestFullscreen();
+					else if (doc.documentElement.msRequestFullscreen)
+						doc.documentElement.msRequestFullscreen();
 				}
 			} else {
 				//If the full screen api isn't available, manually trigger the fullScreen styling
@@ -704,8 +791,8 @@ CIQ.FullScreen =
 		};
 
 		//Handle full screen change
-		this.onFullScreenChange = function () {
-			if (this.getFullScreenElement()) {
+		this.onFullScreenChange = function (e) {
+			if (this.getFullScreenElement(e.target.ownerDocument)) {
 				this.fullScreenState = true;
 			} else {
 				this.fullScreenState = false;
@@ -713,35 +800,27 @@ CIQ.FullScreen =
 			this.fullScreenRender();
 		};
 
-		this.getFullScreenElement = function () {
+		this.getFullScreenElement = function (doc) {
 			return (
-				document.fullscreenElement ||
-				document.webkitCurrentFullScreenElement ||
-				document.mozFullScreenElement ||
-				document.msFullscreenElement
+				doc.fullscreenElement ||
+				doc.webkitCurrentFullScreenElement ||
+				doc.mozFullScreenElement ||
+				doc.msFullscreenElement
 			);
 		};
 
-		document.addEventListener(
+		var self = this;
+		[
 			"fullscreenchange",
-			this.onFullScreenChange.bind(this),
-			false
-		);
-		document.addEventListener(
 			"webkitfullscreenchange",
-			this.onFullScreenChange.bind(this),
-			false
-		);
-		document.addEventListener(
 			"mozfullscreenchange",
-			this.onFullScreenChange.bind(this),
-			false
-		);
-		document.addEventListener(
-			"MSFullscreenChange",
-			this.onFullScreenChange.bind(this),
-			false
-		);
+			"MSFullscreenChange"
+		].forEach(function (ev) {
+			self.stx.container.ownerDocument.addEventListener(
+				ev,
+				self.onFullScreenChange.bind(self)
+			);
+		});
 
 		// Add the FullScreen button to chartControls
 		this.addFullScreenButton();
@@ -791,13 +870,19 @@ CIQ.InactivityTimer =
 		this.sleepTimer = null;
 		this.sleeping = false;
 		this.last = new Date().getTime();
-		this.wakeChart = function () {
+		this.wakeChart = function (isPropagated) {
 			clearTimeout(this.sleepTimer);
 			this.last = new Date().getTime();
 			if (this.sleeping) {
 				if (this.stx.quoteDriver) this.stx.quoteDriver.updateChartLoop();
 				this.sleeping = false;
-				document.body.classList.remove("ciq-sleeping");
+				this.stx.container.ownerDocument.body.classList.remove("ciq-sleeping");
+				if (!isPropagated) {
+					CIQ.ChartEngine.registeredContainers.forEach(function (container) {
+						if (params.stx !== container.stx && container.stx.inactivityTimer)
+							container.stx.inactivityTimer.wakeChart(true);
+					});
+				}
 			}
 			this.sleepTimer = setTimeout(
 				this.sleepChart.bind(this),
@@ -805,17 +890,27 @@ CIQ.InactivityTimer =
 			);
 			if (this.wakeCB) this.wakeCB();
 		};
-		this.sleepChart = function () {
+		this.sleepChart = function (isPropagated) {
 			if (!this.sleeping) {
 				if (this.stx.quoteDriver)
 					this.stx.quoteDriver.updateChartLoop(this.interval);
 				this.sleeping = true;
-				document.body.classList.add("ciq-sleeping");
+				this.stx.container.ownerDocument.body.classList.add("ciq-sleeping");
+				if (!isPropagated) {
+					CIQ.ChartEngine.registeredContainers.forEach(function (container) {
+						if (params.stx !== container.stx && container.stx.inactivityTimer)
+							container.stx.inactivityTimer.sleepChart(true);
+					});
+				}
 			}
 			if (this.sleepCB) this.sleepCB();
 		};
 
 		var self = this;
+		function wake() {
+			self.wakeChart();
+		}
+
 		[
 			"mousemove",
 			"mousedown",
@@ -826,14 +921,13 @@ CIQ.InactivityTimer =
 			"keydown",
 			"wheel"
 		].forEach(function (ev) {
-			document.body.addEventListener(
-				ev,
-				function (e) {
-					self.wakeChart();
-				},
-				{ passive: false }
-			);
+			self.stx.container.ownerDocument.addEventListener(ev, wake, {
+				passive: false
+			});
 		});
+
+		this.stx.inactivityTimer = this;
+
 		this.wakeChart();
 	};
 
@@ -1006,6 +1100,7 @@ CIQ.RangeSlider =
 		self.xaxisHeight = 30;
 		self.manageTouchAndMouse = false;
 		self.minimumCandleWidth = 0;
+		self.chart.yaxisMarginMultiplier = 1;
 		var panel = self.chart.panel;
 		var subholder = panel.subholder;
 		var closeButton = panel.close;
@@ -1047,8 +1142,8 @@ CIQ.RangeSlider =
 		if (CIQ.UI) {
 			CIQ.UI.KeystrokeHub.addHotKeyHandler(
 				"rangeSlider",
-				() => {
-					document.body.keystrokeHub.context.advertised.Layout.setRangeSlider();
+				({ stx }) => {
+					stx.container.ownerDocument.body.keystrokeHub.context.advertised.Layout.setRangeSlider();
 				},
 				stx
 			);
@@ -1101,7 +1196,7 @@ CIQ.RangeSlider =
 			}
 			ciqSlider.style.display = on ? "" : "none";
 			stx.resizeChart();
-			window.dispatchEvent(new Event("resize"));
+			ciqSlider.ownerDocument.defaultView.dispatchEvent(new Event("resize"));
 			if (!on) return;
 			self.resizeChart();
 			self.initializeChart();
@@ -1293,7 +1388,7 @@ CIQ.RangeSlider =
 		stx.addEventListener("theme", function (obj) {
 			self.clearPixelCache();
 			self.styles = {};
-			self.chart.container.style.backgroundColor = "";
+			self.container.style.backgroundColor = "";
 			if (CIQ.ThemeHelper) {
 				var helper = new CIQ.ThemeHelper({ stx: obj.stx });
 				helper.params.stx = self;
@@ -1314,8 +1409,11 @@ CIQ.RangeSlider =
 			this.slider.requestDraw();
 		});
 		stx.prepend("resizeChart", function () {
-			var ciqChart = chartContainer.parentElement,
-				chartArea = ciqChart.parentElement;
+			var ciqChart = chartContainer.parentElement;
+			if (!ciqChart || !ciqChart.isConnected) {
+				return true;
+			}
+			var chartArea = ciqChart.parentElement;
 			var totalHeightOfContainers = CIQ.elementDimensions(chartArea).height;
 			var chartContainers = chartArea.querySelectorAll(".chartContainer");
 			Array.from(chartContainers).forEach(function (container) {
@@ -1555,8 +1653,8 @@ CIQ.Shortcuts =
 		if (CIQ.UI) {
 			CIQ.UI.KeystrokeHub.addHotKeyHandler(
 				"shortcuts",
-				() => {
-					document.body.keystrokeHub.context.advertised.Layout.showShortcuts();
+				({ stx, options }) => {
+					stx.container.ownerDocument.body.keystrokeHub.context.advertised.Layout.showShortcuts();
 				},
 				stx
 			);
@@ -1566,6 +1664,7 @@ CIQ.Shortcuts =
 			() => (this.content = this.getShortcutContent(config))
 		);
 		mo.observe(container, { attributes: true });
+		this.mo = mo;
 	};
 
 /**
@@ -1683,6 +1782,10 @@ CIQ.Shortcuts.prototype.getShortcutContent = function (config) {
 	};
 
 	const container = this.stx.container.closest("cq-context");
+	if (!container) {
+		this.mo.disconnect();
+		return;
+	}
 	const extensionAvailable = (name) =>
 		container.hasAttribute(name.toLowerCase() + "-active");
 	const hotkeys = ((config.hotkeyConfig && config.hotkeyConfig.hotkeys) || [])
@@ -1888,7 +1991,8 @@ CIQ.TableView =
 					).find(({ action }) => action === "tableView");
 					if (tableViewKeyEntry) {
 						tableViewKeyEntry.action = () => {
-							const { tableView } = document.body.keystrokeHub.context.stx;
+							const { tableView } =
+								uiContext.topNode.ownerDocument.body.keystrokeHub.context.stx;
 							if (tableView) {
 								tableView.toggle();
 								return true;
@@ -1898,7 +2002,41 @@ CIQ.TableView =
 				});
 			});
 		}
+		setTimeout(() => {
+			// allow uiContext creation first
+			this.setup({ minColumnWidth, coverUIMaxWidth, coverContainer });
+		});
 	};
+
+/**
+ * Sets up the dialog and toolbar for the table view.
+ * @param {object} config Setup configuration
+ * @memberof CIQ.TableView
+ * @since 8.7.0
+ */
+CIQ.TableView.prototype.setup = function (config) {
+	const { stx } = this;
+	const cover = this.builder.getChartCover(stx, config);
+	const toolbar = this.builder.createToolbar(stx, config);
+	cover.append(toolbar);
+	cover.style.display = "none";
+
+	stx.addEventListener("symbolChange", () => {
+		if (this.view) {
+			this.close();
+			this.builder.createTable(stx, config);
+			this.dialog.focus();
+		}
+	});
+
+	this.dialog = cover;
+	this.toolbar = {
+		symbol: toolbar.querySelector(".ciq-data-table-title"),
+		copyBtn: toolbar.querySelector(".ciq-data-table-copy"),
+		downloadBtn: toolbar.querySelector(".ciq-data-table-download"),
+		additional: toolbar.querySelector(".ciq-data-table-additionalColumns")
+	};
+};
 
 /**
  * Displays the table view.
@@ -1921,30 +2059,28 @@ CIQ.TableView.prototype.open = function (params) {
 	if (this.view) {
 		this.close(false);
 	}
-	config.minColumnWidth = this.minColumnWidth;
-	config.coverUIMaxWidth = this.coverUIMaxWidth;
-	config.coverContainer = this.coverContainer;
 	this.onClose = onClose;
-	this.view = this.builder.createTable(this.stx, config);
-	if (!this.view) return;
+	this.builder.createTable(this.stx, config);
+	if (!this.dialog) return;
 	const { stx } = this;
 	const close = this.close.bind(this);
 
-	// Set the view as an active modal, this will disable the main tab key handler
+	// Set the dialog as an active modal, this will disable the main tab key handler
 	// and tie us into the main escape key handler.
-	const keystrokeHub = document.body.keystrokeHub;
+	const keystrokeHub = this.dialog.ownerDocument.body.keystrokeHub;
 	if (keystrokeHub) keystrokeHub.addActiveModal(this);
 
 	setTimeout(() => (this.removeCloseListener = getCloseListener(this)));
 
 	function getCloseListener(self) {
 		const contextNode = stx.uiContext.topNode;
+		const body = contextNode.ownerDocument.body;
 		const withinTable = (el) => el.closest(".ciq-data-table-container");
 
 		const closeHandler = ({ target }) => !withinTable(target) && close();
 		contextNode.addEventListener("click", closeHandler);
 		const handleKeydown = (e) => {
-			const { tableView } = document.body.keystrokeHub.context.stx;
+			const { tableView } = body.keystrokeHub.context.stx;
 			if (!tableView) return;
 			if (e.code === "Escape") {
 				tableView.close();
@@ -1962,7 +2098,7 @@ CIQ.TableView.prototype.open = function (params) {
 					// The highlightItem context must have a keyboardNavigation property
 					if (focused[0])
 						componentProxy.highlightItem.call(
-							{ keyboardNavigation: document.body.keystrokeHub },
+							{ keyboardNavigation: body.keystrokeHub },
 							focused[0]
 						);
 				} else if (e.code === "Enter") {
@@ -1971,10 +2107,10 @@ CIQ.TableView.prototype.open = function (params) {
 				}
 			}
 		};
-		document.body.addEventListener("keydown", handleKeydown);
+		body.addEventListener("keydown", handleKeydown);
 
 		// Use modal functionality available in menu
-		const uiManager = CIQ.getFn("UI.getUIManager")();
+		const uiManager = CIQ.getFn("UI.getUIManager")(contextNode);
 		if (uiManager) {
 			// Menu item requires show and hide providing no-op functions
 			self.view.show = self.view.hide = function () {};
@@ -1982,7 +2118,7 @@ CIQ.TableView.prototype.open = function (params) {
 		}
 		return () => {
 			contextNode.removeEventListener("click", closeHandler);
-			document.body.removeEventListener("keydown", handleKeydown);
+			body.removeEventListener("keydown", handleKeydown);
 			if (uiManager) uiManager.closeMenu(self.view);
 		};
 	}
@@ -1999,7 +2135,10 @@ CIQ.TableView.prototype.open = function (params) {
  * @since 8.1.0
  */
 CIQ.TableView.prototype.close = function (notify = true) {
+	let body;
+	this.dialog.style.display = "none";
 	if (this.view) {
+		body = this.view.ownerDocument.body;
 		this.view.remove();
 		this.view = null;
 	}
@@ -2013,13 +2152,13 @@ CIQ.TableView.prototype.close = function (notify = true) {
 	}
 
 	// Remove the table view as an active modal in keyboard navigation
-	if (document.body.keystrokeHub) {
-		let { tabActiveModals } = document.body.keystrokeHub;
+	if (body && body.keystrokeHub) {
+		let { tabActiveModals } = body.keystrokeHub;
 		let modalIdx = tabActiveModals.indexOf(this);
 		if (modalIdx > -1) {
 			tabActiveModals.splice(modalIdx, 1);
 		}
-		document.body.keystrokeHub.highlightAlign();
+		body.keystrokeHub.highlightAlign();
 	}
 };
 
@@ -2032,6 +2171,9 @@ CIQ.TableView.prototype.close = function (notify = true) {
  */
 CIQ.TableView.prototype.toggle = function () {
 	this[this.view ? "close" : "open"]();
+	// DO NOT move this into open method!
+	// You don't want to change focus when toggling additional columns
+	if (!this.view) this.dialog.focus();
 };
 
 /**
@@ -2064,6 +2206,9 @@ CIQ.TableView.prototype.subscribeToChanges = function (
 						channelWrite(tableView, false, stx);
 					}
 				});
+				// DO NOT move this into open method!
+				// You don't want to change focus when toggling additional columns
+				stx.tableView.dialog.focus();
 			} else {
 				stx.tableView.close();
 			}
@@ -2093,7 +2238,7 @@ function TableViewBuilder() {}
  * @since 8.1.0
  */
 TableViewBuilder.colHeaders = {
-	date: { label: "Date" },
+	date: { label: "Date", alias: "DT" },
 	open: { label: "Open" },
 	high: { label: "High" },
 	low: { label: "Low" },
@@ -2111,6 +2256,66 @@ TableViewBuilder.colHeaders = {
  * @since 8.1.0
  */
 TableViewBuilder.percentDecimalPlaces = 2;
+
+/**
+ * Creates the toolbar cover elements of the table view.
+ *
+ * The toolbar contains buttons for copying and saving the table data and for displaying
+ * additional table columns.
+ * @param {CIQ.ChartEngine} stx A reference to the chart engine that contains the chart for which
+ * 		the table view is created.
+ * @param {object} [config] Configuration parameters.
+ * @param {function} [config.fileNameFormatter] Formats the name of the file that contains the
+ * 		downloaded table data.
+ * @returns {HTMLElement} toolbar Constructed toolbar container element.
+ * @memberof TableViewBuilder
+ * @since 8.7.0
+ */
+TableViewBuilder.createToolbar = function (stx, config = {}) {
+	const self = this;
+	const { symbolDisplay, symbol } = stx.chart;
+	const { builder } = stx.tableView;
+	const { dataToCsv, downloadCsv, getFilenameFormatter } = builder;
+	const { fileNameFormatter = getFilenameFormatter(stx) } = config;
+
+	const colHeaders = Object.assign({}, this.colHeaders);
+
+	const toolbar = builder.getCoverToolbar({
+		symbol: symbolDisplay || symbol,
+		viewAdditionalColumns: stx.tableView.viewAdditionalColumns,
+		copyFn,
+		downloadFn,
+		toggleAdditionalColumnsFn: (e) => {
+			const { tableView } = stx;
+			tableView.viewAdditionalColumns = !tableView.viewAdditionalColumns;
+			tableView.open();
+		},
+		closeFn: () => stx.tableView.close()
+	});
+	return toolbar;
+
+	function copyFn() {
+		const contentEl = document.createElement("textArea");
+		stx.container.ownerDocument.body.appendChild(contentEl);
+		contentEl.textContent = dataToCsv(self.currentTable, {
+			colHeaders,
+			colSeparator: ","
+		});
+		contentEl.select();
+		stx.container.ownerDocument.execCommand("copy");
+		contentEl.remove();
+		stx.dispatch("notification", "copytoclipboard");
+	}
+
+	function downloadFn() {
+		const csvData = dataToCsv(self.currentTable, {
+			colHeaders,
+			colSeparator: ","
+		});
+		const fileName = fileNameFormatter(csvData);
+		downloadCsv(csvData, fileName, stx);
+	}
+};
 
 /**
  * Creates a table view as an HTMLElement overlay over a chart container. The table view displays
@@ -2138,19 +2343,16 @@ TableViewBuilder.percentDecimalPlaces = 2;
 TableViewBuilder.createTable = function (stx, config = {}) {
 	if (!stx.chart || !stx.chart.dataSegment) return;
 
-	const { builder } = stx.tableView;
+	const { tableView } = stx;
+	const { builder } = tableView;
 	const {
 		getChartData,
 		dataToHtml,
-		dataToCsv,
-		downloadCsv,
 		getDateFormatter,
 		getValueFormatter,
 		getVolumeFormatter,
-		getFilenameFormatter,
 		getSeriesDataNames,
-		getStudyDataNames,
-		getChartCover
+		getStudyDataNames
 	} = builder;
 
 	const colHeaders = Object.assign({}, this.colHeaders);
@@ -2161,7 +2363,7 @@ TableViewBuilder.createTable = function (stx, config = {}) {
 		delete colHeaders.low;
 	}
 
-	if (!stx.tableView.viewAdditionalColumns) {
+	if (!tableView.viewAdditionalColumns) {
 		for (let key in colHeaders) {
 			if (colHeaders[key].cls) {
 				delete colHeaders[key];
@@ -2186,7 +2388,6 @@ TableViewBuilder.createTable = function (stx, config = {}) {
 		valueFormatter = getValueFormatter(stx),
 		percentFormatter = getValueFormatter(stx, this.percentDecimalPlaces),
 		volumeFormatter = getVolumeFormatter(stx),
-		fileNameFormatter = getFilenameFormatter(stx),
 		minColumnWidth = "84px"
 	} = config;
 
@@ -2198,26 +2399,20 @@ TableViewBuilder.createTable = function (stx, config = {}) {
 		additionalDataFields
 	});
 
-	const cover = getChartCover(stx, config);
-	const { symbolDisplay, symbol } = stx.chart;
+	// Save reference to the tableData for devs to inspect/use just in case
+	this.currentTable = arr;
 
-	const toolbar = builder.getCoverToolbar({
-		symbol: symbolDisplay || symbol,
-		viewAdditionalColumns: stx.tableView.viewAdditionalColumns,
-		copyFn,
-		downloadFn,
-		toggleAdditionalColumnsFn: () => {
-			const { tableView } = stx;
-			tableView.viewAdditionalColumns = !tableView.viewAdditionalColumns;
-			tableView.open();
-		},
-		closeFn: () => stx.tableView.close()
-	});
-	cover.appendChild(toolbar);
+	const cover = tableView.dialog;
+	cover.style.display = "";
+	const { symbolDisplay, symbol } = stx.chart;
+	const displayedSymbol = `Symbol: ${symbolDisplay || symbol}`;
+	tableView.toolbar.symbol.innerText = displayedSymbol;
+	tableView.toolbar.symbol.setAttribute("aria-label", displayedSymbol);
 
 	setTimeout(() => {
 		const htmlTable = dataToHtml(arr, { colHeaders, minColumnWidth });
 		cover.appendChild(htmlTable);
+		tableView.view = htmlTable;
 		const scrollbarStyling = CIQ.getFromNS(
 			stx,
 			"uiContext.config.scrollbarStyling"
@@ -2228,27 +2423,11 @@ TableViewBuilder.createTable = function (stx, config = {}) {
 				suppressScrollY: true
 			});
 		}
-		if (CIQ.I18N && CIQ.I18N.localized) CIQ.I18N.translateUI(null, cover);
+		if (stx.translateUI) stx.translateUI(cover);
 		cover.classList.remove("loading");
 	});
 
 	return cover;
-
-	function copyFn() {
-		const contentEl = document.createElement("textArea");
-		document.body.appendChild(contentEl);
-		contentEl.textContent = dataToCsv(arr, { colHeaders, colSeparator: "," });
-		contentEl.select();
-		document.execCommand("copy");
-		contentEl.remove();
-		stx.dispatch("notification", "copytoclipboard");
-	}
-
-	function downloadFn() {
-		const csvData = dataToCsv(arr, { colHeaders, colSeparator: "," });
-		const fileName = fileNameFormatter(csvData);
-		downloadCsv(csvData, fileName);
-	}
 };
 
 /**
@@ -2282,8 +2461,8 @@ TableViewBuilder.dataToHtml = function (data, { colHeaders, minColumnWidth }) {
 				const value = row[key];
 				return index === 0
 					? `<th scope="row"
-								style="width: ${colWidth}"
-								>${value}</th>`
+							style="width: ${colWidth}"
+						>${value}</th>`
 					: `<td style="width: ${colWidth}">${value}</td>`;
 			})
 			.join("");
@@ -2296,9 +2475,10 @@ TableViewBuilder.dataToHtml = function (data, { colHeaders, minColumnWidth }) {
 		? `calc(${keyLength} * ${minColumnWidth})`
 		: "";
 	tableWrapper.innerHTML = `
-		<table class="header-fixed"	${minWidth ? `style="min-width: ${minWidth}"` : ""}>
-		<thead>${tableHeader.join("")}</thead>
-		<tbody>${tableRows.join("")}</tbody>
+		<table class="header-fixed"	aria-description="Data visible in the chart"
+		${minWidth ? `style="min-width: ${minWidth}"` : ""}>
+		<thead role="rowgroup">${tableHeader.join("")}</thead>
+		<tbody role="rowgroup">${tableRows.join("")}</tbody>
 		</table>`;
 	return tableWrapper;
 };
@@ -2324,9 +2504,12 @@ TableViewBuilder.dataToCsv = function (
 		.map(([, { label }]) => `"${label}"`)
 		.join(colSeparator);
 
+	const columns = Object.entries(colHeaders).map(
+		(arr) => arr[1].alias || arr[0]
+	);
 	const tableRows = data.map((row) => {
-		return Object.keys(colHeaders)
-			.map((key) => `"${row[key]}"`)
+		return columns
+			.map((key) => `"${key === "DT" ? row[key].toISOString() : row[key]}"`)
 			.join(colSeparator);
 	});
 
@@ -2338,20 +2521,28 @@ TableViewBuilder.dataToCsv = function (
  *
  * @param {string} csvString The table view in the form of character-separated data.
  * @param {string} filename The name given to the download file.
+ * @param {CIQ.ChartEngine} [stx] The chart engine
  *
  * @memberof TableViewBuilder
- * @since 8.1.0
+ * @since
+ * - 8.1.0
+ * - 8.5.0 Added optional `stx` parameter to aid in specifying document to download from.
  */
-TableViewBuilder.downloadCsv = function (csvString, filename = "filename") {
+TableViewBuilder.downloadCsv = function (
+	csvString,
+	filename = "filename",
+	stx = null
+) {
 	const blob = new Blob([csvString], { type: "text/csv;charset=utf-8;" });
 
 	const a = document.createElement("a");
 	a.href = window.URL.createObjectURL(blob, { type: "text/plain" });
 	a.download = `${filename}.csv`;
 	a.style.display = "none";
-	document.body.appendChild(a);
+	const doc = ((stx || {}).container || {}).ownerDocument || document;
+	doc.body.appendChild(a);
 	a.click();
-	document.body.removeChild(a);
+	doc.body.removeChild(a);
 };
 
 /**
@@ -2511,7 +2702,7 @@ TableViewBuilder.getVolumeFormatter = function (stx) {
 		}
 
 		const num_parts = num.toString().split(".");
-		num_parts[0] = num_parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+		num_parts[0] = CIQ.commas(num_parts[0]);
 		return num_parts[0];
 	};
 };
@@ -2536,8 +2727,8 @@ TableViewBuilder.getFilenameFormatter = function (stx) {
 			if (rows.length > 1) {
 				[, firstDate = ""] = rows[rows.length - 1].match(/^"([^"]*)"/) || [];
 				[, lastDate = ""] = rows[1].match(/^"([^"]*)"/) || [];
-				firstDate = firstDate.replace(/:/g, ".").replace(/\//g, "-");
-				lastDate = lastDate.replace(/:/g, ".").replace(/\//g, "-");
+				firstDate = CIQ.yyyymmddhhmmssmmm(new Date(firstDate));
+				lastDate = CIQ.yyyymmddhhmmssmmm(new Date(lastDate));
 			}
 		}
 		return `${symbol}${firstDate ? ` (${firstDate} _ ${lastDate})` : ""}`;
@@ -2565,7 +2756,8 @@ TableViewBuilder.getChartCover = function (
 	{ coverUIMaxWidth, coverContainer }
 ) {
 	const parentElement =
-		(coverContainer && document.querySelector(coverContainer)) ||
+		(coverContainer &&
+			stx.container.ownerDocument.querySelector(coverContainer)) ||
 		(stx.uiContext && stx.container.offsetWidth < coverUIMaxWidth
 			? stx.uiContext.topNode
 			: stx.container.parentElement.parentElement);
@@ -2574,6 +2766,9 @@ TableViewBuilder.getChartCover = function (
 	Object.assign(cover.style, { top: 0, left: 0, right: 0, bottom: 0 });
 
 	cover.classList.add("ciq-data-table-container", "loading");
+	cover.setAttribute("role", "dialog");
+	cover.setAttribute("aria-label", "Data Table");
+	cover.setAttribute("tabindex", 0);
 
 	const spinner = document.createElement("div");
 	spinner.classList.add("ciq-spinner-wrapper");
@@ -2621,13 +2816,22 @@ TableViewBuilder.getCoverToolbar = function ({
 		<div class="ciq-data-table-title"></div>
 		<button class="ciq-data-table-copy">${this.copyLabel}</button>
 		<button class="ciq-data-table-download">${this.downloadLabel}</button>
-		<button class="ciq-data-table-additionalColumns">${this.getAdditionalColumnLabel(
-			viewAdditionalColumns
-		)}</button>
-		<cq-close />
+		<div>
+			<label>
+				<input
+					type="checkbox"
+					role="switch"
+					name="additionalColumns"
+					class="ciq-data-table-additionalColumns"
+				/><span>Show Additional Columns</span>
+			</label>
+		</div>
+		<cq-close role="button" aria-label="close" />
 	`;
 	const titleEl = toolBar.querySelector(".ciq-data-table-title");
 	titleEl.textContent = symbol;
+	titleEl.setAttribute("aria-label", symbol);
+	titleEl.setAttribute("role", "heading");
 
 	const btnCopy = toolBar.querySelector(".ciq-data-table-copy");
 	if (copyFn) {
@@ -2707,6 +2911,7 @@ TableViewBuilder.getAdditionalColumnLabel = function (
  */
 TableViewBuilder.getStudyDataNames = function (stx) {
 	return Object.values(stx.layout.studies || {})
+		.filter((study) => !study.signalData || study.signalData.reveal)
 		.map(getDataNames)
 		.reduce((acc, item) => acc.concat(item), []);
 
@@ -2835,6 +3040,8 @@ if (!CIQ.Marker) {
 	 * @param {boolean} [tooltipParams.volume] Set to true to show Volume.
 	 * @param {boolean} [tooltipParams.series] Set to true to show value of series.
 	 * @param {boolean} [tooltipParams.studies] Set to true to show value of studies.
+	 * @param {boolean} [tooltipParams.signalStudies] Set to true to show value of signalling studies
+	 * 		even when they are hidden.
 	 * @param {boolean} [tooltipParams.showOverBarOnly] Set to true to show the tooltip only when
 	 * 		the mouse is over the primary line/bars.
 	 * @param {boolean} [tooltipParams.change] Set to true to show the change in daily value
@@ -2866,6 +3073,8 @@ if (!CIQ.Marker) {
 	 * - 8.2.0 Decoupled `CIQ.Tooltip` from the crosshairs and added highlighting of the data
 	 * 		point (or bar) the mouse is hovering over. The new `tooltipParams.showBarHighlight`
 	 * 		parameter enables or disables the highlighting.
+	 * - 8.6.0 New `tooltipParams.signalStudies` flag to show the value of signaling studies
+	 * 		even when they are hidden.
 	 *
 	 * @example <caption>Add a tooltip to a chart:</caption>
 	 * // First declare your chart engine.
@@ -2941,6 +3150,7 @@ if (!CIQ.Marker) {
 				volume: showVolume,
 				series: showSeries,
 				studies: showStudies,
+				signalStudies: showSignalStudies,
 				interpolation: showInterpolation,
 				showOverBarOnly,
 				showBarHighlight = true,
@@ -3066,7 +3276,7 @@ if (!CIQ.Marker) {
 						let width = candleWidth;
 
 						if (left + width > stx.chart.width) {
-							// adjust width of last bar so it does not highlight past the edge of the chart into the y axis
+							// adjust width of last bar so it does not highlight past the edge of the chart into the y-axis
 							width = stx.chart.width - left;
 						}
 
@@ -3078,7 +3288,7 @@ if (!CIQ.Marker) {
 					}
 				}
 				// backwards compatibility
-				// temporarily disable overXAxis, overYAxis so the crosshairs don't hide if touch device and over Y axis (this can happen
+				// temporarily disable overXAxis, overYAxis so the crosshairs don't hide if touch device and over y-axis (this can happen
 				// due to the offset which we apply)
 				if (CIQ.touchDevice && stx.layout.crosshair) {
 					var overXAxis = stx.overXAxis,
@@ -3239,9 +3449,11 @@ if (!CIQ.Marker) {
 						}
 					}
 				}
-				if (showStudies) {
+				if (showStudies || showSignalStudies) {
 					for (var study in stx.layout.studies) {
 						var sd = stx.layout.studies[study];
+						if (!showSignalStudies && sd.signalData && !sd.signalData.reveal)
+							continue;
 						panel = stx.panels[sd.panel];
 						yAxis = panel && sd.getYAxis(stx);
 						for (var output in stx.layout.studies[study].outputMap) {
@@ -3420,8 +3632,7 @@ if (!CIQ.Marker) {
 							);
 							if (fieldNameField.innerHTML === "") {
 								fieldNameField.innerHTML = fieldName;
-								if (CIQ.I18N && CIQ.I18N.localized)
-									CIQ.I18N.translateUI(null, fieldNameField);
+								if (stx.translateUI) stx.translateUI(fieldNameField);
 							}
 						} else {
 							var newField = document.createElement("stx-hu-tooltip-field");
@@ -3531,7 +3742,7 @@ var CIQ = typeof _CIQ !== "undefined" ? _CIQ : _exports.CIQ;
  * - Make a copy of this function so you can override the behavior.
  * - In there you will see it determine var x and y, which are the coordinates for the center of the beacon.
  * - At the bottom of this append function, we draw the beacon by using the Canvas arc() function to draw a circle and then fill() to make the circle solid.
- * - You can replace  the canvas circle with an image using [CanvasRenderingContext2D.drawImage()](https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D#Drawing_images) .
+ * - You can replace the canvas circle with an image using [CanvasRenderingContext2D.drawImage()](https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D#Drawing_images) .
  * - Example:
  *
  *   ```
@@ -3554,7 +3765,7 @@ var CIQ = typeof _CIQ !== "undefined" ? _CIQ : _exports.CIQ;
  * @param {number} [config.animationParameters.ticksFromEdgeOfScreen=5] Number of ticks from the right edge the chart should stop moving forward so the last tick never goes off screen (only applicable if stayPut=false)
  * @param {number} [config.animationParameters.granularity=1000000] Set to a value that will give enough granularity for the animation.  The larger the number the smaller the price jump between frames, which is good for charts that need a very slow smooth animation either because the price jumps between ticks are very small, or because the animation was set up to run over a large number of frames when instantiating the CIQ.EaseMachine.
  * @param {number} [config.animationParameters.tension=null] Splining tension for smooth curves around data points (range 0-1).
- * @param {CIQ.EaseMachine} config.easeMachine Override the default easeMachine.  Default is `new CIQ.EaseMachine(Math.easeOutCubic, 1000);`
+ * @param {CIQ.EaseMachine} config.easeMachine Override the default easeMachine.  Default is `new CIQ.EaseMachine("easeOutCubic", 1000);`
  * @constructor
  * @name  CIQ.Animation
  * @since
@@ -3593,9 +3804,8 @@ CIQ.Animation =
 		animationParameters = CIQ.extend(params, animationParameters);
 
 		if (params.tension) stx.chart.tension = animationParameters.tension;
-		stx.tickAnimator =
-			easeMachine || new CIQ.EaseMachine(Math.easeOutCubic, 1000);
-		var scrollAnimator = new CIQ.EaseMachine(Math.easeInOutCubic, 1000);
+		stx.tickAnimator = easeMachine || new CIQ.EaseMachine("easeOutCubic", 1000);
+		var scrollAnimator = new CIQ.EaseMachine("easeInOutCubic", 1000);
 
 		var flashingColors = ["#0298d3", "#19bcfc", "#5dcffc", "#9ee3ff"];
 		var flashingColorIndex = 0;
@@ -4270,7 +4480,8 @@ CIQ.ContinuousZoom.prototype.execute = function (zoomOut) {
 				dtLeft: chart.xaxis[0].DT,
 				dtRight: chart.xaxis[chart.xaxis.length - 1].DT,
 				dontSaveRangeToLayout: true,
-				periodicity: newPeriodicity
+				periodicity: newPeriodicity,
+				padding: stx.preferences.whitespace
 			});
 		}
 	}
@@ -4369,8 +4580,8 @@ CIQ.Outliers =
 		if (CIQ.UI) {
 			CIQ.UI.KeystrokeHub.addHotKeyHandler(
 				"outliers",
-				() => {
-					document.body.keystrokeHub.context.advertised.Layout.setOutliers();
+				({ stx }) => {
+					stx.container.ownerDocument.body.keystrokeHub.context.advertised.Layout.setOutliers();
 				},
 				this.stx
 			);
@@ -4403,7 +4614,7 @@ CIQ.Outliers =
 		this.processDataSet = function (dataSet, panel, axis) {
 			if (!dataSet.length || dataSet.length <= 1) return false;
 
-			var result = [0, 0]; // Min/Max axis values to return
+			var result = [0, 0]; // Min/Max-axis values to return
 
 			// Create an axis reference if one does not exist
 			if (!this.axisData[axis.name]) {
@@ -4914,7 +5125,7 @@ CIQ.Outliers =
 		 * - 8.0.0 Added `position` and `targetAxis` parameters and return value.
 		 */
 		this.markAxis = function (position, targetAxis) {
-			// Create a marker positioned on the Y axis and return it.
+			// Create a marker positioned on the y-axis and return it.
 			var axisMarker = document.createElement("div");
 			axisMarker.classList.add("outlier-sticker", "axis", "mini", position);
 			axisMarker.innerHTML =
@@ -5405,7 +5616,7 @@ CIQ.PlotComplementer =
 };
 
 
-let _exports = {CIQ};
+let _exports = {CIQ:__CIQ_};
 export {__js_addons_standard_dataLoader_ as dataLoader};
 export {__js_addons_standard_extendedHours_ as extendedHours};
 export {__js_addons_standard_fullScreen_ as fullScreen};
@@ -5419,11 +5630,11 @@ export {__js_addons_advanced_continuousZoom_ as continuousZoom};
 export {__js_addons_advanced_outliers_ as outliers};
 export {__js_addons_advanced_plotComplementer_ as plotComplementer};
 
-export {CIQ};
+export {__CIQ_ as CIQ};
 
 /* global __TREE_SHAKE__ */
 if (typeof __TREE_SHAKE__ === "undefined" || !__TREE_SHAKE__) {
-	(_exports.CIQ || CIQ).activateImports(
+	_exports.CIQ.activateImports(
 		__js_addons_standard_dataLoader_,
 		__js_addons_standard_extendedHours_,
 		__js_addons_standard_fullScreen_,

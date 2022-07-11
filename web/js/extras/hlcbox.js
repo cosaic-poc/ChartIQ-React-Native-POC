@@ -1,10 +1,10 @@
 /**
- *	8.4.0
- *	Generation date: 2021-11-29T15:42:32.590Z
+ *	8.7.0
+ *	Generation date: 2022-06-10T18:37:49.036Z
  *	Client name: sonyl test
- *	Package Type: Technical Analysis
+ *	Package Type: Technical Analysis e98f22c
  *	License type: trial
- *	Expiration date: "2022/01/31"
+ *	Expiration date: "2022/12/31"
  */
 
 /***********************************************************
@@ -132,7 +132,6 @@ CIQ.ChartEngine.prototype.drawHLCBox = function (params) {
 	if (!params.highlight && this.highlightedDraggable)
 		context.globalAlpha *= 0.3;
 	var cache = [];
-	var leftTick = chart.dataSet.length - chart.scroll - 1;
 	context.beginPath();
 	var field = params.field;
 	var yAxis = params.yAxis || panel.yAxis;
@@ -140,7 +139,6 @@ CIQ.ChartEngine.prototype.drawHLCBox = function (params) {
 	var xbase = panel.left - 0.5 * candleWidth + this.micropixels - 1;
 	var defaultWhitespace =
 		(widthFactor ? candleWidth * widthFactor : chart.tmpWidth) / 2; //for each side of the candle
-	var voffset = context.lineWidth / 2;
 	for (var x = 0; x <= quotes.length; x++) {
 		var whitespace = defaultWhitespace;
 		xbase += candleWidth / 2; //complete previous candle
@@ -160,7 +158,6 @@ CIQ.ChartEngine.prototype.drawHLCBox = function (params) {
 		if (quote && field) quote = quote[field];
 		if (!quote && quote !== 0) continue;
 		var Close = quote[closeField];
-		var tick = leftTick + x;
 		var Top = quote[highField] === undefined ? Close : quote[highField];
 		var Bottom = quote[lowField] === undefined ? Close : quote[lowField];
 		// inline version of pixelFromTransformedValue() for efficiency
@@ -192,19 +189,21 @@ CIQ.ChartEngine.prototype.drawHLCBox = function (params) {
 			c1 += yAxis.top;
 		}
 		yValueCache[x] = c1;
-		var pxTop = Math.floor(Math.min(t1, b1)); //+borderOffset;
+		var pxTop = Math.min(t1, b1);
 		var pxBottom = Math.max(t1, b1);
-		var pxClose = c1;
-		var length = Math.floor(pxBottom - pxTop);
+		if (Math.abs(pxTop - pxBottom) < 1) pxTop = pxBottom; // draw doji
+		pxTop = Math.floor(pxTop);
+		pxBottom = Math.floor(pxBottom);
+		var length = pxBottom - pxTop;
+		var pxClose = Math.floor(c1);
 		if (pxTop < t) {
 			if (pxTop + length < t) continue;
-			length -= t - pxTop;
-			pxTop = t;
+			length -= t - pxTop - 1;
+			pxTop = t - 1;
 		}
 		if (pxTop + length > b) {
-			length -= pxTop + length - b;
+			length = b - pxTop + 1;
 		}
-		length = Math.max(length, 2);
 		pxBottom = pxTop + length;
 		if (pxTop >= b) continue;
 		if (pxBottom <= t) continue;
@@ -214,7 +213,8 @@ CIQ.ChartEngine.prototype.drawHLCBox = function (params) {
 		var flr_xbase = Math.floor(xbase) + 0.5;
 		var xstart = Math.floor(flr_xbase - whitespace); //+borderOffset;
 		var xend = Math.round(flr_xbase + whitespace); //-borderOffset;
-		if (pxTop != pxBottom) {
+		var isDoji = pxTop === pxBottom;
+		if (!isDoji) {
 			var highlightOffset = 0;
 			if (xend - xstart <= 2) {
 				if (params.highlight) highlightOffset = borderOffset;
@@ -225,14 +225,15 @@ CIQ.ChartEngine.prototype.drawHLCBox = function (params) {
 				Math.max(1, xend - xstart + 2 * highlightOffset),
 				Math.max(1, Math.abs(pxBottom - pxTop) + 2 * highlightOffset)
 			);
-			cache.push({
-				left: xstart,
-				right: xend,
-				top: pxTop,
-				close: pxClose,
-				bottom: pxBottom
-			});
 		}
+		cache.push({
+			left: xstart,
+			right: xend,
+			top: pxTop,
+			close: pxClose,
+			bottom: pxBottom,
+			isDoji: isDoji
+		});
 	}
 	context.fill();
 	var c, point, pl, pr, pt, pc, pb;
@@ -243,6 +244,7 @@ CIQ.ChartEngine.prototype.drawHLCBox = function (params) {
 			context.fillStyle = context.strokeStyle = shadeColor;
 			for (c = 0; c < cache.length; c++) {
 				point = cache[c];
+				if (point.isDoji) continue;
 				pl = point.left;
 				pr = point.right;
 				pc = point.close;
@@ -256,6 +258,8 @@ CIQ.ChartEngine.prototype.drawHLCBox = function (params) {
 						yAxis.flipped ? -Math.max(1, pc - pt) : Math.max(1, pb - pc)
 					);
 				} else {
+					// ensure that pc line does not draw blurry
+					pc += !params.highlight && 0.5;
 					context.moveTo(pl, pc);
 					context.lineTo(pr, pc);
 				}
@@ -263,23 +267,31 @@ CIQ.ChartEngine.prototype.drawHLCBox = function (params) {
 		}
 		context[shaded ? "fill" : "stroke"]();
 	}
-	if (borderOffset) {
-		context.lineWidth = 1;
-		if (params.highlight) context.lineWidth *= 2;
-		context.strokeStyle = borderColor;
-		context.beginPath();
-		for (c = 0; c < cache.length; c++) {
-			point = cache[c];
-			pl = point.left - borderOffset;
-			pr = point.right + borderOffset;
-			pt = point.top - borderOffset;
-			pb = point.bottom + borderOffset;
-			if (point.right - point.left > 2) {
+	context.lineWidth = 1;
+	if (params.highlight) context.lineWidth *= 2;
+	context.strokeStyle = borderColor;
+	context.beginPath();
+	for (c = 0; c < cache.length; c++) {
+		point = cache[c];
+		pl = point.left;
+		pr = point.right;
+		pt = point.top;
+		pb = point.bottom;
+		if (point.right - point.left > 2) {
+			if (point.isDoji) {
+				var pxDoji = pb + (!params.highlight && 0.5);
+				context.moveTo(pl, pxDoji);
+				context.lineTo(pr, pxDoji);
+			} else if (borderOffset) {
+				pl -= borderOffset;
+				pr += borderOffset;
+				pt -= borderOffset;
+				pb += borderOffset;
 				context.rect(pl, pt, Math.max(1, pr - pl), Math.max(1, pb - pt));
 			}
 		}
-		context.stroke();
 	}
+	context.stroke();
 	if (clip) this.endClip();
 	var colors = [fillColor];
 	if (shaded) colors.push(shadeColor);

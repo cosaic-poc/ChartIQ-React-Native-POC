@@ -20,6 +20,7 @@
  _ciq-help.scss - used for help webcomponent
  _ciq-drawing-palette.scss - used for drawingPalette webcomponent
  _ciq-message_toaster.scss - used for messageToaster webcomponent
+ _ciq-multi.scss - used for multi chart environment
  _perfect-scrollbar.scss - used for PerfectScrollbar styling of scroll webcomponent
 
  Run sass to generate a css file from this file and the included _ciq files.
@@ -126,4 +127,6 @@ $DEFAULT-help:			#398dff !default;
 @import "perfect-scrollbar";
 /* Interactive Help */
 @import "ciq-help";
+/* Multi chart */
+@import "ciq-multi";
 // Add an import for your overrides here and then recompile the SASS

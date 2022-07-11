@@ -40,8 +40,8 @@ div, li, span, a {
 }
 
 /* You can safely remove or override these */
-input:not([type]), 
-input[type="text"], 
+input:not([type]),
+input[type="text"],
 input[type="number"],
 input[type="date"],
 input[type="time"] {

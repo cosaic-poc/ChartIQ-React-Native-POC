@@ -1,7 +1,7 @@
 .ciq-chart-area {
   padding: 0;
   top: 0;
-  bottom: 0; 
+  bottom: 0;
 }
 
 cq-dialog#simulation-warning {
@@ -39,7 +39,7 @@ cq-study-legend-fixed-wrapper cq-study-legend[cq-hovershow] {
 }
 
 cq-study-legend[cq-hovershow] > cq-item > cq-label {
-	width: 160px
+	width: 160px;
 }
 
 .break-sm .stx-panel-control .stx-panel-legend {
@@ -57,7 +57,7 @@ cq-study-legend[cq-hovershow] > cq-item > cq-label {
 
 .rightclick_drawing .overlayTrashCan,
 .rightclick_study .overlayTrashCan {
-	margin-left: 18px; 
+  margin-left: 18px;
 }
 
 div.clear {

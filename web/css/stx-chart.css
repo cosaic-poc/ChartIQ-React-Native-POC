@@ -87,7 +87,7 @@
 	user-select: none;
 }
 /* Button Hover State */
-/*.stx-btn:hover { 
+/*.stx-btn:hover {
 	color: #444444;
 	border: solid 1px #c5c5c5;
 	-webkit-box-shadow: 0px 1px 1px rgba(0, 0, 0, .1), inset 0px -8px 6px rgba(100, 100, 100, .03);
@@ -95,7 +95,7 @@
 	box-shadow: 0px 1px 1px rgba(0, 0, 0, .1), inset 0px -8px 6px rgba(100, 100, 100, .03);
 }*/
 /* Button Active State */
-.stx-btn:active { 
+.stx-btn:active {
 	color: #333;
 	-webkit-box-shadow: inset 0px 8px 6px rgba(100, 100, 100, .03);
 	-moz-box-shadow: inset 0px 8px 6px rgba(100, 100, 100, .03);
@@ -272,7 +272,8 @@
 	-ms-transform: scale(1.2, 1.2);
 	transform: scale(1.2, 1.2);
 }
-.chartSize span:hover{
+
+html:not([ciq-last-interaction="touch"]) .chartSize span:hover{
 	opacity: 1;
 }
 
@@ -301,7 +302,7 @@
 	z-index: 4;
 }
 
-.stx_chart_controls *:hover>.stx-tooltip{
+html:not([ciq-last-interaction="touch"]) .stx_chart_controls *:hover > .stx-tooltip {
 	top: 110%;
 	opacity: 1;
 	transition: opacity 0.1s 0.1s, top 0.5s 0.1s;
@@ -316,7 +317,6 @@
 	background: #fafafa;
 	border-radius: 3px;
 }
-
 
 .stx_notification_tray div {
 	box-sizing: content-box;
@@ -375,7 +375,7 @@
 /*.stx_jump_today:hover span {
 	opacity: 1;
 }*/
-translate { /* so translate nodes don't affect interactivity */
+cq-translate { /* so translate nodes don't affect interactivity */
 	pointer-events: none;
 }
 
@@ -506,7 +506,7 @@ translate { /* so translate nodes don't affect interactivity */
 	padding:0;
 	border:none;
 }
-.mSticky, .vectorTrashCan, .overlayTrashCan, .overlayEdit {
+.mSticky, .vectorTrashCan, .overlayTrashCan, .overlayEdit, .overlayText {
 	position: absolute;
 	z-index: 40;
 }
@@ -516,6 +516,7 @@ translate { /* so translate nodes don't affect interactivity */
 	display: inline-block;
 	float: left;
 }
+.overlayText.stx-btn,
 .overlayEdit.stx-btn,
 .overlayTrashCan.stx-btn,
 .vectorTrashCan.stx-btn {/* Drawing and study info div delete button wrappers for mobile */
@@ -529,6 +530,7 @@ translate { /* so translate nodes don't affect interactivity */
 	border: solid #ddd 1px;
 	margin: 0 0 0 18px;
 }
+.overlayText.stx-btn span,
 .overlayEdit.stx-btn span,
 .overlayTrashCan.stx-btn span,
 .vectorTrashCan.stx-btn span {/* Drawing and study info div delete button content */
@@ -536,11 +538,11 @@ translate { /* so translate nodes don't affect interactivity */
 	margin: 0;
 	width: 23px;
 	height: 25px;
-	
+
 	overflow: hidden;
 	text-indent: 100px;
 	background: transparent;
-	
+
 	background-image:url(img/stx-sprite-panels.svg);
 	background-position: -400px -26px;
 }
@@ -563,6 +565,7 @@ translate { /* so translate nodes don't affect interactivity */
 }
 */
 
+.no-svg .overlayText.stx-btn span,
 .no-svg .overlayEdit.stx-btn span,
 .no-svg .overlayTrashCan.stx-btn span,
 .no-svg .vectorTrashCan.stx-btn span {/* Button Icons for non SVG browsers */
@@ -1087,7 +1090,7 @@ stx-hu-tooltip {
 	white-space: nowrap;
 	padding: 6px;
 	border: 2px solid #4ea1fe;
-	background-color: rgba(255,255,255,.7);
+	background-color: rgba(255,255,255,.9);
 	color: #000;
 	font-size: 14px;
 	fill: white;

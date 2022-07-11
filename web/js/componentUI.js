@@ -1,10 +1,10 @@
 /**
- *	8.4.0
- *	Generation date: 2021-11-29T15:42:32.590Z
+ *	8.7.0
+ *	Generation date: 2022-06-10T18:37:49.036Z
  *	Client name: sonyl test
- *	Package Type: Technical Analysis
+ *	Package Type: Technical Analysis e98f22c
  *	License type: trial
- *	Expiration date: "2022/01/31"
+ *	Expiration date: "2022/12/31"
  */
 
 /***********************************************************
@@ -24,10 +24,10 @@ var claims = [];
 /**
  * The following is a set of web components used in our sample templates to illustrate how the API can be leveraged to build a full featured UI to control the chart.
  *
- * Feel free to use them as provided, or modify the web components to meet your needs. You can find all of the source code for these components in `js/components.js`
+ * Feel free to use them as provided or modify the web components to meet your needs. You can find all of the source code for these components in `js/components.js`
  * and `js/componentUI.js`.
  *
- * This implementation assumes the chart is attached to to a quote feed for interactive data loading. If you will not be using a quote feed, you will need to adjust
+ * This implementation assumes the chart is attached to a quote feed for interactive data loading. If you will not be using a quote feed, you will need to adjust
  * these components accordingly.
  *
  * >Two special tags are required to run the framework:
@@ -96,8 +96,8 @@ CIQ.UI.stxtap = function (element, listener, selector) {
  * @since 7.4.0 Replaces {@link CIQ.addResizeListener}.
  */
 CIQ.UI.addResizeListener = function (element, fn) {
-	CIQ.UI.getUIManager().registerForResize(element);
-	element.resizeHandle = CIQ.resizeObserver(element, fn, null, 250);
+	CIQ.UI.getUIManager(element).registerForResize(element);
+	element.resizeHandle = CIQ.resizeObserver(element, fn, null);
 };
 /**
  * Removes an attached resize event listener from a DOM element.
@@ -112,7 +112,7 @@ CIQ.UI.addResizeListener = function (element, fn) {
  * @since 7.4.0 Replaces {@link CIQ.removeResizeListener}.
  */
 CIQ.UI.removeResizeListener = function (element) {
-	CIQ.UI.getUIManager().unregisterForResize(element);
+	CIQ.UI.getUIManager(element).unregisterForResize(element);
 	CIQ.resizeObserver(element, null, element.resizeHandle);
 };
 /**
@@ -375,7 +375,7 @@ CIQ.UI.unobserveProperty = function (property, obj, listener) {
 			if (observable.obj == obj) {
 				if (listener) {
 					var listenerArr = observable.listeners;
-					for (var l = listenerArr.length; l >= 0; l--) {
+					for (var l = listenerArr.length - 1; l >= 0; l--) {
 						if (listenerArr[l] === listener) listenerArr.splice(l, 1);
 					}
 				}
@@ -433,6 +433,7 @@ CIQ.UI.getMyContext = function (me, preferContextNode) {
  * The value of `this` is set to the context.
  *
  * @param {Function} func Function to run.
+ * @param {HTMLElement} [node] A node within the context.
  *
  * @memberof CIQ.UI
  *
@@ -440,11 +441,17 @@ CIQ.UI.getMyContext = function (me, preferContextNode) {
  *  CIQ.UI.contextsForEach(function(){
  *  	this.stx.doSomething();
  *  });
+ *
+ * @since 8.5.0 Added `node` parameter.
+ *
  */
-CIQ.UI.contextsForEach = function (func) {
-	var contexts = document.querySelectorAll("cq-context,*[cq-context]");
+CIQ.UI.contextsForEach = function (func, node) {
+	var contexts = ((node || {}).ownerDocument || document).querySelectorAll(
+		"cq-context,*[cq-context]"
+	);
 	contexts.forEach(function (node) {
-		func.apply(node.CIQ.UI.context);
+		if (node.CIQ && node.CIQ.UI && node.CIQ.UI.context)
+			func.apply(node.CIQ.UI.context);
 	});
 };
 CIQ.UI.release = false;
@@ -787,6 +794,42 @@ CIQ.UI.supportedInputType = function (type) {
 	return inputTypesSupported[type];
 };
 /**
+ * Moves functions from the superclass into the current class.
+ *
+ * Used by a component's adoptedCallback method when moving a component to a new document
+ * and the browser implementation decides to lose track of the inheritance chain once the
+ * document has been added to the new document (Firefox).
+ *
+ * @param {object} component A web component instance.
+ * @param {function} classDefinition Class definition that identifies a component.
+ *
+ * @memberof CIQ.UI
+ *
+ * @since 8.5.0
+ */
+CIQ.UI.flattenInheritance = function (component, classDefinition) {
+	//if (component.constructor.name !== "HTMLElement") return; // we can bypass
+	Object.getOwnPropertyNames(classDefinition.prototype).forEach((prop) => {
+		if (
+			[
+				"constructor",
+				"connectedCallback",
+				"disconnectedCallback",
+				"attributeChangedCallback",
+				"adoptedCallback"
+			].indexOf(prop) === -1
+		) {
+			const desc = Object.getOwnPropertyDescriptor(
+				classDefinition.prototype,
+				prop
+			);
+			if (desc) {
+				Object.defineProperty(component, prop, desc);
+			}
+		}
+	});
+};
+/**
  * UI context helper class.
  *
  * Designed to be used as a helper method for the included {@link WebComponents}. A full
@@ -964,7 +1007,19 @@ Context.prototype.getAdvertised = function (helperName) {
 	return this.advertised[helperName];
 };
 /**
- * Web component instance to show loading status and having show and hide methods
+ * The data object for the first parameter of the stxsetget attribute callback.
+ * @typedef {object} CIQ.UI~Setter
+ * @property {HTMLElement} node The user interface element that was activated.
+ * @property {Event} e The event that triggered the function.
+ * @property {CIQ.UI~SetterParams} params Additional params.
+ */
+/**
+ * The data object for the first parameter of the stxsetget attribute callback.
+ * @typedef {object} CIQ.UI~SetterParams
+ * @property {HTMLElement} parent Context binding container (cq-context).
+ */
+/**
+ * Web component instance to show loading status and having show and hide methods.
  * @typedef {object} CIQ.UI~Loader
  * @property {function} show
  * @property {function} hide
@@ -994,7 +1049,7 @@ Context.prototype.isModal = function () {
 	return this.stx.openDialog !== "";
 };
 /**
- * Checks the chart for a study legend that is active and has keyboard navigation control.
+ * Checks the chart for a study legend or comparison search that is active and has keyboard navigation control.
  *
  * @return {boolean} true if a [cq-study-legend]{@link WebComponents.cq-study-legend} component is
  * 		both active and has keyboard navigation control; otherwise, false.
@@ -1004,18 +1059,18 @@ Context.prototype.isModal = function () {
  * @since 8.3.0
  */
 Context.prototype.isLegendKeyboardActive = function () {
-	const legends = document.querySelectorAll("cq-study-legend");
-	if (legends.length) {
-		for (let i = 0; i < legends.length; i++) {
-			// Verify the legend is active and has keyboard control
-			if (
-				legends[i].classList.contains("ciq-active") &&
-				legends[i].keyboardNavigation
-			)
-				return true;
-		}
-	}
-	return false;
+	const { topNode } = this;
+	const legends = (topNode.closest("cq-context") || topNode).querySelectorAll(
+		"cq-study-legend.ciq-active, cq-menu.cq-comparison-new.stxMenuActive"
+	);
+	return !!Array.from(legends).find((legend) => {
+		if (
+			(legend.classList.contains("ciq-active") && legend.keyboardNavigation) ||
+			(legend.classList.contains("stxMenuActive") &&
+				legend.parentElement.keyboardNavigation)
+		)
+			return true;
+	});
 };
 /**
  * Abstract class for {@link WebComponents} using this framework.
@@ -1047,6 +1102,9 @@ class BaseComponent extends HTMLElement {
 		BaseComponent.buildReverseBindings(this);
 		this.attached = true;
 	}
+	adoptedCallback() {
+		CIQ.UI.flattenInheritance(this, BaseComponent);
+	}
 	/**
 	 * Called automatically when a tag is removed from the DOM.
 	 *
@@ -1055,11 +1113,13 @@ class BaseComponent extends HTMLElement {
 	 * @private
 	 */
 	disconnectedCallback() {
+		if (this.doNotDisconnect) return;
 		this.attached = false;
 		if (this.context) {
 			for (var i = 0; i < this.eventListeners.length; i++) {
 				this.context.stx.removeEventListener(this.eventListeners[i]);
 			}
+			this.eventListeners = [];
 		}
 	}
 	/**
@@ -1079,7 +1139,16 @@ class BaseComponent extends HTMLElement {
 		const isEmpty = (node) => node.children.length === 0;
 		if (isEmpty(node) && (node.constructor.markup || markup)) {
 			const startTime = +new Date();
-			node.innerHTML = markup || node.constructor.markup;
+			const innerHTML = markup || node.constructor.markup;
+			if (node.ownerDocument !== document) {
+				const templ = document.createElement("template");
+				templ.innerHTML = innerHTML;
+				document.body.append(templ);
+				node.append(document.importNode(templ.content, true));
+				templ.remove();
+			} else {
+				node.innerHTML = innerHTML;
+			}
 			BaseComponent.buildReverseBindings(node);
 			if (CIQ.debug) {
 				const timeToBuild = +new Date() - startTime;
@@ -1095,7 +1164,13 @@ class BaseComponent extends HTMLElement {
 					"total=" + BaseComponent.createMarkupTime
 				);
 			}
-			if (CIQ.I18N && CIQ.I18N.localized) CIQ.I18N.translateUI(null, node);
+			if (CIQ.I18N && CIQ.I18N.localized) {
+				const language = CIQ.getFromNS(
+					this,
+					"context.stx.preferences.language"
+				);
+				CIQ.I18N.translateUI(language, node);
+			}
 		}
 	}
 	/**
@@ -1209,7 +1284,7 @@ class BaseComponent extends HTMLElement {
 	 *
 	 * @param {String} path The CSS selectors for which to search.
 	 * @param {HTMLElement|String} context The chart context element, which is the starting
-	 * 		point of the DOM query, or "thisChart" to indicate the chart context in whidh this
+	 * 		point of the DOM query, or "thisChart" to indicate the chart context in which this
 	 * 		function is called.
 	 * @return {HTMLElement|undefined} An array of selected DOM element or undefined if no
 	 * elements are found.
@@ -1612,11 +1687,10 @@ class BaseComponent extends HTMLElement {
 				return NodeFilter.FILTER_ACCEPT;
 			}
 		};
-		var walker = document.createNodeIterator(
+		var walker = traverseNode.ownerDocument.createNodeIterator(
 			traverseNode,
 			NodeFilter.SHOW_ELEMENT,
-			CIQ.isIE ? acceptFunc : { acceptNode: acceptFunc },
-			false
+			CIQ.isIE ? acceptFunc : { acceptNode: acceptFunc }
 		);
 		var node;
 		node = walker.nextNode();
@@ -1797,6 +1871,7 @@ class BaseComponent extends HTMLElement {
 	 * @see [focusItem]{@link CIQ.UI.BaseComponent#focusItem}
 	 */
 	focusNextItem(items, reverse, loop) {
+		if (!items.length) return;
 		const focused = this.findFocused(items);
 		let i = -1;
 		if (focused.length) {
@@ -1851,9 +1926,12 @@ class BaseComponent extends HTMLElement {
 	 */
 	focusItem(item) {
 		item.setAttribute("cq-focused", "true");
+		// Sometimes the dialog will re-render when changing selection. Store the name attribute to locate the selected element after a render.
+		this.activeElementName = item.getAttribute("name");
 		this.highlightItem(item);
 		// Automatically select input elements to eliminate the need for pressing enter twice
-		if (item.tagName == "INPUT") this.clickItem(item);
+		if (item.tagName == "INPUT" || item.tagName == "TEXTAREA")
+			this.clickItem(item);
 	}
 	/**
 	 * Removes the `cq-focused` attribute from all elements in `items`.
@@ -1998,6 +2076,10 @@ class ContextTag extends BaseComponent {
 		this.setContextHolder();
 		super.connectedCallback();
 	}
+	adoptedCallback() {
+		super.adoptedCallback();
+		CIQ.UI.flattenInheritance(this, ContextTag);
+	}
 	/**
 	 * Removes all the the injections for a context tag and resets the tag to its default
 	 * state.
@@ -2010,6 +2092,12 @@ class ContextTag extends BaseComponent {
 	 * @memberof CIQ.UI.ContextTag.prototype
 	 */
 	disconnectedCallback() {
+		if (
+			this.doNotDisconnect ||
+			(this.parentElement && this.parentElement.doNotDisconnect)
+		)
+			return;
+		this.attached = false;
 		if (this.context) {
 			var i;
 			for (i = 0; i < this.injections.length; i++) {
@@ -2073,7 +2161,7 @@ class ContextTag extends BaseComponent {
 	 */
 	setContextPrivate(context) {
 		this.context = context;
-		this.uiManager = CIQ.UI.getUIManager();
+		this.uiManager = CIQ.UI.getUIManager(context.topNode);
 		if (this.hasAttribute("cq-marker") && !this.convertedToMarker) {
 			this.convertedToMarker = true;
 			this.marker = new CIQ.Marker({
@@ -2137,6 +2225,10 @@ class ModalTag extends ContextTag {
 		};
 		super.connectedCallback();
 	}
+	adoptedCallback() {
+		super.adoptedCallback();
+		CIQ.UI.flattenInheritance(this, ModalTag);
+	}
 	/**
 	 * @alias modalBegin
 	 * @memberof CIQ.UI.ModalTag.prototype
@@ -2172,6 +2264,10 @@ CIQ.UI.ModalTag = ModalTag;
 class DialogContentTag extends BaseComponent {
 	constructor() {
 		super();
+	}
+	adoptedCallback() {
+		super.adoptedCallback();
+		CIQ.UI.flattenInheritance(this, DialogContentTag);
 	}
 	/**
 	 * Closes the dialog.
@@ -2546,7 +2642,7 @@ CIQ.UI.HeadsUp.prototype.begin = function () {
 					);
 				}
 				// Keep below top of screen
-				var top = containerHeight - bottom - marker.clientHeight + stx.top;
+				var top = containerHeight - bottom - marker.clientHeight;
 				if (top < 0) {
 					nodeClass.add("stx-below");
 					bottom =
@@ -2772,8 +2868,7 @@ CIQ.UI.HeadsUp.prototype.position = function () {
 		(prices && +prices.DT == +stx.chart.endPoints.end)
 	) {
 		if (this.timeout) clearTimeout(this.timeout);
-		var ms = this.params.followMouse ? 0 : 0; // IE and FF struggle to keep up with the dynamic heads up.
-		this.timeout = setTimeout(printValues, ms);
+		this.timeout = setTimeout(printValues, 0); // IE and FF struggle to keep up with the dynamic heads up.
 	}
 	this.prevTick = this.tick; // We don't want to update the dom every pixel, just when we cross into a new candle
 	if (this.params.followMouse) {
@@ -2818,7 +2913,8 @@ function DrawingEdit(node, context) {
 	this.node = $node[0];
 	this.context = context;
 	this.editing = null;
-	this.drawingContext = document.querySelector("cq-drawing-context");
+	this.drawingContext =
+		this.node.ownerDocument.querySelector("cq-drawing-context");
 	this.cvpController = $node.find("cq-cvp-controller");
 	this.toolbar = $node.find("cq-toolbar");
 	if (!this.toolbar.length) {
@@ -2891,6 +2987,8 @@ function onDrawingEditShowContext(self) {
 			self.endEdit(null, "edit");
 			self.showToolbar(params.drawing);
 			self.beginEdit(params.drawing);
+		} else if (params.forceText === true) {
+			self.text(params.drawing);
 		} else {
 			self.showContext(params);
 		}
@@ -3126,7 +3224,7 @@ DrawingEdit.prototype.edit = function () {
 		var localContext = CIQ.UI.getMyContext(drawing.stx.container).topNode;
 		// The drawing context menu element is created outside of any instant chart so query the document
 		var contextContainer =
-			document.querySelector("cq-drawing-context").parentNode;
+			localContext.ownerDocument.querySelector("cq-drawing-context").parentNode;
 		var settingsPalette = localContext.querySelector("cq-drawing-settings");
 		var contextLocation = {
 			left: contextContainer.offsetLeft,
@@ -3151,18 +3249,22 @@ DrawingEdit.prototype.edit = function () {
  *
  * Used for drawing tools with an edit() function, such as annotation and callout.
  *
- * Will allow re-application of this function.
+ * Allows re-application of this function.
  *
+ * @param {CIQ.Drawing} drawing The drawing to use if the drawingContext UI is bypassed.
  * @memberof CIQ.UI.DrawingEdit
- * @since 7.0.0
+ * @since
+ * - 7.0.0
+ * - 8.6.0 Allow a drawing object to be passed into the function.
  */
-DrawingEdit.prototype.text = function () {
-	var self = this;
-	if (this.drawingContext) {
-		this.drawingContext.close();
-		self.endEdit(null, "text");
-		if (this.drawingContext.drawing.edit)
-			this.drawingContext.drawing.edit(null, true);
+DrawingEdit.prototype.text = function (drawing) {
+	let drawingContext = this.drawingContext;
+	if (drawingContext) {
+		drawingContext.close();
+		let currentDrawing =
+			drawing instanceof CIQ.Drawing ? drawing : drawingContext.drawing; // make sure it's actually a drawing
+		this.endEdit(null, "text");
+		if (currentDrawing.edit) currentDrawing.edit(null, true);
 	}
 };
 /**
@@ -3286,19 +3388,24 @@ DrawingEdit.prototype.remove = function () {
  * @since 4.1.0 The `contextDialog` parameter is no longer passed in.
  */
 CIQ.UI.StudyEdit = function (node, context) {
-	this.context = context;
-	this.node = node ? node : context.topNode;
-	this.contextDialog = [];
-	var sc = document.querySelectorAll("cq-study-context");
+	const self =
+		this instanceof CIQ.UI.StudyEdit
+			? this
+			: Object.create(CIQ.UI.StudyEdit.prototype);
+	self.context = context;
+	self.node = node ? node : context.topNode;
+	self.contextDialog = [];
+	var sc = self.node.ownerDocument.querySelectorAll("cq-study-context");
 	for (var i = 0; i < sc.length; i++) {
-		this.contextDialog.push(sc[i]);
+		self.contextDialog.push(sc[i]);
 	}
-	context.advertiseAs(this, "StudyEdit");
-	this.initialize();
+	context.advertiseAs(self, "StudyEdit");
+	self.initialize();
+	return self;
 };
 CIQ.inheritsFrom(CIQ.UI.StudyEdit, CIQ.UI.Helper);
 /**
- * Closes Study Edit dialog.
+ * Proxy for removing a study.
  *
  * Designed to be used as a helper method for the included {@link WebComponents}. A full tutorial on how to work with and customize the web components can be found here: {@tutorial Web Component Interface}
  *
@@ -3347,7 +3454,9 @@ CIQ.UI.StudyEdit.prototype.editPanel = function (params) {
 		const channel = (config.channels || {}).dialog || "channel.dialog";
 		channelWrite(channel, { type: "study", params }, stx);
 	} else {
-		document.querySelector("cq-study-dialog").open(params);
+		params.context.topNode.ownerDocument
+			.querySelector("cq-study-dialog")
+			.open(params);
 	}
 };
 /**
@@ -3414,7 +3523,7 @@ CIQ.UI.StudyEdit.prototype.initialize = function () {
  *     alert(whatToDo);
  * };
  * ```
- * where the first parameter is always the node that was clicked, and can be manipulated to change as needed to add or remove styling, for example.
+ * where the first parameter is always the node that was clicked and can be manipulated to change as needed to add or remove styling, for example.
  * @name CIQ.UI.Layout
  * @param {CIQ.UI.Context} context The context
  * @param {Object} [params] Parameters
@@ -3423,10 +3532,15 @@ CIQ.UI.StudyEdit.prototype.initialize = function () {
  * @since 4.1.0 Layout no longer takes a node as its first parameter
  */
 CIQ.UI.Layout = function (context, params) {
-	this.params = params ? params : {};
-	if (!this.params.activeClassName) this.params.activeClassName = "ciq-active";
-	this.context = context;
-	context.advertiseAs(this, "Layout");
+	const self =
+		this instanceof CIQ.UI.Layout
+			? this
+			: Object.create(CIQ.UI.Layout.prototype);
+	self.params = params ? params : {};
+	if (!self.params.activeClassName) self.params.activeClassName = "ciq-active";
+	self.context = context;
+	context.advertiseAs(self, "Layout");
+	return self;
 };
 CIQ.inheritsFrom(CIQ.UI.Layout, CIQ.UI.Helper);
 /**
@@ -3438,7 +3552,8 @@ CIQ.inheritsFrom(CIQ.UI.Layout, CIQ.UI.Helper);
  *
  * @param {HTMLElement} node The user interface element that enables users to select a chart
  * 		style or aggregation type.
- * @param {String} chartType The chart style or aggregation type of the activated radio button.
+ * @param {String} [chartType] The chart style or aggregation type of the activated radio button.
+ *		If not provided as a string, use the chart type defined in the node's `data-value` attribute.
  *
  * @memberof CIQ.UI.Layout
  * @private
@@ -3446,6 +3561,7 @@ CIQ.inheritsFrom(CIQ.UI.Layout, CIQ.UI.Helper);
 CIQ.UI.Layout.prototype.getChartType = function (node, chartType) {
 	var stx = this.context.stx,
 		className = this.params.activeClassName;
+	if (typeof chartType !== "string") chartType = node.dataset.value || "";
 	var listener = function (obj) {
 		var layout = obj.obj;
 		if (layout.aggregationType && layout.aggregationType != "ohlc") {
@@ -3480,13 +3596,14 @@ CIQ.UI.Layout.prototype.getChartType = function (node, chartType) {
  * Leverages {@link CIQ.ChartEngine#setChartType} and
  * {@link CIQ.ChartEngine#setAggregationType}.
  *
- * @param {HTMLElement} [node] The user interface element that enables users to set the chart
- * 		style or aggregation type.
- * @param {String} chartType The chart style or aggregation type to be set.
+ * @param {CIQ.UI~Setter} obj An object containing the user interface element,
+ *		trigger event, and additional param object.
+ * @param {string} [chartType] The chart style or aggregation type to be set.
+ * 		If not provided as a string, use the chart type defined in the node's `data-value` attribute.
  *
  * @memberof CIQ.UI.Layout
  */
-CIQ.UI.Layout.prototype.setChartType = function (node, chartType) {
+CIQ.UI.Layout.prototype.setChartType = function (obj, chartType) {
 	var aggregations = {
 		heikinashi: true,
 		kagi: true,
@@ -3495,6 +3612,7 @@ CIQ.UI.Layout.prototype.setChartType = function (node, chartType) {
 		rangebars: true,
 		renko: true
 	};
+	if (typeof chartType !== "string") chartType = obj.node.dataset.value || "";
 	if (aggregations[chartType]) {
 		this.context.stx.setAggregationType(chartType);
 	} else {
@@ -3530,14 +3648,14 @@ CIQ.UI.Layout.prototype.getChartScale = function (node, chartScale) {
  *
  * Leverages {@link CIQ.ChartEngine#setChartScale}.
  *
- * @param {HTMLElement} [node] The user interface element that enables users to set the chart
- * 		scale.
+ * @param {CIQ.UI~Setter|null} obj Either null or an object containing the user interface element,
+ *		trigger event, and additional param object.
  * @param {String} chartScale The type of scaling, such as "log", "linear", "percent", or
  * 		"relative".
  *
  * @memberof CIQ.UI.Layout
  */
-CIQ.UI.Layout.prototype.setChartScale = function (node, chartScale) {
+CIQ.UI.Layout.prototype.setChartScale = function (obj, chartScale) {
 	var stx = this.context.stx;
 	var layoutScale = stx.layout.chartScale;
 	if (layoutScale == chartScale) {
@@ -3574,12 +3692,13 @@ CIQ.UI.Layout.prototype.getFlippedChart = function (node) {
  *
  * Leverages {@link CIQ.ChartEngine#flipChart}.
  *
- * @param {HTMLElement} [node] The user interface element that enables users to flip the chart.
+ * @param {CIQ.UI~Setter|null} obj Either null or an object containing the user interface element,
+ *		trigger event, and additional param object.
  *
  * @memberof CIQ.UI.Layout
  * @since 6.3.0
  */
-CIQ.UI.Layout.prototype.setFlippedChart = function (node) {
+CIQ.UI.Layout.prototype.setFlippedChart = function (obj) {
 	var stx = this.context.stx;
 	stx.flipChart(!stx.layout.flipped);
 };
@@ -3610,12 +3729,12 @@ CIQ.UI.Layout.prototype.getExtendedHours = function (node) {
  *
  * See {@link CIQ.Market} and {@link CIQ.ExtendedHours}.
  *
- * @param {HTMLElement} [node] The user interface element that enables users to enable and
- * 		disable extended hours.
+ * @param {CIQ.UI~Setter|null} obj Either null or an object containing the user interface element,
+ *		trigger event, and additional param object.
  *
  * @memberof CIQ.UI.Layout
  */
-CIQ.UI.Layout.prototype.setExtendedHours = function (node) {
+CIQ.UI.Layout.prototype.setExtendedHours = function (obj) {
 	var stx = this.context.stx;
 	stx.layout.extended = !stx.layout.extended;
 	stx.changeOccurred("layout");
@@ -3660,13 +3779,13 @@ CIQ.UI.Layout.prototype.getAnimation = function (node) {
  * tutorial on how to work with and customize the web components can be found here:
  * {@tutorial Web Component Interface}
  *
- * @param {HTMLElement} [node] The user interface element that enables users to enable and
- * 		disable animation.
+ * @param {CIQ.UI~Setter|null} obj Either null or an object containing the user interface element,
+ *		trigger event, and additional param object.
  *
  * @memberof CIQ.UI.Layout
  * @since 8.4.0
  */
-CIQ.UI.Layout.prototype.setAnimation = function (node) {
+CIQ.UI.Layout.prototype.setAnimation = function (obj) {
 	const { stx } = this.context;
 	stx.layout.animation = !stx.layout.animation;
 	stx.changeOccurred("layout");
@@ -3698,12 +3817,12 @@ CIQ.UI.Layout.prototype.getRangeSlider = function (node) {
  *
  * See {@link CIQ.RangeSlider}.
  *
- * @param {HTMLElement} [node] The user interface element that enables users to enable and
- * 		disable the range slider.
+ * @param {CIQ.UI~Setter|null} obj Either null or an object containing the user interface element,
+ *		trigger event, and additional param object.
  *
  * @memberof CIQ.UI.Layout
  */
-CIQ.UI.Layout.prototype.setRangeSlider = function (node) {
+CIQ.UI.Layout.prototype.setRangeSlider = function (obj) {
 	var stx = this.context.stx;
 	stx.layout.rangeSlider = !stx.layout.rangeSlider;
 	if (stx.slider) stx.slider.display(stx.layout.rangeSlider);
@@ -3734,13 +3853,13 @@ CIQ.UI.Layout.prototype.getOutliers = function (node) {
  * Convenience function that toggles the outliers layout property between on and off (true
  * and false). Invoked from the Display drop-down menu.
  *
- * @param {HTMLElement} [node] The user interface element that enables users to show and hide
- * 		outliers.
+ * @param {CIQ.UI~Setter|null} obj Either null or an object containing the user interface element,
+ *		trigger event, and additional param object.
  *
  * @memberof CIQ.UI.Layout
  * @since 7.5.0
  */
-CIQ.UI.Layout.prototype.setOutliers = function (node) {
+CIQ.UI.Layout.prototype.setOutliers = function (obj) {
 	var stx = this.context.stx;
 	stx.layout.outliers = !stx.layout.outliers;
 	stx.draw();
@@ -3778,13 +3897,13 @@ CIQ.UI.Layout.prototype.getAggregationType = function (node, aggregationType) {
  *
  * Leverages {@link CIQ.ChartEngine#setAggregationType}.
  *
- * @param {HTMLElement} [node] The user interface element that enables users to set the
- * 		aggregation type.
+ * @param {CIQ.UI~Setter|null} obj Either null or an object containing the user interface element,
+ *		trigger event, and additional param object.
  * @param {string} aggregationType The aggregation type to be set.
  *
  * @memberof CIQ.UI.Layout
  */
-CIQ.UI.Layout.prototype.setAggregationType = function (node, aggregationType) {
+CIQ.UI.Layout.prototype.setAggregationType = function (obj, aggregationType) {
 	if (this.context.stx.layout.aggregationType == aggregationType) {
 		this.context.stx.setAggregationType(null);
 	} else {
@@ -3822,14 +3941,14 @@ CIQ.UI.Layout.prototype.getAggregationEdit = function (node, field) {
 /**
  * Updates settings for the aggregation type specified by `field`.
  *
- * @param {HTMLElement} node The user interface element that enables users to edit the
- * 		aggregation settings.
+ * @param {CIQ.UI~Setter} obj An object containing the user interface element,
+ *		trigger event, and additional param object.
  * @param {String} field Identifies the aggregation type to which the settings apply.
  *
  * @memberof CIQ.UI.Layout
  * @private
  */
-CIQ.UI.Layout.prototype.setAggregationEdit = function (node, field) {
+CIQ.UI.Layout.prototype.setAggregationEdit = function (obj, field) {
 	var stx = this.context.stx;
 	function completeAggEdit() {
 		stx.changeOccurred("layout");
@@ -3853,7 +3972,7 @@ CIQ.UI.Layout.prototype.setAggregationEdit = function (node, field) {
 			stx.layout.pandf.reversal = null;
 		}
 		completeAggEdit();
-		const parent = node.params.parent;
+		const parent = obj.params.parent;
 		if (!parent) return;
 		Array.from(
 			parent.querySelectorAll(".ciq" + stx.layout.aggregationType + " input")
@@ -3870,7 +3989,7 @@ CIQ.UI.Layout.prototype.setAggregationEdit = function (node, field) {
 		});
 	} else {
 		var tuple = CIQ.deriveFromObjectChain(stx.layout, field);
-		tuple.obj[tuple.member] = node.node.value;
+		tuple.obj[tuple.member] = obj.node.value;
 		completeAggEdit();
 	}
 };
@@ -3892,12 +4011,12 @@ CIQ.UI.Layout.prototype.showAggregationEdit = function (node, aggregationType) {
 		);
 	} else {
 		// configuration not available reverting to legacy dialog opening
-		const dialog = document.querySelector("cq-aggregation-dialog");
+		const dialog = node.ownerDocument.querySelector("cq-aggregation-dialog");
 		dialog.open({ context: this.context, aggregationType: aggregationType });
 	}
 };
 /**
- * Removes all studies from the top most node.
+ * Removes all studies from the top-most node.
  *
  * Designed to be used as a helper method for the included {@link WebComponents}. A full tutorial on how to work with and customize the web components can be found here: {@tutorial Web Component Interface}
  *
@@ -3909,7 +4028,8 @@ CIQ.UI.Layout.prototype.clearStudies = function (node) {
 	var stx = this.context.stx;
 	for (var id in stx.layout.studies) {
 		var sd = stx.layout.studies[id];
-		if (!sd.customLegend && !sd.permanent) CIQ.Studies.removeStudy(stx, sd);
+		if (!sd.customLegend && !sd.permanent && !sd.signalData)
+			CIQ.Studies.removeStudy(stx, sd);
 	}
 	stx.draw();
 };
@@ -3921,7 +4041,8 @@ CIQ.UI.Layout.prototype.clearStudies = function (node) {
  * {@tutorial Web Component Interface}
  *
  * Leverages {@link CIQ.ChartEngine#setPeriodicity}.
- * @param {HTMLElement} [node] The user interface element that enables users to set periodicity.
+ * @param {CIQ.UI~Setter|null} obj Either null or an object containing the user interface element,
+ *		trigger event, and additional param object.
  * @param {number} periodicity Same as `period` from {@link CIQ.ChartEngine#setPeriodicity}.
  * @param {number} interval Same as `interval` from {@link CIQ.ChartEngine#setPeriodicity}.
  * @param {number} timeUnit Same as `timeUnit` from {@link CIQ.ChartEngine#setPeriodicity}.
@@ -3929,7 +4050,7 @@ CIQ.UI.Layout.prototype.clearStudies = function (node) {
  * @memberof CIQ.UI.Layout
  */
 CIQ.UI.Layout.prototype.setPeriodicity = function (
-	node,
+	obj,
 	periodicity,
 	interval,
 	timeUnit
@@ -3989,14 +4110,58 @@ CIQ.UI.Layout.prototype.periodicity = function (node) {
 	this.addObserver({ base, path: "layout.periodicity", listener });
 	this.addObserver({ base, path: "layout.timeUnit", listener });
 };
+CIQ.UI.Layout.prototype.chartType = function (node) {
+	const { stx: base } = this.context;
+	const { displayStyleIcons } = this.context.config || {};
+	if (!displayStyleIcons) {
+		const noIconsText = node.getAttribute("ciq-no-icon-text");
+		if (noIconsText) {
+			node.insertAdjacentHTML("beforebegin", `<span>${noIconsText}</span>`);
+			node.remove();
+		}
+		return;
+	}
+	const listener = ({ obj: { chartType, aggregationType } }) => {
+		const type = aggregationType === "ohlc" ? chartType : aggregationType;
+		const labelNode = node
+			.closest("cq-menu")
+			.querySelector(`*[data-value='${type}'] *[ciq-label]`);
+		const iconNode = node.querySelector("*[ciq-menu-icon]");
+		const tooltip = node.querySelector("cq-tooltip");
+		const displayStyleIcons = CIQ.getFromNS(
+			this,
+			"context.config.displayStyleIcons"
+		);
+		const iconCls = labelNode
+			? (labelNode.closest("cq-item").querySelector("[ciq-menu-icon]") || {})
+					.className
+			: `ciq-icon-${type.replace(/_/, "-")}`;
+		if (tooltip) {
+			tooltip.innerHTML = labelNode
+				? labelNode.innerHTML
+				: CIQ.capitalize(type.replace(/-|_/, " "));
+		}
+		if (displayStyleIcons && iconNode) {
+			node.classList.add("ciq-menu-icon");
+			iconNode.className = iconCls;
+		}
+	};
+	this.addObserver({ base, path: "layout.chartType", listener });
+	this.addObserver({ base, path: "layout.aggregationType", listener });
+};
 /**
  * Populates and displays the language widget.
  *
  * Designed to be used as a helper method for the included {@link WebComponents}. A full tutorial on how to work with and customize the web components can be found here: {@tutorial Web Component Interface}
  *
+ * @param {CIQ.UI~Setter} obj An object containing the user interface element,
+ *		trigger event, and additional param object.
+ *
  * @memberof CIQ.UI.Layout
+ *
+ * @since 8.5.0 Added `obj` parameter.
  */
-CIQ.UI.Layout.prototype.setLanguage = function () {
+CIQ.UI.Layout.prototype.setLanguage = function (obj) {
 	const { config, stx } = this.context;
 	if (config) {
 		const { channelWrite } = CIQ.UI.BaseComponent.prototype;
@@ -4005,7 +4170,7 @@ CIQ.UI.Layout.prototype.setLanguage = function () {
 		channelWrite(channel, { type: "language", params }, stx);
 	} else {
 		// config is not available revert to direct component access
-		document.querySelector("cq-language-dialog").open();
+		obj.node.ownerDocument.querySelector("cq-language-dialog").open();
 	}
 };
 /**
@@ -4027,12 +4192,56 @@ CIQ.UI.Layout.prototype.getLanguage = function (node) {
 		if (!CIQ.I18N.languages) CIQ.I18N.languages = { en: "English" };
 		var lang = node.querySelector("cq-language-name");
 		if (lang) {
-			lang.innerText = CIQ.I18N.languages[CIQ.I18N.language];
+			lang.innerText =
+				CIQ.I18N.languages[stx.preferences.language] ||
+				CIQ.I18N.languages[CIQ.I18N.language];
 			var flag = node.querySelector("cq-flag");
-			if (flag) flag.setAttribute("cq-lang", CIQ.I18N.language);
+			if (flag)
+				flag.setAttribute(
+					"cq-lang",
+					stx.preferences.language || CIQ.I18N.language
+				);
 		}
 	};
 	CIQ.UI.observeProperty("language", CIQ.I18N, listener);
+};
+/**
+ * Adds a new chart in multi-chart environment.
+ *
+ * Designed to be used as a helper method for the included {@link WebComponents}. A full
+ * tutorial on how to work with and customize the web components can be found here:
+ * {@tutorial Web Component Interface}
+ *
+ * @param {HTMLElement} node The user interface element that enables users to select the chart
+ * 		language.
+ * @param {string} position Position to insert the new chart relative to the existing chart(s). Available values are `before`and `after`.
+ *
+ * @memberof CIQ.UI.Layout
+ * @since 8.6.0
+ */
+CIQ.UI.Layout.prototype.addChart = function (node, position) {
+	const container = this.context.topNode;
+	(container.parentNode.closest("cq-context") || container).addChart(
+		null,
+		position
+	);
+};
+/**
+ * Removes the active chart if it is not the only one remaining.
+ *
+ * Designed to be used as a helper method for the included {@link WebComponents}. A full
+ * tutorial on how to work with and customize the web components can be found here:
+ * {@tutorial Web Component Interface}
+ *
+ * @param {HTMLElement} node The user interface element that enables users to select the chart
+ * 		language.
+ *
+ * @memberof CIQ.UI.Layout
+ * @since 8.6.0
+ */
+CIQ.UI.Layout.prototype.removeChart = function (node) {
+	const container = this.context.topNode;
+	(container.parentNode.closest("cq-context") || container).removeChart();
 };
 class Channel extends CIQ.UI.Helper {
 	constructor(context) {
@@ -4048,7 +4257,9 @@ class Channel extends CIQ.UI.Helper {
 		);
 	}
 }
-CIQ.UI.Channel = Channel;
+CIQ.UI.Channel = function (...args) {
+	return new Channel(...args);
+};
 /**
  * Toggles help-active attribute in context element, enabling display of cq-help components.
  *
@@ -4075,7 +4286,7 @@ CIQ.UI.Layout.prototype.toggleHelp = function () {
 	}
 };
 /**
- * UI Helper for managing the 'Events' menu drop down for showing markers on the chart.
+ * UI Helper for managing the 'Events' menu dropdown for showing markers on the chart.
  *
  * @name CIQ.UI.Markers
  * @param {CIQ.UI.Context} context The context
@@ -4087,12 +4298,17 @@ CIQ.UI.Layout.prototype.toggleHelp = function () {
  * @since 7.1.0
  */
 CIQ.UI.Markers = function (context, params) {
-	this.context = context;
+	const self =
+		this instanceof CIQ.UI.Markers
+			? this
+			: Object.create(CIQ.UI.Markers.prototype);
+	self.context = context;
 	if (!params) params = {};
-	this.menuItemSelector = params.menuItemSelector;
-	this.activeClassName = params.activeClassName || "ciq-active";
-	this.implementation = params.implementation;
-	context.advertiseAs(this, "Markers");
+	self.menuItemSelector = params.menuItemSelector;
+	self.activeClassName = params.activeClassName || "ciq-active";
+	self.implementation = params.implementation;
+	context.advertiseAs(self, "Markers");
+	return self;
 };
 CIQ.inheritsFrom(CIQ.UI.Markers, CIQ.UI.Helper);
 /**
@@ -4122,14 +4338,14 @@ CIQ.inheritsFrom(CIQ.UI.Markers, CIQ.UI.Helper);
  *    import marker from "./examples/markers/markersSample.js";
  *
  *    const config = getDefaultConfig({
- *        markerSample: marker.MarkersSample,
+ *        markerFeed: marker.MarkersSample,
  *        .
  *        .
  *        .
  *    });
  *    ```
  *
- *    The `markerSample` parameter is assigned to the `eventMarkersImplementation` property of the
+ *    The `markerFeed` parameter is assigned to the `eventMarkersImplementation` property of the
  *    chart configuration object.
  *
  *    See the <a href="tutorial-Chart%20Configuration.html" target="_blank">Chart Configuration</a>
@@ -4154,28 +4370,21 @@ CIQ.UI.Markers.prototype.showMarkers = function (node, type, markerType) {
 		// context container has been removed from the dom
 		return;
 	}
-	topNode = topNode.parentElement.closest("cq-context") || topNode;
+	topNode = topNode.multiChartContainer || topNode;
 	var implementation = this.implementation;
 	if (!implementation) {
 		return;
 	}
-	// hide markers
-	implementation.showMarkers();
 	if (type) {
-		implementation.showMarkers(type, markerType);
-	}
-	Array.from(topNode.querySelectorAll(this.menuItemSelector)).forEach(function (
-		item
-	) {
-		// Previously event markers were one for all. Click one and the rest disappeared. Life Cycle Events breaks that chain
-		// and can have as many as you want on the screen. So leave whichever have checkboxes alone.
-		var hasCheckbox = item.querySelector(".ciq-checkbox");
-		if (node.node == item) {
-			item.classList.add(activeClassName);
-		} else if (!hasCheckbox) {
-			item.classList.remove(activeClassName);
+		// Toggle the marker type
+		if (implementation.activeLabels.includes(type)) {
+			implementation.hideMarkers(type);
+			node.node.classList.remove(activeClassName);
+		} else {
+			implementation.showMarkers(type, markerType);
+			node.node.classList.add(activeClassName);
 		}
-	});
+	}
 };
 /**
  * UI Helper for capturing and handling keystrokes. cb to capture the key.
@@ -4186,9 +4395,12 @@ CIQ.UI.Markers.prototype.showMarkers = function (node, type, markerType) {
  * @param {function} [cb] Callback when key pressed
  * @param {object} [params]
  * @param {array} [params.keysToRepeat] Keys to process multiple times if key is held down
+ * @param {HTMLElement} [params.node] Node to indicate the document to add keystroke to
  * @constructor
+ *
+ * @since 8.5.0 Added `node` parameter.
  */
-CIQ.UI.Keystroke = function (cb, { keysToRepeat = [] } = {}) {
+CIQ.UI.Keystroke = function (cb, { keysToRepeat = [], node = {} } = {}) {
 	this.cb = cb;
 	this.shift = false;
 	this.ctrl = false;
@@ -4199,7 +4411,7 @@ CIQ.UI.Keystroke = function (cb, { keysToRepeat = [] } = {}) {
 	this.keysToRepeat = keysToRepeat;
 	this.recentKeys = {};
 	this.commandKeys = {}; // all `KeyboardEvent.code` values that map to a command
-	this.initialize();
+	this.initialize(node);
 };
 /**
  * Set this to true to bypass key capture. Shift, CTRL, CMD will still be toggled however.
@@ -4330,7 +4542,22 @@ CIQ.UI.Keystroke.prototype.keydown = function (e) {
 		this.commandKeys[code] = { command: mappedKey, pressed: true };
 	}
 	// Prevent default tab key behavior
-	if (key == "Tab") e.preventDefault();
+	if (key == "Tab") {
+		// If at least one element on the page has CIQ tab navigation active, we take over the tab key
+		if (document.querySelector("[cq-keyboardnavigation-active]")) {
+			e.preventDefault();
+		} else if (e.target.hasAttribute("cq-exit")) {
+			let direction = e.target.getAttribute("cq-exit");
+			if (
+				(direction == "head" && !e.shiftKey) ||
+				(direction == "foot" && e.shiftKey)
+			) {
+				e.target.setAttribute("cq-keyboardnavigation-active", "");
+				e.preventDefault();
+			}
+			e.target.removeAttribute("cq-exit");
+		}
+	}
 	this.key = key;
 	if (isCommandKey) {
 		this[mappedKey] = true;
@@ -4356,18 +4583,23 @@ CIQ.UI.Keystroke.prototype.keypress = function (e) {
 };
 /**
  * Initializes member functions.
+ *
+ * @param {HTMLElement} [node] Node to indicate the document to add keystroke to
+ *
  * @memberof CIQ.UI.Keystroke
  * @private
+ * @since 8.5.0 Added `node` parameter.
  */
-CIQ.UI.Keystroke.prototype.initialize = function () {
+CIQ.UI.Keystroke.prototype.initialize = function (node) {
 	var self = this;
+	var doc = (node || {}).ownerDocument || document;
 	["keyup", "keydown", "keypress"].forEach(function (ev) {
-		document.addEventListener(ev, function (e) {
+		doc.addEventListener(ev, function (e) {
 			if (ev === "keydown") self.downValue = e.target.value;
 			self[ev](e);
 		});
 	});
-	window.addEventListener("blur", function (e) {
+	doc.defaultView.addEventListener("blur", function (e) {
 		// otherwise ctrl-t to switch tabs causes ctrl to get stuck
 		self.ctrl = false;
 		self.cb({ key: "Control", e: e, keystroke: self });
@@ -4376,7 +4608,7 @@ CIQ.UI.Keystroke.prototype.initialize = function () {
 /**
  * UI Helper for capturing and handling keystrokes.
  *
- * A helper or ContextTag can "claim" keystrokes and intercept them, otherwise the keystrokes will be handled by keyup and keydown.
+ * A helper or ContextTag can "claim" keystrokes and intercept them, otherwise the keystrokes will be handled by keyup and keydown events.
  *
  * @param {HTMLElement} [node] The node or selector to which to attach. Defaults to `document` which means that hot keys will act globally.
  * If set to any other element (selector) then hot keys will only function when the mouse is hovering over that element.
@@ -4388,10 +4620,10 @@ CIQ.UI.Keystroke.prototype.initialize = function () {
  * @constructor
  */
 CIQ.UI.KeystrokeHub = function (node, context, params) {
-	node = CIQ.UI.$(node || "document")[0];
+	node = CIQ.UI.$(node || context.topNode.ownerDocument)[0];
 	this.infocus = false;
 	var self = this;
-	if (node === document || node === document.body || node === window) {
+	if ([undefined, "#document", "BODY"].indexOf(node.nodeName) > -1) {
 		this.infocus = true;
 	} else {
 		node.addEventListener("mouseout", function () {
@@ -4404,7 +4636,7 @@ CIQ.UI.KeystrokeHub = function (node, context, params) {
 	this.context = context;
 	this.params = params ? params : {};
 	({ hotkeyConfig: this.hotkeyConfig } = context.config || {});
-	this.uiManager = CIQ.UI.getUIManager();
+	this.uiManager = CIQ.UI.getUIManager(context.topNode);
 	this.uiManager.keystrokeHub = this; // Register the keystroke hub so that it can be found
 	function handler() {
 		return function () {
@@ -4412,7 +4644,8 @@ CIQ.UI.KeystrokeHub = function (node, context, params) {
 		};
 	}
 	this.keystroke = new CIQ.UI.Keystroke(handler(), {
-		keysToRepeat: this.hotkeyConfig.keysToRepeat
+		keysToRepeat: this.hotkeyConfig.keysToRepeat,
+		node
 	});
 	// Array of element references for keyboard navigation. No element placed at index 0. This
 	// allows tabIndex to represent either a positive (selected) and negative (deselected) value
@@ -4434,6 +4667,7 @@ CIQ.UI.KeystrokeHub = function (node, context, params) {
 		".chartControls .chartSize span",
 		"cq-show-range div",
 		"cq-share-button",
+		".ciq-shortcut-button",
 		"ciq-data-table-container button",
 		"[keyboard-navigation='true']"
 	];
@@ -4479,9 +4713,11 @@ CIQ.UI.KeystrokeHub.defaultHotKeys = function (key, hub, e = {}) {
 	const { hotkeyConfig = {}, keystroke, context } = hub;
 	const { hotkeys = [] } = hotkeyConfig;
 	const { stx } = context;
-	const { code, keyCode } = e || {};
+	const { code, keyCode, shiftKey } = e || {};
 	const numpadCode = code && code.includes("Numpad");
-	if (key === "Unidentified") key = String.fromCharCode(keyCode); // legacy edge support
+	if (key == "Unidentified") key = String.fromCharCode(keyCode); // legacy edge support
+	// Ensure shift key state is accurate for instances where tab navigation leaves and re-enters the document.
+	keystroke.shift = shiftKey;
 	return hotkeys
 		.slice()
 		.reverse() // process in reverse order to allow dev/user to override existing functionality
@@ -4573,13 +4809,15 @@ CIQ.UI.KeystrokeHub.executeHotkeyCommand = function ({
 	const { left, right, panel } = stx.chart;
 	const height = stx.height - stx.xaxisHeight;
 	const { percent = 0, bars = 0 } = options;
-	const keystrokeHub = document.body.keystrokeHub;
 	const { topNode } = stx.uiContext;
+	const keystrokeHub = topNode.ownerDocument.body.keystrokeHub;
 	const positionCrosshairs = ({ axis, direction = 1 } = {}) => {
 		const { cx, cy } = stx;
 		let change = 0; // default case: initial positioning, no adjustment
 		if (axis === "x") change = candleWidth * bars;
 		if (axis === "y") change = height * percent;
+		if (stx.crossSection && stx.crossSection.crosshairBreakDistance)
+			change = stx.crossSection.crosshairBreakDistance;
 		if (!(cx || cx === 0)) stx.cx = Math.round(stx.width / 2);
 		if (!(cy || cy === 0)) stx.cy = Math.round(height / 2);
 		if (change) {
@@ -4697,11 +4935,13 @@ CIQ.UI.KeystrokeHub.executeHotkeyCommand = function ({
 			// Check for modal state first because we don't want to deselect when escaping out of a menu
 			// if (!stx.uiContext.isModal()) keystrokeHub.tabOrderDeselect();
 			if (CIQ.ChartEngine.drawingLine) {
+				if (stx.currentVectorParameters.vectorType == "continuous")
+					CIQ.ChartEngine.completeDrawing(stx);
 				stx.undo();
 			} else if (stx.repositioningAnchorSelector) {
 				CIQ.Studies.cancelRepositionAnchor(stx);
 			} else {
-				const uiManager = CIQ.UI.getUIManager();
+				const uiManager = CIQ.UI.getUIManager(topNode);
 				// If there is an active modal, pass the escape key to it for a chance to process internally.
 				if (keystrokeHub.tabActiveModals.length) {
 					// If the modal successfully handles Escape, it will return true and there's no need to do anything further here.
@@ -4749,21 +4989,25 @@ CIQ.UI.KeystrokeHub.executeHotkeyCommand = function ({
  * @since 8.4.0
  */
 CIQ.UI.KeystrokeHub.prototype.resetTabNavigation = function () {
+	const { topNode } = this.context;
 	this.tabOrder = [null];
 	this.tabIndex = 0;
-	this.yNormalizationThreshold =
-		this.context.topNode.getBoundingClientRect().height / 25;
+	this.yNormalizationThreshold = topNode.getBoundingClientRect().height / 25;
 	this.tabActiveElement = null;
-	this.tabActiveModals = [];
 	this.keyControlElement = null;
-	this.highlightElement = null;
+	if (
+		this.highlightElement &&
+		this.highlightElement.parentElement !== topNode
+	) {
+		// If we've changed contexts' detach and attach to the new context
+		this.highlightElement.remove();
+		topNode.append(this.highlightElement);
+	}
 	// Halt keyboard navigation if the mouse button is used anywhere else.
-	this.context.topNode.addEventListener("pointerdown", () =>
-		this.tabOrderDeselect()
-	);
+	topNode.addEventListener("pointerdown", () => this.tabOrderDeselect());
 	// Reenable the mouse pointer when the mouse is moved
-	this.context.topNode.addEventListener("pointermove", () =>
-		this.context.topNode.classList.remove("disable-mouse-pointer")
+	topNode.addEventListener("pointermove", () =>
+		topNode.classList.remove("disable-mouse-pointer")
 	);
 	// Update the highlight position on resize
 	this.context.stx.append("resizeChart", () => {
@@ -4805,21 +5049,24 @@ CIQ.UI.KeystrokeHub.prototype.setTabOrderElements = function () {
 			const element = elements[idx];
 			if (element.getAttribute("keyboard-navigation") === "false") continue;
 			// Add a stxtap listener to the element to move the index to this element if click/tapped
-			element.addEventListener(
-				"stxtap",
-				function (element) {
-					// Find the tabOrder index of the element
-					let targetIndex = this.tabOrder.findIndex(
-						(item) => item && item.element === element
-					);
-					if (targetIndex != this.tabIndex) {
-						// Something else received an interaction, likely with the mouse. Shift keyboard focus to this element.
-						this.tabOrderDeselect();
-						this.tabIndex = -targetIndex;
-					}
-					return true;
-				}.bind(this, element)
-			);
+			if (!element.tabListenerAdded) {
+				element.addEventListener(
+					"stxtap",
+					function (element) {
+						// Find the tabOrder index of the element
+						let targetIndex = this.tabOrder.findIndex(
+							(item) => item && item.element === element
+						);
+						if (targetIndex != this.tabIndex) {
+							// Something else received an interaction, likely with the mouse. Shift keyboard focus to this element.
+							this.tabOrderDeselect();
+							this.tabIndex = -targetIndex;
+						}
+						return true;
+					}.bind(this, element)
+				);
+				element.tabListenerAdded = true;
+			}
 			this.tabOrder.push({
 				element: element
 			});
@@ -5015,18 +5262,16 @@ CIQ.UI.KeystrokeHub.prototype.tabOrderClickSelected = function () {
  * @since 8.2.0
  */
 CIQ.UI.KeystrokeHub.prototype.tabIndexNext = function (reverse) {
+	if (
+		!this.context.stx.uiContext.topNode.hasAttribute(
+			"cq-keyboardnavigation-active"
+		)
+	)
+		return;
 	if (this.tabOrder.length <= 1) return;
-	let setNextElement = function (self, reverse) {
-		// Change the tabIndex
-		if (reverse === true) {
-			self.tabIndex--;
-		} else {
-			self.tabIndex++;
-		}
-		// Loop back when out of the array bounds
-		if (self.tabIndex >= self.tabOrder.length) self.tabIndex = 1;
-		if (self.tabIndex < 1) self.tabIndex = self.tabOrder.length - 1;
-	};
+	// The context can lose focus when intacting with certian child elements like inputs.
+	// Ensure that it remains focused when tabbing
+	this.context.stx.uiContext.topNode.focus();
 	// Sort the elements based on screen position.
 	this.sortTabOrderElements();
 	// A negative index represents a deselected state of that index
@@ -5037,17 +5282,44 @@ CIQ.UI.KeystrokeHub.prototype.tabIndexNext = function (reverse) {
 	} else {
 		// If the tabIndex is already positive, deselect the current element but keep the index unchanged.
 		this.tabOrderDeselect(true);
-		setNextElement(this, reverse);
 	}
-	// If the current selected element isn't visible, find the next in line that is
-	while (
-		!CIQ.trulyVisible(this.tabOrder[this.tabIndex].element) ||
-		this.tabOrder[this.tabIndex].element.getAttribute("keyboard-selectable") ===
-			"false"
-	) {
-		setNextElement(this, reverse);
+	if (this.tabIndex < 1 || this.tabIndex >= this.tabOrder.length) {
+		this.tabIndex = reverse ? this.tabOrder.length : 1;
+	}
+	// If the current selected element isn't visible, find the next in line that is.
+	// Also look ahead to see if we're at the last selectable element in tabOrder
+	let nextIndex = this.tabIndex;
+	let tabIndexMoved = false;
+	do {
+		if (reverse === true) {
+			nextIndex--;
+		} else {
+			nextIndex++;
+		}
+		if (
+			this.tabOrder[nextIndex] &&
+			CIQ.trulyVisible(this.tabOrder[nextIndex].element) &&
+			this.tabOrder[nextIndex].element.getAttribute("keyboard-selectable") !==
+				"false"
+		) {
+			if (!tabIndexMoved) {
+				this.tabIndex = nextIndex;
+				tabIndexMoved = true;
+			} else {
+				break;
+			}
+		}
+	} while (nextIndex < this.tabOrder.length && nextIndex > 0);
+	// At this point we either have an element or we're outside of the array
+	if (nextIndex >= this.tabOrder.length || nextIndex <= 1) {
+		if (nextIndex >= this.tabOrder.length)
+			this.context.topNode.setAttribute("cq-exit", "foot");
+		else if (nextIndex <= 1)
+			this.context.topNode.setAttribute("cq-exit", "head");
+		this.context.topNode.removeAttribute("cq-keyboardnavigation-active");
 	}
 	this.tabOrderSelect();
+	this.uiManager.closeMenu();
 };
 /**
  * Adds `targetModal` to the internal active modal array and sets it as the active node for
@@ -5168,6 +5440,8 @@ CIQ.UI.KeystrokeHub.prototype.highlightCreate = function () {
 	}
 	// Hide the mouse pointer
 	this.context.topNode.classList.add("disable-mouse-pointer");
+	// Indicate the highlight is visible
+	this.context.topNode.classList.add("cq-navigation-highlight-visible");
 	return this.highlightElement;
 };
 /**
@@ -5179,6 +5453,7 @@ CIQ.UI.KeystrokeHub.prototype.highlightCreate = function () {
  */
 CIQ.UI.KeystrokeHub.prototype.highlightHide = function () {
 	if (this.highlightElement) this.highlightElement.classList.add("disabled");
+	this.context.topNode.classList.remove("cq-navigation-highlight-visible");
 };
 /**
  * Change the active context for the hub, for instance when dealing with multiple charts.
@@ -5207,6 +5482,7 @@ CIQ.UI.KeystrokeHub.prototype.processKeyStrokeClaims = function (
 ) {
 	for (var i = claims.length - 1; i > -1; i--) {
 		var helper = claims[i].helper;
+		if (helper.ownerDocument !== e.target.ownerDocument) continue;
 		var response = helper.keyStroke(hub, key, e, keystroke);
 		if (response) {
 			if (!response.allowDefault) e.preventDefault();
@@ -5226,7 +5502,7 @@ CIQ.UI.KeystrokeHub.prototype.handler = function (obj) {
 	if (stx.editingAnnotation) return;
 	// If the keystrokehub is associated with a specific element, then it will only
 	// process key events when that element is in focus
-	if (!this.infocus) return;
+	if (!this.infocus && obj.key !== "Tab") return;
 	var e = obj.e,
 		key = obj.key,
 		keystroke = obj.keystroke,
@@ -5250,14 +5526,21 @@ CIQ.UI.KeystrokeHub.prototype.handler = function (obj) {
 			break;
 	}
 	let escTabPress = e.key === "Escape" || e.key === "Esc" || e.key === "Tab";
+	let isInputField = targetTagName === "INPUT" || targetTagName === "TEXTAREA";
+	let modalElementActive = this.context.topNode.ownerDocument.querySelector(
+		".stxMenuActive, cq-dialog[cq-active=true], cq-color-picker[cq-active=true]"
+	);
 	// process default claims before added claims
 	if (
 		this.params.cb &&
-		// Allow an escape or tab press on an input field.
-		((targetTagName === "INPUT" && escTabPress) || targetTagName !== "INPUT") &&
-		targetTagName !== "TEXTAREA" &&
-		!this.context.isLegendKeyboardActive() &&
-		!(this.context.isModal() && !escTabPress)
+		// Conditions for processing hotkeys
+		(escTabPress || // Pressing esc/tab OR
+			// NOT any of the following
+			!(
+				isInputField ||
+				this.context.isLegendKeyboardActive() ||
+				modalElementActive
+			))
 	) {
 		if (this.params.cb(key, this, e)) return e.preventDefault();
 	}
@@ -5300,12 +5583,6 @@ class UIManager extends HTMLElement {
 		this.activeMenuStack = [];
 		this.registeredForResize = [];
 		this.keystrokehub = null;
-		CIQ.installTapEvent(document.body, { preventUnderlayClick: false });
-		var self = this;
-		function handleTap() {
-			self.closeTopMenu();
-		}
-		document.body.addEventListener("stxtap", handleTap);
 	}
 	/**
 	 * Attaches a "resize" event listener to an individual component as part of the context.
@@ -5325,8 +5602,14 @@ class UIManager extends HTMLElement {
 				if (typeof rr[i].resize == "function") rr[i].resize();
 			}
 		};
-		window.addEventListener("resize", this.resize);
-		if (document.body.contains(this)) {
+		function handleTap() {
+			self.closeTopMenu();
+		}
+		var doc = this.document || document;
+		doc.body.addEventListener("stxtap", handleTap);
+		CIQ.installTapEvent(doc.body, { preventUnderlayClick: false });
+		doc.defaultView.addEventListener("resize", this.resize);
+		if (doc.body.contains(this)) {
 			// cq-ui-manager tag exists, must want old way of loading components
 			CIQ.UI.registerComponentsImmediately = true;
 			CIQ.UI.ensureComponentsRegistered();
@@ -5339,11 +5622,12 @@ class UIManager extends HTMLElement {
 	 * tutorial on how to work with and customize the WebComponents can be found here:
 	 * {@tutorial Web Component Interface}.
 	 *
-	 * @alias detachedCallback
+	 * @alias disconnectedCallback
 	 * @memberof CIQ.UI.UIManager
 	 */
 	disconnectedCallback() {
-		window.removeEventListener("resize", this.resize);
+		var doc = this.document || document;
+		doc.defaultView.removeEventListener("resize", this.resize);
 	}
 	/**
 	 * Closes the current active menu and resets the active menu stack.
@@ -5354,13 +5638,18 @@ class UIManager extends HTMLElement {
 	 *
 	 * @param {HTMLElement} [menu] The menu to be closed. If a menu is not specified, all active
 	 * 		menus are closed.
-	 *
+	 * @param {string} [tagFilter] Accepts a comma delimited list of tagNames and closes only matching tags.
 	 * @memberof CIQ.UI.UIManager
 	 * @alias closeMenu
+	 * @since 8.7.0 Modified `tagFilter` parameter to accept a comma seperated list of tag names.
 	 */
-	closeMenu(menu) {
+	closeMenu(menu, tagFilter) {
 		var activeMenuStack = this.activeMenuStack;
 		var closeThese = [];
+		tagFilter = (tagFilter || "")
+			.split(",")
+			.map((item) => item.trim())
+			.filter((item) => item);
 		if (menu) {
 			// if menu is specified then close it
 			closeThese.push(menu);
@@ -5376,7 +5665,10 @@ class UIManager extends HTMLElement {
 		}
 		// hide all the items we've decided to close
 		for (var j = 0; j < closeThese.length; j++) {
-			if (closeThese[j].hide) closeThese[j].hide();
+			const node = closeThese[j];
+			if (tagFilter.length && !tagFilter.includes(node.tagName)) continue;
+			if (node.keepOpen) continue;
+			if (node.hide) node.hide();
 		}
 		// filter out the ones that are inactive
 		this.activeMenuStack = activeMenuStack.filter(function (item) {
@@ -5454,17 +5746,17 @@ class UIManager extends HTMLElement {
 	 */
 	ifAllClosed() {
 		if (!this.activeMenuStack.length) {
-			Array.from(document.querySelectorAll("cq-context,*[cq-context]")).forEach(
-				function (context) {
-					if (
-						context.CIQ &&
-						context.CIQ.UI &&
-						context.CIQ.UI.context &&
-						context.CIQ.UI.context.stx
-					)
-						context.CIQ.UI.context.stx.modalEnd();
-				}
-			);
+			Array.from(
+				(this.document || document).querySelectorAll("cq-context,*[cq-context]")
+			).forEach(function (context) {
+				if (
+					context.CIQ &&
+					context.CIQ.UI &&
+					context.CIQ.UI.context &&
+					context.CIQ.UI.context.stx
+				)
+					context.CIQ.UI.context.stx.modalEnd();
+			});
 		}
 	}
 	/**
@@ -5495,6 +5787,7 @@ class UIManager extends HTMLElement {
 	lift(element) {
 		var n = element;
 		if (!n) return;
+		var doc = n.ownerDocument;
 		n.remember = {
 			parentNode: n.parentNode,
 			css: {
@@ -5509,6 +5802,7 @@ class UIManager extends HTMLElement {
 		};
 		var offset = n.getBoundingClientRect();
 		var height = n.scrollHeight;
+		n.doNotDisconnect = true;
 		n.remove();
 		n.reduceMenuHeight = 5;
 		Object.assign(n.style, {
@@ -5519,7 +5813,8 @@ class UIManager extends HTMLElement {
 			height: height + "px",
 			opacity: 1
 		});
-		document.body.appendChild(n);
+		doc.body.appendChild(n);
+		delete n.doNotDisconnect;
 		if (typeof n.resize != "undefined") n.resize();
 		Array.from(n.querySelectorAll("cq-scroll")).forEach(function (scroll) {
 			scroll.resize();
@@ -5546,20 +5841,20 @@ class UIManager extends HTMLElement {
 		}, 0);
 		this.activeMenuStack.push(menu);
 		menu.show(params);
-		Array.from(document.querySelectorAll("cq-context,*[cq-context]")).forEach(
-			function (context) {
-				if (
-					context.CIQ &&
-					context.CIQ.UI &&
-					context.CIQ.UI.context &&
-					context.CIQ.UI.context.stx
-				) {
-					const { stx } = context.CIQ.UI.context;
-					stx.modalBegin();
-					if (stx.callbackListeners.menu) stx.dispatch("menu", { stx, menu });
-				}
+		Array.from(
+			menu.ownerDocument.querySelectorAll("cq-context,*[cq-context]")
+		).forEach(function (context) {
+			if (
+				context.CIQ &&
+				context.CIQ.UI &&
+				context.CIQ.UI.context &&
+				context.CIQ.UI.context.stx
+			) {
+				const { stx } = context.CIQ.UI.context;
+				stx.modalBegin();
+				if (stx.callbackListeners.menu) stx.dispatch("menu", { stx, menu });
 			}
-		);
+		});
 	}
 	/**
 	 * Registers a resize event listener for `element`.
@@ -5588,7 +5883,9 @@ class UIManager extends HTMLElement {
 	restoreLift(element) {
 		if (!element) return;
 		var remember = element.remember;
+		element.doNotDisconnect = true;
 		element.remove();
+		delete element.doNotDisconnect;
 		Object.assign(element.style, remember.css);
 		remember.parentNode.appendChild(element);
 	}
@@ -5629,6 +5926,20 @@ class UIManager extends HTMLElement {
 	}
 }
 CIQ.UI.UIManager = UIManager;
+CIQ.ChartEngine.registerGlobalEvent(
+	"unload",
+	function () {
+		const manager = CIQ.UI._uiManagers.get(this.document);
+		if (manager) {
+			CIQ.UI._uiManagers.delete(this.document);
+			try {
+				manager.disconnectedCallback();
+			} catch (e) {}
+		}
+	},
+	false,
+	true
+);
 /**
  * Obtains a reference to the document's [cq-ui-manager]{@link WebComponents.cq-ui-manager}
  * instance or, if one does not exist, creates an instance.
@@ -5636,20 +5947,32 @@ CIQ.UI.UIManager = UIManager;
  * Avoids the need for a `cq-ui-manager` singleton when multiple charts are present in one
  * document.
  *
+ * @param {Element} [element] Pass an element to give a hint as to where to find the UI Manager.
  * @returns {CIQ.UI.UIManager} A reference to the document's UI manager.
  *
  * @memberof CIQ.UI
- * @since 7.5.0
+ * @since
+ * - 7.5.0
+ * - 8.5.0 Added `element` parameter.
  */
-CIQ.UI.getUIManager = function () {
-	if (CIQ.UI._uiManager) return CIQ.UI._uiManager;
-	let uiManager = document.querySelector("cq-ui-manager");
+CIQ.UI.getUIManager = function (element) {
+	let doc = document;
+	if (element) {
+		const context = element.closest("cq-context, *[cq-context]");
+		if (context) doc = context.portalDoc || doc;
+		else doc = element.ownerDocument || doc;
+	}
+	if (!CIQ.UI._uiManagers) CIQ.UI._uiManagers = new WeakMap();
+	const existingUIManager = CIQ.UI._uiManagers.get(doc);
+	if (existingUIManager) return existingUIManager;
+	let uiManager = doc.querySelector("cq-ui-manager");
 	if (!uiManager) {
 		// if node has not been attached create and initiate uiManager
 		uiManager = new CIQ.UI.UIManager();
+		uiManager.document = doc;
 		uiManager.connectedCallback();
 	}
-	CIQ.UI._uiManager = uiManager;
+	CIQ.UI._uiManagers.set(doc, uiManager);
 	return uiManager;
 };
 customElements.define("cq-ui-manager", UIManager);
@@ -5661,7 +5984,7 @@ const { qs, qsa, channelWrite, channelRead, channelSubscribe } =
  * and the chart user interface.
  *
  * The decisions on what to initiate and how it gets initiated are based on the provided
- * configuration object and the availabilty of resources loaded in the {@link CIQ} namespace.
+ * configuration object and the availability of resources loaded in the {@link CIQ} namespace.
  *
  * @name CIQ.UI.Chart
  * @class
@@ -5701,89 +6024,16 @@ class Chart {
 			deferLoad: true
 		});
 		chartContainer.stx = stx;
-		let parentContext = container.closest("cq-context");
-		if (parentContext) {
-			parentContext = parentContext.parentElement.closest("cq-context");
-			if (parentContext) {
-				CIQ.UI.stxtap(container, ({ target }) => {
-					const contextEl = target.closest("cq-context");
-					if (contextEl) {
-						const context = contextEl.CIQ.UI.context;
-						parentContext.switchContext(context);
-					}
-				});
-			}
-		}
 		CIQ.UI.scrollbarStyling = config.scrollbarStyling;
 		CIQ.UI.ensureComponentsRegistered();
 		let uiContext = new CIQ.UI.Context(stx, contextContainer);
+		if (!uiContext.topNode.hasAttribute("tabindex"))
+			uiContext.topNode.setAttribute("tabindex", "0");
 		uiContext.config = config;
 		container.context = uiContext; // make context available for grid
-		if (existingContext) {
-			container.switchContext = getContextSwitcher(container);
-			// Activate the first charts context. Set in the next event loop to ensure context is available
-			setTimeout(() => {
-				container.switchContext(existingContext);
-			});
-			const chartArr = Array.from(container.querySelectorAll("cq-context"))
-				.map((el) => el.querySelector(".chartContainer"))
-				.concat(uiContext.stx.container);
-			container.getChartContainers = () => chartArr;
-			container.getCharts = () => chartArr.map(({ stx }) => stx);
-		}
-		function getContextSwitcher(container) {
-			let currentContext = container.CIQ.UI.context;
-			const targetContext = container.CIQ.UI.context;
-			const updateContext = (context) => {
-				if (context === currentContext) return;
-				currentContext = context;
-				getHeaderAndFooterElements().forEach((el) =>
-					updateElContext(el, context)
-				);
-				updateHelpers(context);
-				Array.from(container.querySelectorAll("cq-context-wrapper")).forEach(
-					(wrapper) => {
-						const wrapperContext =
-							wrapper.querySelector("cq-context").CIQ.UI.context;
-						wrapper.classList.toggle("active", context === wrapperContext);
-					}
-				);
-			};
-			return updateContext;
-			function getHeaderAndFooterElements() {
-				return getElements(".ciq-nav, .ciq-footer", container).filter((el) => {
-					return (
-						el.localName !== "cq-themes" &&
-						el.localName !== "cq-info-toggle-dropdown" &&
-						el.localName !== "cq-side-nav" &&
-						!el.classList.contains("shortcuts-ui")
-					);
-				});
-			}
-			function getElements(selectors, context) {
-				return selectors.split(/, |,/g).reduce((acc, selector) => {
-					const container = context.querySelector(selector);
-					const elements = Array.from(container.querySelectorAll("*"));
-					return acc.concat(elements);
-				}, []);
-			}
-			function updateElContext(el, context) {
-				if (el.changeContext) {
-					el.changeContext(context);
-					return;
-				}
-				if (el.stx) el.stx = context.stx;
-				if (el.context) el.context = context;
-			}
-			function updateHelpers(newContext) {
-				Object.values(targetContext.advertised).forEach((helper) => {
-					if (helper.changeContext) helper.changeContext(newContext);
-				});
-			}
-		}
 		// create UI helpers
-		new CIQ.UI.Layout(uiContext);
-		new CIQ.UI.Channel(uiContext);
+		CIQ.UI.Layout(uiContext);
+		CIQ.UI.Channel(uiContext);
 		this.initLookup(uiContext);
 		this.initDialogHandler(uiContext);
 		this.initContainerListeners(uiContext);
@@ -5792,21 +6042,24 @@ class Chart {
 			CIQ.UI.BaseComponent.buildReverseBindings(contextContainer);
 			return uiContext;
 		}
-		new CIQ.UI.StudyEdit(null, uiContext);
+		CIQ.UI.StudyEdit(null, uiContext);
 		this.initDrawingTools(uiContext);
 		this.initDrawingEditListeners(uiContext);
-		this.initColorPicker();
+		this.initColorPicker(uiContext);
 		this.initExtensions({ stx, uiContext, config, type: "plugins" });
+		if (config.onEngineReady) config.onEngineReady(stx);
 		this.loadChart(uiContext);
 		if (config.language) CIQ.I18N.setLanguage(stx, config.language);
 		CIQ.UI.BaseComponent.buildReverseBindings(contextContainer);
 		contextContainer.bindingInitiated = true;
 		CIQ.UI.begin(config.onWebComponentsReady); // initiates webcomponent taps and binding
-		uiContext.uiManager = CIQ.UI.getUIManager();
+		uiContext.uiManager = CIQ.UI.getUIManager(uiContext.topNode);
 		uiContext.uiManager.initializeMenuListeners(stx);
 		// Call to setTabOrderElements is moved to the event queue so the dom has a chance to render
 		window.setTimeout(function () {
-			document.body.keystrokeHub.resetTabNavigation();
+			uiContext.topNode.ownerDocument.body.keystrokeHub.resetTabNavigation();
+			if (CIQ.UI.setDefaultStates) CIQ.UI.setDefaultStates(uiContext);
+			if (CIQ.UI.setAriaStates) CIQ.UI.setAriaStates(uiContext);
 		}, 0);
 		return uiContext;
 		function getContextContainer(container) {
@@ -5862,6 +6115,26 @@ class Chart {
 			keystrokeHub
 		);
 		contextContainer.addEventListener("mouseover", keystrokeHubSetter);
+		contextContainer.addEventListener("focus", (event) => {
+			if (event.target.hasAttribute("cq-keyboardnavigation-active")) return;
+			keystrokeHubSetter(event);
+			event.target.setAttribute("cq-keyboardnavigation-active", "");
+			keystrokeHub.resetTabNavigation();
+		});
+		//contextContainer.addEventListener("focus", keystrokeHubSetter);
+		contextContainer.addEventListener("blur", (event) => {
+			// If refocusing to a child element, ignore and keep keyboard navigation active
+			const dialogContainer = document.querySelector(".cq-dialogs");
+			if (
+				event.relatedTarget &&
+				(contextContainer.contains(event.relatedTarget) ||
+					(dialogContainer && dialogContainer.contains(event.relatedTarget)))
+			)
+				return;
+			event.target.removeAttribute("cq-keyboardnavigation-active");
+			keystrokeHub.tabOrderDeselect();
+			keystrokeHub.highlightHide();
+		});
 	}
 	/**
 	 * Creates a symbol change filter and attaches it to the chart UI context and lookup
@@ -5935,18 +6208,18 @@ class Chart {
 	 * @since 7.5.0
 	 */
 	initKeystrokeHub(uiContext) {
-		if (document.body.keystrokeHub) {
-			return document.body.keystrokeHub;
+		let doc = document;
+		if (uiContext) doc = uiContext.topNode.portalDoc || doc;
+		if (doc.body.keystrokeHub) {
+			return doc.body.keystrokeHub;
 		}
-		document.body.keystrokeHub = new CIQ.UI.KeystrokeHub(
-			document.body,
-			uiContext,
-			{ cb: CIQ.UI.KeystrokeHub.defaultHotKeys }
-		);
-		return document.body.keystrokeHub;
+		doc.body.keystrokeHub = new CIQ.UI.KeystrokeHub(doc.body, uiContext, {
+			cb: CIQ.UI.KeystrokeHub.defaultHotKeys
+		});
+		return doc.body.keystrokeHub;
 	}
 	/**
-	 * Gets a callback that set the the active context of the keystroke hub based on the mouse
+	 * Gets a callback that set the active context of the keystroke hub based on the mouse
 	 * pointer location.
 	 *
 	 * When multiple charts are on a page, the chart with the mouse pointer over it responds
@@ -5991,10 +6264,11 @@ class Chart {
 			if (!itemConfig) {
 				return;
 			}
-			let el = qs(itemConfig.tag);
+			const doc = params.context.topNode.ownerDocument;
+			let el = qs(itemConfig.tag, doc);
 			if (!el) {
 				// create and add to dialogs
-				const dialogs = getDialogContainer();
+				const dialogs = getDialogContainer(doc);
 				const dialogWrapper = document.createElement("cq-dialog");
 				el = document.createElement(itemConfig.tag);
 				Object.entries(itemConfig.attributes || {}).forEach(([name, value]) =>
@@ -6006,12 +6280,12 @@ class Chart {
 			if (el && el.open) {
 				el.open(params);
 			}
-			function getDialogContainer() {
-				let container = qs(".cq-dialogs");
+			function getDialogContainer(doc) {
+				let container = qs(".cq-dialogs", doc);
 				if (container) return container;
 				container = document.createElement("div");
 				container.classList.add("cq-dialogs");
-				document.body.append(container);
+				doc.body.append(container);
 				return container;
 			}
 		}
@@ -6082,14 +6356,25 @@ class Chart {
 	 * Creates and appends a [cq-color-picker]{@link WebComponents.cq-color-picker} component
 	 * to the document body if one is not already attached.
 	 *
+	 * @param {CIQ.UI.Context} uiContext The chart user interface context.
+	 *
 	 * @alias initColorPicker
 	 * @memberof CIQ.UI.Chart.prototype
-	 * @since 7.5.0
+	 * @since
+	 * - 7.5.0
+	 * - 8.5.0 Added `uiContext` parameter.
 	 */
-	initColorPicker() {
-		const colorPicker = document.querySelector("cq-color-picker");
+	initColorPicker(uiContext) {
+		let doc = document;
+		if (uiContext) doc = uiContext.topNode || doc;
+		let colorPicker = doc.querySelector("cq-color-picker");
 		if (colorPicker) return;
-		document.body.append(document.createElement("cq-color-picker"));
+		doc = doc.ownerDocument || doc;
+		colorPicker = doc.querySelector("body > cq-color-picker");
+		if (colorPicker) return;
+		colorPicker = document.createElement("cq-color-picker");
+		document.body.append(colorPicker); // we need to put it here first!
+		if (doc.ownerDocument) doc.ownerDocument.body.append(colorPicker);
 	}
 	/**
 	 * Loads a chart with an initial symbol. When configured to restore the layout (which is
@@ -6123,6 +6408,7 @@ class Chart {
 			topNode,
 			config: {
 				chartId,
+				multiChartId,
 				initialSymbol,
 				restore,
 				onChartReady,
@@ -6132,7 +6418,10 @@ class Chart {
 		} = uiContext;
 		if (loader) loader.show();
 		if (restore) {
-			CIQ.ChartEngine.restorePreferences(stx, chartId || topNode.id);
+			CIQ.ChartEngine.restorePreferences(
+				stx,
+				multiChartId || chartId || topNode.id
+			);
 			CIQ.ChartEngine.restoreLayout(
 				stx,
 				function () {
@@ -6143,7 +6432,8 @@ class Chart {
 					}
 					cbChartReady();
 				},
-				chartId
+				chartId,
+				uiContext.config
 			);
 		} else {
 			loadSymbol();
@@ -6197,6 +6487,7 @@ class Chart {
 			},
 			config: { channels = {} } = {}
 		} = uiContext;
+		if (stx.destroyed) return; // don't resize if chart is dead
 		// avoid notification if there are no changes in dimensions
 		const previous = channelRead(
 			channels.containerSize || "channel.containerSize",
@@ -6270,7 +6561,7 @@ class Chart {
 		if (typeof height === "undefined") return breakWidth;
 		let breakHeight = "break-height-sm";
 		if (height > 768) breakHeight = "break-height-lg";
-		else if (height > 400) breakHeight = "break-height-md";
+		else if (height > 350) breakHeight = "break-height-md";
 		return [breakWidth, breakHeight];
 	}
 	/**
@@ -6284,12 +6575,13 @@ class Chart {
 	 */
 	initEventMarkers(uiContext) {
 		const config = uiContext.config;
+		if (!config.eventMarkersImplementation) return;
 		if (CIQ.UI.Markers) {
 			const implementation =
 				config.eventMarkersImplementation &&
 				new config.eventMarkersImplementation(uiContext.stx);
 			const menuItemSelector = config.selector.markersMenuItem;
-			new CIQ.UI.Markers(uiContext, { menuItemSelector, implementation });
+			CIQ.UI.Markers(uiContext, { menuItemSelector, implementation });
 		}
 	}
 	/**
@@ -6378,11 +6670,16 @@ class Chart {
 	 * @since 7.5.0
 	 */
 	sidenavSizeSetter(uiContext) {
-		const chartArea = qs(".ciq-chart-area", uiContext.topNode);
+		const chartArea = qs(
+			".ciq-multi-chart-container-wrapper, .ciq-chart-area",
+			uiContext.topNode
+		);
 		const stx = uiContext.stx;
 		return function setSidenavSize(value) {
 			chartArea.style.left = value + "px";
-			stx.resizeChart();
+			CIQ.getFnFromNS(uiContext, "topNode.getCharts", [
+				uiContext.stx
+			])().forEach((chart) => chart.resizeChart());
 		};
 	}
 	/**
@@ -6463,6 +6760,639 @@ class Chart {
 }
 CIQ.UI.Chart = Chart;
 /**
+ * The Multichart class contains a collection of methods used to instantiate and configure
+ * a multi-chart container and charts post execution of Chart.createChartAndUI.
+ *
+ * @name CIQ.UI.Multichart
+ * @class
+ * @since 8.6.0
+ */
+class Multichart {
+	/**
+	 * Creates a chart grid with a shared footer and header.
+	 * Use with the *sample-template-advanced-multi.html* template.
+	 *
+	 * @param {object} params
+	 * @param {string | HTMLElement} parms.container DOM node or query path identifyig the `cq-context` host element.
+	 * @param {object} params.chartConfig Object containing parameters for chart creation in a multi-chart environment.
+	 * @param {object[]} params.chartConfig.charts Array of objects containing the default symbol and `chartId` property.
+	 * 	chartId is optional
+	 * @param {number} [params.chartConfig.colCount] Maximum number of charts in a grid row.
+	 *	Adding a new chart past this value creates a new row.
+	 * @param {object} config Chart configuration.
+	 * @returns CIQ.ChartEngine[] Chart engine array.
+	 *
+	 * @alias createCharts
+	 * @memberof CIQ.UI.Multichart
+	 * @since 8.6.0
+	 */
+	createCharts({ containerId, chartsConfig }, config) {
+		const container =
+			!containerId || typeof containerId === "string"
+				? document.querySelector(containerId || "cq-context")
+				: containerId;
+		const wrappers = Array.from(
+			container.querySelectorAll("cq-context-wrapper")
+		);
+		if (!wrappers.length) {
+			throw "cq-context-wrapper element is required for multichart template setup";
+		}
+		const chartTemplate = wrappers[0].outerHTML;
+		let { charts, colCount = 2 } = chartsConfig;
+		// Replicate template for additional charts that
+		charts.slice(0, charts.length - wrappers.length).forEach(() => {
+			wrappers[0].parentElement.insertAdjacentHTML("beforeend", chartTemplate);
+		});
+		const contexts = container.querySelectorAll("cq-context");
+		// Reset config root
+		config.root = null;
+		// Default to keeping drawing tool selected after drawing is complete
+		if (config.keepDrawingToolSelected === undefined) {
+			config.keepDrawingToolSelected = true;
+		}
+		let currentVectorParameters, drawingPrefs;
+		const chartFactory = new CIQ.UI.Chart();
+		const stxArr = charts.map(({ symbol, chartId }, i) => {
+			// Clone parent configuration for each chart
+			const chartConfig = CIQ.clone(config);
+			chartConfig.initialSymbol =
+				typeof symbol !== undefined ? symbol : chartConfig.initialSymbol;
+			chartConfig.chartId =
+				chartId || (config.chartId || "") + "_c" + CIQ.uniqueID();
+			const chartContainer = contexts[i];
+			chartContainer
+				.closest("cq-context-wrapper")
+				.classList.add("ciq-chart-col-" + colCount);
+			chartConfig.root = chartContainer;
+			const { stx } = chartFactory.createChartAndUI({
+				container: chartContainer,
+				config: chartConfig
+			});
+			// If soloing on draw is enabled share drawing parameter instance
+			if (config.soloActive && config.soloActive.onDraw) {
+				if (i === 0) {
+					// store first charts currentVectorParameters
+					currentVectorParameters = stx.currentVectorParameters;
+					drawingPrefs = stx.preferences.drawings =
+						stx.preferences.drawings || {};
+				} else {
+					stx.currentVectorParameters = currentVectorParameters;
+					stx.preferences.drawings = drawingPrefs;
+				}
+			}
+			this.initChart(chartContainer, chartConfig, stx);
+			return stx;
+		});
+		chartFactory.createChartAndUI({
+			container,
+			config
+		});
+		this.initContainer(container, config, chartTemplate);
+		this.setGridUI(container, colCount);
+		container.colCount = colCount;
+		container.updateLayout();
+		return stxArr;
+	}
+	/**
+	 * Initializes a multi-chart context container.
+	 *
+	 * Attaches methods to the container to be invoked by individual charts and the UI.
+	 *
+	 * @param {HTMLElement} container Multi-chart context container.
+	 * @param {object} config Chart configuration object.
+	 * @param {string} chartTemplate Chart markup template to create new charts.
+	 *
+	 * @alias initContainer
+	 * @memberof CIQ.UI.Multichart
+	 * @since 8.6.0
+	 */
+	initContainer(container, config, chartTemplate) {
+		const childContextContainer = container.querySelector("cq-context");
+		this.contextSwitcher(container);
+		this.addChart(container, config, chartTemplate);
+		this.removeChart(container, config);
+		this.solo(container, config);
+		this.toggleSolo(container, config);
+		this.setColCount(container);
+		this.updateGridListener(container);
+		this.updateLayout(container, config);
+		this.utils(container);
+		// copy attributes from inner chart to enable plugins and addOn UI interface
+		this.copyAttributes(childContextContainer, container);
+		// activate the first charts context. Set in the next event loop to ensure context is available
+		setTimeout(() => {
+			container.switchContext(childContextContainer.CIQ.UI.context);
+		});
+	}
+	/**
+	 * Initializes a chart for a multi-chart environment.
+	 *
+	 * @param {HTMLElement} container Chart context container.
+	 * @param {object} config Chart configuration object.
+	 * @param {CIQ.ChartEngine} stx A reference to the chart engine.
+	 *
+	 * @alias initChart
+	 * @memberof CIQ.UI.Multichart
+	 * @since 8.6.0
+	 */
+	initChart(container, config, stx) {
+		const parentContainer = container.parentElement.closest("cq-context");
+		stx.keepDrawingToolSelected = config.keepDrawingToolSelected;
+		CIQ.UI.stxtap(container, ({ target }) => {
+			const contextEl = target.closest("cq-context");
+			if (contextEl) {
+				const context = contextEl.CIQ.UI.context;
+				parentContainer.switchContext(context);
+			}
+		});
+		const { onDraw } = config.soloActive || {};
+		const shouldSolo =
+			CIQ.getFromNS(config, "soloActive.onDraw.shouldSolo") || (() => true);
+		if (onDraw)
+			channelSubscribe(
+				config.channels.drawing,
+				(value) => {
+					if (parentContainer.soloActive) {
+						parentContainer.soloActive(value && shouldSolo(stx), "onDraw");
+					}
+				},
+				container.CIQ.UI.context.stx
+			);
+		// Update other charts that they do not have mouseover any longer
+		const moveout = 5000;
+		stx.prepend("mousemoveinner", (x, y) => {
+			if (stx.__notifiedExit || x === moveout) return;
+			const charts = parentContainer.getCharts();
+			charts.forEach((chart) => {
+				if (chart !== stx) {
+					chart.mousemoveinner(moveout, moveout);
+					chart.__notifiedExit = false;
+				}
+			});
+			stx.__notifiedExit = true;
+		});
+		container.closest("cq-context-wrapper").close = function () {
+			if (parentContainer.activeRequests) {
+				parentContainer.toggleSolo({ node: this });
+			}
+			parentContainer.removeChart(this);
+		};
+		const { drawing = "channel.drawing" } = config.channels || {};
+		CIQ.UI.addResizeListener(container, () => {
+			const { width, height } = container.getBoundingClientRect();
+			if (!width || !height) return;
+			const drawingOn = channelRead(drawing, stx);
+			const isSolo = container.closest(".ciq-solo");
+			if (drawingOn && shouldSolo(stx) && !isSolo) {
+				channelWrite(drawing, false, stx);
+			}
+		});
+		container.multiChartContainer = parentContainer;
+	}
+	/**
+	 * Creates and attaches the `addChart` method to the chart wrapper container.
+	 *
+	 * @param {HTMLElement} container Chart wrapper container.
+	 * @param {object} config Chart configuration ojbject.
+	 * @param {string} chartTemplate Chart template to create new charts.
+	 *
+	 * @alias addChart
+	 * @memberof CIQ.UI.Multichart
+	 * @since 8.6.0
+	 */
+	addChart(container, config, chartTemplate) {
+		container.addChart = (options, position = "after") => {
+			if (container.activeRequests) {
+				container.toggleSolo({
+					node: container.querySelector(
+						"cq-context-wrapper.active .ciq-solo-toggle"
+					)
+				});
+			}
+			let { node, symbol, chartId } = options || {};
+			const selectChartWrapper = node
+				? node.closest("cq-context-wrapper")
+				: container.querySelector("cq-context-wrapper.active");
+			if (config.multiChartCopySymbol)
+				symbol = CIQ.getFromNS(
+					selectChartWrapper.querySelector("cq-context"),
+					"CIQ.UI.context.stx.chart.symbolObject"
+				);
+			const { crosshair, headsUp } =
+				selectChartWrapper.querySelector("cq-context").CIQ.UI.context.stx
+					.layout;
+			let chartWrapper;
+			if (position === "before") {
+				selectChartWrapper.insertAdjacentHTML("afterEnd", chartTemplate);
+				chartWrapper = selectChartWrapper.nextSibling;
+			} else if (position === "after") {
+				selectChartWrapper.insertAdjacentHTML("beforeBegin", chartTemplate);
+				chartWrapper = selectChartWrapper.previousSibling;
+			}
+			CIQ.UI.BaseComponent.buildReverseBindings(chartWrapper);
+			const chartContainer = chartWrapper.querySelector("cq-context");
+			const chartConfig = CIQ.clone(config);
+			chartConfig.initialSymbol =
+				typeof symbol !== undefined ? symbol : chartConfig.initialSymbol;
+			chartConfig.chartId = chartId || `_c${CIQ.uniqueID()}`;
+			chartWrapper.classList.add(`ciq-chart-col-${container.colCount || 2}`);
+			chartConfig.root = chartContainer;
+			const stx = chartConfig.createChart(chartContainer);
+			stx.layout.crosshair = crosshair;
+			stx.layout.headsUp = Object.assign({}, headsUp);
+			container
+				.querySelectorAll("cq-info-toggle-dropdown")
+				.forEach((item) => item.initInfoComponents(container));
+			if (container.setCurrentThemeClass) {
+				container.setCurrentThemeClass(chartContainer);
+			}
+			this.initChart(chartContainer, chartConfig, stx);
+			chartContainer.dispatchEvent(new Event("stxtap"));
+			if (!symbol) {
+				setTimeout(() => {
+					const input = container.querySelector("cq-lookup input");
+					input.dispatchEvent(new Event("pointerdown"));
+					input.dispatchEvent(new Event("pointerup"));
+					input.focus();
+				});
+			}
+			container.updateLayout();
+			return stx;
+		};
+	}
+	/**
+	 * Creates and attaches the `removeChart` method to the chart wrapper container that enables removal of the active chart.
+	 *
+	 * @param {HTMLElement} container Chart wrapper container.
+	 * @param {object} config Chart configuration object.
+	 *
+	 * @alias removeChart
+	 * @memberof CIQ.UI.Multichart
+	 * @since 8.6.0
+	 */
+	removeChart(container, config) {
+		container.removeChart = function removeChart(chartWrapper) {
+			const wrapper =
+				chartWrapper || container.querySelector("cq-context-wrapper.active");
+			const isActive = wrapper.classList.contains("active");
+			const sibling =
+				wrapper.nextElementSibling || wrapper.previousElementSibling;
+			if (!sibling) return;
+			if (isActive) {
+				sibling.querySelector("cq-context").dispatchEvent(new Event("stxtap"));
+			}
+			wrapper.querySelector("cq-context").CIQ.UI.context.stx.destroy();
+			wrapper.remove();
+			const Store = config.nameValueStore || CIQ.NameValueStore;
+			const store = new Store();
+			const chartId = CIQ.getFromNS(
+				wrapper.querySelector("cq-context") || {},
+				"CIQ.UI.context.config.chartId"
+			);
+			const baseId = CIQ.getFromNS(
+				wrapper.querySelector("cq-context") || {},
+				"CIQ.UI.context.config.chartId"
+			);
+			if (chartId) {
+				store.remove(`myChartLayout${chartId}`);
+				const drawingsKey = `${chartId || ""}_drawings`;
+				store.get(drawingsKey, (err, values) => {
+					if (err || !values) return;
+					Object.keys(values).forEach((key) => {
+						store.remove(key);
+					});
+					store.remove(drawingsKey);
+				});
+				container.updateLayout();
+			}
+		};
+	}
+	/**
+	 * Creates and attaches a context switcher method context to the container that allows a change to the multi-chart active context.
+	 *
+	 * @param {HTMLElement} container Chart wrapper container.
+	 *
+	 * @alias contextSwitcher
+	 * @memberof CIQ.UI.Multichart
+	 * @since 8.6.0
+	 */
+	contextSwitcher(container) {
+		let currentContext = container.CIQ.UI.context;
+		const targetContext = container.CIQ.UI.context;
+		container.switchContext = (context) => {
+			if (context === currentContext) return;
+			currentContext = context;
+			this.getCommonUI(container).forEach((el) => updateElContext(el, context));
+			updateHelpers(context);
+			Array.from(container.querySelectorAll("cq-context-wrapper")).forEach(
+				(wrapper) => {
+					const wrapperContext =
+						wrapper.querySelector("cq-context").CIQ.UI.context;
+					wrapper.classList.toggle("active", context === wrapperContext);
+				}
+			);
+		};
+		function updateElContext(el, context) {
+			if (el.changeContext) {
+				el.changeContext(context);
+				return;
+			}
+			if (el.stx) el.stx = context.stx;
+			if (el.context) el.context = context;
+		}
+		function updateHelpers(newContext) {
+			Object.values(targetContext.advertised).forEach((helper) => {
+				if (helper.changeContext) helper.changeContext(newContext);
+			});
+		}
+	}
+	/**
+	 * Creates and attaches a solo method to the chart wrapper container that expands the active chart content as
+	 * the only visible chart in a multi-chart container.
+	 *
+	 * @param {HTMLElement} container Chart wrapper container.
+	 * @param {object} config Chart configuration object.
+	 *
+	 * @alias solo
+	 * @memberof CIQ.UI.Multichart
+	 * @since 8.6.0
+	 */
+	solo(container, config) {
+		let init;
+		container.soloActive = (solo, type) => {
+			if (!init) {
+				init = true;
+				return;
+			}
+			let { activeRequests = 0 } = container;
+			const inSolo = activeRequests;
+			activeRequests += solo ? 1 : activeRequests ? -1 : 0;
+			Object.assign(container, { activeRequests });
+			const activeChartWrapper = container.querySelector(
+				"cq-context-wrapper.active"
+			);
+			if (!activeChartWrapper) return;
+			container.querySelectorAll("cq-context-wrapper").forEach((el) => {
+				const isActive = el.classList.contains("active");
+				el.classList.remove("ciq-solo-minimized", "ciq-solo");
+				if (activeRequests) {
+					el.classList.add(isActive ? "ciq-solo" : "ciq-solo-minimized");
+				}
+			});
+			container.classList.toggle("ciq-solo", !!solo);
+			const activeChart =
+				activeChartWrapper.querySelector("cq-context").context.stx;
+			if (solo) {
+				const notify = CIQ.getFromNS(config, `soloActive.${type}.notify`);
+				if (
+					!inSolo &&
+					notify &&
+					container.classList.contains("ciq-multi-chart")
+				)
+					activeChart.dispatch("notification", notify);
+			} else if (!activeRequests) {
+				// hide all possibly issued notification when returning to grid
+				Object.values(config.soloActive || {})
+					.filter((value) => value.notify)
+					.forEach(({ notify }) => {
+						activeChart.dispatch(
+							"notification",
+							Object.assign({}, notify, { remove: true })
+						);
+					});
+			}
+		};
+	}
+	/**
+	 * Creates and attaches the `toggleSolo` method to the chart wrapper container that toggles expansion of the clicked
+	 * chart content as the only visible chart in a multi-chart container.
+	 *
+	 * @param {HTMLElement} container Chart wrapper container.
+	 * @param {object} config Chart configuration object.
+	 *
+	 * @alias toggleSolo
+	 * @memberof CIQ.UI.Multichart
+	 * @since 8.6.0
+	 */
+	toggleSolo(container, config) {
+		container.toggleSolo = ({ node }) => {
+			const contextEl = node
+				.closest("cq-context-wrapper")
+				.querySelector("cq-context");
+			const context = contextEl.CIQ.UI.context;
+			if (container.activeRequests) {
+				const { drawing = "channel.drawing", tfc = "channel.tfc" } =
+					config.channels || {};
+				const { channelWrite } = CIQ.UI.BaseComponent.prototype;
+				channelWrite(drawing, false, context.stx);
+				channelWrite(tfc, false, context.stx);
+				container.soloActive(false, "toggle");
+			} else {
+				const isActive = node
+					.closest("cq-context-wrapper")
+					.classList.contains("active");
+				if (!isActive) {
+					container.switchContext(context);
+				}
+				container.soloActive(true, "toggle");
+			}
+		};
+	}
+	/**
+	 * Creates and attaches the `setColCount` method  to the chart wrapper container to enable changing the maximum columnn count.
+	 *
+	 * @param {HTMLElement} container Chart wrapper container.
+	 *
+	 * @alias setColCount
+	 * @memberof CIQ.UI.Multichart
+	 * @since 8.6.0
+	 */
+	setColCount(container) {
+		container.setColCount = function setColCount(n) {
+			container.colCount = n;
+			container.querySelectorAll("cq-context-wrapper").forEach((el) => {
+				el.classList.remove(
+					"ciq-chart-col-1",
+					"ciq-chart-col-2",
+					"ciq-chart-col-3",
+					"ciq-chart-col-4",
+					"ciq-chart-col-5"
+				);
+				el.classList.add(`ciq-chart-col-${n}`);
+			});
+			container.updateLayout();
+		};
+	}
+	/**
+	 * Creates a listener for changes in the maximum columnn count.
+	 *
+	 * @param {HTMLElement} container Chart wrapper container.
+	 *
+	 * @alias updateGridListner
+	 * @memberof CIQ.UI.Multichart
+	 * @since 8.6.0
+	 */
+	updateGridListener(container) {
+		container.addEventListener(
+			"update-grid",
+			({ detail: { columns, container: selecteContainer } }) => {
+				if (selecteContainer !== container) return;
+				container.setColCount(columns);
+			}
+		);
+	}
+	/**
+	 * Creates and attaches the `updateLayout` method to the chart wrapper container that stores the current multi-chart layout in `NameValueStore`.
+	 *
+	 * @param {HTMLElement} container Chart wrapper container
+	 * @param {object} config Chart configuration ojbject
+	 *
+	 * @alias updateLayout
+	 * @memberof CIQ.UI.Multichart
+	 * @since 8.6.0
+	 */
+	updateLayout(container, config) {
+		container.updateLayout = function () {
+			const Store = config.nameValueStore || CIQ.NameValueStore;
+			const store = new Store();
+			const charts = Array.from(
+				container.ownerDocument.querySelectorAll("cq-context-wrapper"),
+				(wrapper) => {
+					const chartId = CIQ.getFromNS(
+						wrapper.querySelector("cq-context") || {},
+						"CIQ.UI.context.config.chartId"
+					);
+					if (!chartId) return;
+					return { chartId };
+				}
+			).filter((item) => item);
+			store.set("multiCharts" + (config.multiChartId || ""), {
+				charts,
+				colCount: container.colCount
+			});
+			container.classList[charts.length > 1 ? "add" : "remove"](
+				"ciq-multi-chart"
+			);
+		};
+	}
+	/**
+	 * Copies attributes ending with "-active" from the source to the target element.
+	 *
+	 * @param {HTMLElement} fromEl Source element.
+	 * @param {HTMLElement} toEl Target element.
+	 *
+	 * @alias copyAttributes
+	 * @memberof CIQ.UI.Multichart
+	 * @since 8.6.0
+	 */
+	copyAttributes(fromEl, toEl) {
+		fromEl
+			.getAttributeNames()
+			.filter((attribute) => /-active$/.test(attribute))
+			.forEach((attribute) =>
+				toEl.setAttribute(attribute, fromEl.getAttribute(attribute))
+			);
+	}
+	/**
+	 * Gets an array of shared UI elements that are context-switch aware.
+	 *
+	 * @param {HTMLElement} container Chart wrapper container.
+	 *
+	 * @alias getCommonUI
+	 * @memberof CIQ.UI.Multichart
+	 * @since 8.6.0
+	 */
+	getCommonUI(container) {
+		return getElements(".ciq-nav, .ciq-footer", container).filter((el) => {
+			return (
+				el.localName !== "cq-themes" &&
+				el.localName !== "cq-info-toggle-dropdown" &&
+				el.localName !== "cq-side-nav" &&
+				!el.classList.contains("ciq-sidenav") &&
+				!el.classList.contains("shortcuts-ui")
+			);
+		});
+		function getElements(selectors, context) {
+			return selectors.split(/, |,/g).reduce((acc, selector) => {
+				const container = context.querySelector(selector);
+				const elements = Array.from(container.querySelectorAll("*"));
+				return acc.concat(elements);
+			}, []);
+		}
+	}
+	/**
+	 * Updates the grid selector column count.
+	 *
+	 * @param {HTMLElement} container Chart wrapper container.
+	 * @param {number|string} colCount Column count.
+	 *
+	 * @alias setGridUI
+	 * @memberof CIQ.UI.Multichart
+	 * @since 8.6.0
+	 */
+	setGridUI(container, colCount) {
+		const gridUI = container.querySelector("cq-grid-size-picker");
+		if (!gridUI) return;
+		gridUI.generateTable(+colCount + 1, 1);
+		gridUI.highlightTable(+colCount, 1);
+	}
+	/**
+	 * Creates and attaches utility methods to a container; for example, to get an array of
+	 * chart engines in a multi-chart.
+	 *
+	 * @param {HTMLElement} container Chart wrapper container.
+	 *
+	 * @alias getCommonUI
+	 * @memberof CIQ.UI.Multichart
+	 * @since 8.6.0
+	 */
+	utils(container) {
+		container.getChartContainers = () =>
+			Array.from(container.querySelectorAll("cq-context"))
+				.map((el) => el.querySelector(".chartContainer"))
+				.concat(container.CIQ.UI.context.stx.container);
+		container.getCharts = () =>
+			container.getChartContainers().map(({ stx }) => stx);
+	}
+}
+CIQ.UI.Multichart = Multichart;
+/**
+ * Sets the ARIA state of elements on the chart to a default state of hidden.
+ * If a list of is provided in configuration for allowing active elements, it will mark those
+ * as `aria-hidden=false` and set all siblings to `aria-hidden=true`.
+ *
+ * To bypass setting setting default states set config.ariaStates to null.
+ *
+ * @param {CIQ.UI.Context} context uiContext to operate on. Will traverse down from topNode
+ * @static
+ * @memberof CIQ.UI
+ * @since 8.7.0
+ */
+CIQ.UI.setDefaultStates = function (context) {
+	const selectorsToEnable = context.config.ariaActive;
+	// If set to null, allow everything
+	if (selectorsToEnable === null) return;
+	if (selectorsToEnable && selectorsToEnable.length) {
+		selectorsToEnable.forEach((selector) => {
+			let element = context.topNode.querySelector(selector);
+			if (element) {
+				silenceMySiblings(element);
+			}
+		});
+	} else {
+		context.topNode.setAttribute("aria-hidden", true);
+	}
+	function silenceMySiblings(me) {
+		const parent = me.parentElement;
+		if (!parent) return;
+		[...parent.children].forEach((child) => {
+			child.ariaHidden = me !== child && child.ariaHidden !== "false";
+		});
+		if (parent.ariaHidden === "false" || parent.matches("cq-context")) return;
+		silenceMySiblings(parent);
+	}
+};
+/**
  * Approximates a subset of jQuery functionality.
  *
  * This class exists to support jQuery-like methods within the existing web components.
@@ -6481,11 +7411,20 @@ class Faquery {
 			console.log("CIQ.UI.$() only accepts one input parameter.");
 		let elements = [];
 		if (input instanceof Faquery) return input;
-		if (input instanceof Node) elements.push(input);
-		else if (input instanceof NodeList) elements = Array.from(input);
-		else if (input instanceof Array) elements = input;
-		else if (typeof input === "string")
+		if (Array.isArray(input)) elements = input;
+		if (typeof input === "object") {
+			if (input.ownerDocument) elements.push(input);
+			else if (
+				input.toString() === "[object NodeList]" ||
+				input.toString() === "[object HTMLCollection]"
+			)
+				elements = Array.from(input);
+		} else if (typeof input === "string") {
+			console.log(
+				"Note: string argument for CIQ.UI.$(element) deprecated and may be removed in the future"
+			);
 			elements = elements = Array.from(document.querySelectorAll(input));
+		}
 		const length = (this.length = elements.length);
 		for (let i = 0; i < length; i++) {
 			this[i] = elements[i];
@@ -6529,7 +7468,7 @@ class Faquery {
 				el[content[0] === "<" ? "innerHTML" : "innerText"] += content;
 				return [el];
 			});
-		} else if (content instanceof HTMLElement || content instanceof Text) {
+		} else if (content.ownerDocument) {
 			const result = this._((el) => {
 				el.appendChild(content.cloneNode(true));
 				return [el];

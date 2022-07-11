@@ -178,6 +178,7 @@ cq-lookup-results
 	&.#{$DARK} {
 		background: $DARK-bg;
 		color: $DARK-text;
+		@include box-shadow (0px, 2px, 4px, rgba(255, 255, 255, .2));
 	}
 }
 
@@ -286,6 +287,11 @@ cq-lookup-results cq-item span:nth-of-type(3){
 
 cq-dialog.#{$DARK} {
 	@include box-shadow (0, 0, 10px, rgba(255, 255, 255, .2));
+
+	&[cq-drawing-context],
+	&[cq-study-context] {
+		@include box-shadow (0, 2px, 4px, rgba(255, 255, 255, .2));
+	}
 
 	html:not([ciq-last-interaction='touch']) & {
 		cq-language-name:hover,
@@ -433,7 +439,7 @@ cq-annotation .ciq-btn {/* Menu Triggers in toolbar */
 		}
 
 		cq-tooltip {
-			font-family: Roboto;
+			font-family: Roboto, sans-serif;
 			height: 15px;
 		}
 	}
@@ -493,10 +499,6 @@ cq-hu-dynamic .ciq-hu-bg { /* HU BG Image Fill */
 	.#{$DARK} & {fill:$DARK-hu-bg-dynamic;}
 }
 
-cq-hu-dynamic .ciq-hu-stroke { /* HU BG Image Border */
-	.#{$DARK} & {opacity:1;}
-}
-
 cq-hu-dynamic cq-hu-date {
 	.#{$DARK} & {color:#64adff;}
 }
@@ -550,7 +552,7 @@ cq-hu-static {
 
 .#{$DARK} stx-hu-tooltip {
 	border: 2px solid #4ea1fe;
-	background-color: rgba(42,81,208,.5);
+	background-color: rgba(42,81,208,.75);
 	color: white;
 	fill: #2a51d0;
 }
@@ -571,7 +573,7 @@ cq-study-legend {
 .mSticky {
 	.#{$DARK} & {
 		border: 2px solid #4ea1fe;
-		background-color: rgba(42,81,208,.5);
+		background-color: rgba(42,81,208,.75);
 		color: white;
 	}
 }
@@ -685,16 +687,22 @@ cq-show-range { /* Set Range Button List Container */
 
 .stx-marker.square .stx-marker-expand,
 .stx-marker.circle .stx-marker-expand {
-	.#{$DARK} & {background:rgba(255, 255, 255, 0.75);}
-}
-.stx-marker.highlight.square .stx-marker-expand,
-.stx-marker.highlight.circle .stx-marker-expand {
-	.#{$DARK} & {outline: 1px solid rgba(255, 255, 255, 0.3);}
+	.#{$DARK} & {
+		background-color: rgba(42, 81, 208, 0.75);
+		color: white;
+	}
 }
 
 
 .stx-marker.callout.highlight .stx-marker-content:after {
 	.#{$DARK} & {border-color: #fff;}
+}
+
+.stx-performance-marker.stx-marker-expand {
+	.#{$DARK} & {
+		background-color: rgba(42, 81, 208, 0.75);
+		color: white;
+	}
 }
 
 
@@ -856,6 +864,16 @@ cq-share-button {
 .#{$DARK} .ciq-data-table-container{
 	background-color: rgba($DARK-main, 0.95);
 	color: $DARK-text;
+
+	label:hover {
+		background-color: #2c4154;
+		input[type="checkbox"] {
+			background: #999999;
+			&:checked {
+				background: #2a51d0;
+			}
+		}
+	}
 
 	tr:hover{
 		background-color: $DARK-menu-highlight-bg;

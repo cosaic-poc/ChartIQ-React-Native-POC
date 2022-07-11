@@ -1,0 +1,226 @@
+$active-multichart-color: #398dff !default;
+
+cq-context,
+*[cq-context] {
+
+	/* when chart is in solo hide grid menu items and show info */
+	.ciq-solo-only {
+		display: none;
+	}
+
+	&.ciq-multi-chart.ciq-solo .ciq-grid cq-item {
+		display: none;
+
+		&.ciq-solo-only {
+			display: inherit;
+		}
+	}
+}
+
+cq-context-wrapper {
+	// highlight the active chart if not only one or is solo
+	.ciq-multi-chart &.active:not(.ciq-solo) {
+		border-color: $active-multichart-color;
+	}
+
+	// overwrite individual charts inherited header and footer
+	& .ciq-chart-area,
+	& cq-side-panel {
+		top: 0;
+		bottom: 0;
+	}
+
+	// chart solo / grid mode setting
+	position: relative;
+	border: solid transparent 2px;
+	flex-grow: 1;
+
+	transition: min-width 250ms, min-height 250ms, opacity 450ms;
+	transition-timing-function: ease-in-out;
+	max-height: 100%;
+	max-width: 100%;
+	min-height: 0;
+	min-width: 0;
+	opacity: 1;
+
+
+	&.ciq-solo {
+		min-width: 100%;
+		min-height: 100%;
+
+		.ciq-solo-toggle {
+			background-image: url(img/stx-sprite-panels.svg);
+			background-position: -602px -32px;
+		}
+	}
+
+	cq-close {
+		bottom: 0;
+		right: 0;
+		left: auto;
+		top: auto;
+		z-index: 1;
+		display: none;
+	}
+	cq-close:hover:after {
+		opacity: 1;
+	}
+
+	&.ciq-solo-minimized {
+		opacity: 0.1;
+		min-width: 0;
+		min-height: 0;
+		border-width: 0;
+
+		.ciq-multi-chart-controls  {
+			display: none; // hide when minimized
+		}
+	}
+
+	.ciq-multi-chart &:not(.ciq-solo-minimized) cq-close {
+		display: inherit; // display when not minimized or last
+	}
+}
+
+.ciq-multi-chart-controls {
+	position: absolute;
+	display: inline-block;
+	background: #ffffffcc;
+
+	border-radius: 4px;
+	padding: 3px 6px;
+	z-index: 1;
+	bottom: 2px;
+	right: 4px;
+	left: auto;
+	top: auto;
+	width: 92px;
+
+	> span:first-child,
+	> span:nth-child(2) {
+		color: black;
+		margin-right: 10px;
+		cursor: pointer;
+		transition: opacity 350ms;
+		font-weight: bold;
+		opacity: .5;
+
+		&:hover {
+			opacity: 1;
+		}
+	}
+}
+
+.ciq-solo-toggle {
+	cursor: pointer;
+	background-image: url(img/stx-sprite-panels.svg);
+	background-position: -556px -32px;
+	width: 16px;
+	height: 14px;
+	opacity: 0.5;
+	display: none;
+	vertical-align: middle;
+
+	&:hover {
+		opacity: 1;
+	}
+
+	.ciq-multi-chart & {
+		display: inline-block;
+	}
+}
+
+.ciq-multi-chart {
+	.stx-full-screen {
+		display: none; // hide full screen in grid mode
+	}
+
+	// hide study leged and comparison when there is not enough vertical space
+	.break-height-sm {
+		cq-study-legend[cq-hovershow],
+		cq-comparison[cq-show],
+		.ciq-comparison[cq-show] {
+			display:none;
+		}
+	}
+}
+
+.ciq-multi-chart-container-wrapper {
+	position: absolute;
+	top: 45px;
+	bottom: 45px;
+	left: 2px;
+	right: -1px;
+
+	.full-screen & {
+		top: 0;
+		bottom: 0;
+	}
+}
+
+.ciq-multi-chart-container {
+	position: relative;
+	width: calc(100% - 2px);
+	height: 100%;
+	display: flex;
+}
+
+.ciq-chart-col-1 {
+	min-width: calc(100% - 8px);
+}
+
+.ciq-chart-col-2 {
+	min-width: calc(100% / 2 - 8px);
+}
+
+.ciq-chart-col-3 {
+	min-width: calc(100% / 3 - 8px);
+}
+
+.ciq-chart-col-4 {
+	min-width: calc(100% / 4 - 8px);
+}
+
+.ciq-chart-col-5 {
+	min-width: calc(100% / 5 - 8px);
+}
+
+// reverse places wider charts on top
+.ciq-multi-chart-reverse {
+	flex-flow: wrap-reverse row-reverse;
+}
+
+// grid size picker
+.ciq-columns {
+	> span {
+		display: inline-block;
+		line-height: 2;
+		vertical-align: top;
+		&::after {
+			content: ":";
+		}
+	}
+
+	cq-grid-size-picker {
+		display: inline-block;
+		margin-left: 6px;
+		p {
+			display: none;
+		}
+	}
+
+	.#{$DARK} & {
+		--grid-size-border-color:  #2c4354;
+		--grid-size-background-color: #151f28;
+		--grid-size-border-hl-color: #398dff;
+		--grid-size-background-hl-color: #2c4354;
+	}
+}
+
+.#{$DARK} .ciq-solo-toggle {background-position: -556px -56px;}
+.#{$DARK} cq-context-wrapper.ciq-solo .ciq-solo-toggle {background-position: -602px -56px;}
+.#{$DARK} .ciq-multi-chart-controls {background: #1c2a35c7;}
+.#{$DARK} .ciq-multi-chart-controls > span:first-child,
+.#{$DARK} .ciq-multi-chart-controls > span:nth-child(2) {
+	color: white;
+}

@@ -1,10 +1,10 @@
 /**
- *	8.4.0
- *	Generation date: 2021-11-29T15:42:32.590Z
+ *	8.7.0
+ *	Generation date: 2022-06-10T18:37:49.036Z
  *	Client name: sonyl test
- *	Package Type: Technical Analysis
+ *	Package Type: Technical Analysis e98f22c
  *	License type: trial
- *	Expiration date: "2022/01/31"
+ *	Expiration date: "2022/12/31"
  */
 
 /***********************************************************
@@ -21,7 +21,7 @@
 
 import {CIQ} from "../js/chartiq.js";
 	// Available resources:
-	// markerSample
+	// markerFeed
 	// scrollStyle
 	// quoteFeed
 	// forecastQuoteFeed
@@ -61,8 +61,10 @@ import {CIQ} from "../js/chartiq.js";
 				loadError(error, uiContext) {
 				}
 			},
-			// save and restore layout, preferences and drawings.
-			restore: true,
+			// configure save and restore layout, preferences and drawings.
+			// type is boolean or object
+			// setting `restore: { symbol: false }` will restore everything except symbol
+			restore: false,
 			// language: "de", // Optionally set a language for the UI, after it has been initialized, and translate.
 			// default lookup driver is defined in examples/feeds/symbolLookupChartIQ.js, it needs to be loaded to be available
 			lookupDriver: CIQ.ChartEngine.Driver.Lookup.ChartIQ,
@@ -113,9 +115,9 @@ import {CIQ} from "../js/chartiq.js";
 					{ label: "Pan to start of loaded data", action: "end", commands: ["End"] },
 					{ label: "Delete a highlighted item or the active drawing", action: "delete", commands: ["Backspace", "Delete", "Del"] },
 					{ label: "Close an open menu / dialog box or undo the active drawing", action: "escape", commands: ["Escape", "Esc"] },
-					{ label: "Symbol Lookup", action: "symbolLookup", commands: ["Shift+Alt+KeyL"] },
+					{ label: "Symbol Lookup", action: "symbolLookup", commands: ["Shift+Alt+KeyL"], ariaLabel: "Opens main symbol lookup for chart" },
 					// AddOns and Plugins
-					{ label: "Open table view", action: "tableView", commands: ["Alt+KeyK"], extension: "tableView" }, // tableView is modal view, toggling off requires use of Escape
+					{ label: "Table view", action: "tableView", commands: ["Alt+KeyK"], extension: "tableView", ariaLabel: "Opens chart data in table format" }, // tableView is modal view, toggling off requires use of Escape
 					{ label: "Range Slider", action: "rangeSlider", commands: ["Shift+Alt+KeyR"], extension: "rangeSlider" },
 					{ label: "Extended Hours", action: "extendedHours", commands: ["Shift+Alt+KeyX"], extension: "extendedHours" },
 					{ label: "Keyboard Shortcuts", action: "shortcuts", commands: ["Shift+Alt+Slash", "Shift+Alt+?"], extension: "shortcuts" },
@@ -204,7 +206,7 @@ import {CIQ} from "../js/chartiq.js";
 			menuPeriodicity: [
 				{ type: "item", label: "1 D", cmd: "Layout.setPeriodicity(1,1,'day')", value: { period: 1, interval: 1, timeUnit: 'day'} },
 				{ type: "item", label: "1 W", cmd: "Layout.setPeriodicity(1,1,'week')", value: { period: 1, interval: 1, timeUnit: 'week' } },
-				{ type: "item", label: "1 Mo", cmd: "Layout.setPeriodicity(1,1,'month')", value: { period: 1, interval: 1, 'timeUnit': 'month' } },
+				{ type: "item", label: "1 Mo", cmd: "Layout.setPeriodicity(1,1,'month')", value: { period: 1, interval: 1, timeUnit: 'month' } },
 				{ type: "separator", },
 				{ type: "item", label: "1 Min", cmd: "Layout.setPeriodicity(1,1,'minute')", value: { period: 1, interval: 1, timeUnit: 'minute' } },
 				{ type: "item", label: "5 Min", cmd: "Layout.setPeriodicity(1,5,'minute')", value: { period: 1, interval: 5, timeUnit: 'minute' } },
@@ -220,29 +222,30 @@ import {CIQ} from "../js/chartiq.js";
 				{ type: "separator", },
 				{ type: "item", label: "250 MSec", cmd: "Layout.setPeriodicity(1,250,'millisecond')", value: { period: 1, interval: 250, timeUnit: 'millisecond' } }
 			],
-			menuChartStyle: [
-				{ type: "radio", label: "Candle", cmd: "Layout.ChartType('candle')" },
-				{ type: "radio", label: "Bar", cmd: "Layout.ChartType('bar')" },
-				{ type: "radio", label: "Colored Bar", cmd: "Layout.ChartType('colored_bar')" },
-				{ type: "radio", label: "Line", cmd: "Layout.ChartType('line')" },
-				{ type: "radio", label: "Vertex Line", cmd: "Layout.ChartType('vertex_line')" },
-				{ type: "radio", label: "Step", cmd: "Layout.ChartType('step')" },
-				{ type: "radio", label: "Mountain", cmd: "Layout.ChartType('mountain')" },
-				{ type: "radio", label: "Baseline", cmd: "Layout.ChartType('baseline_delta')" },
-				{ type: "radio", label: "Hollow Candle", cmd: "Layout.ChartType('hollow_candle')" },
-				{ type: "radio", label: "Volume Candle", cmd: "Layout.ChartType('volume_candle')" },
-				{ type: "radio", label: "Colored HLC Bar", cmd: "Layout.ChartType('colored_hlc')" },
-				{ type: "radio", label: "Scatterplot", cmd: "Layout.ChartType('scatterplot')" },
-				{ type: "radio", label: "Histogram", cmd: "Layout.ChartType('histogram')" }
+			displayStyleIcons: true, // use style icons in the chart style menu
+			menuChartStyle: [ // if displayStyleIcons is true and a suitable icon class for the iconCls parameter is not available, "generic" class can be applied
+				{ type: "radio", label: "Candle", cmd: "Layout.ChartType()", iconCls: "candle", value: "candle"},
+				{ type: "radio", label: "Bar", cmd: "Layout.ChartType()", iconCls: "bar", value: "bar" },
+				{ type: "radio", label: "Colored Bar", cmd: "Layout.ChartType()", iconCls: "colored-bar", value: "colored_bar"},
+				{ type: "radio", label: "Line", cmd: "Layout.ChartType()", iconCls: "line", value: "line" },
+				{ type: "radio", label: "Vertex Line", cmd: "Layout.ChartType()", iconCls: "vertex-line", value: "vertex_line" },
+				{ type: "radio", label: "Step", cmd: "Layout.ChartType()", iconCls: "step", value: "step" },
+				{ type: "radio", label: "Mountain", cmd: "Layout.ChartType()", iconCls: "mountain", value: "mountain" },
+				{ type: "radio", label: "Baseline", cmd: "Layout.ChartType()", iconCls: "baseline-delta", value: "baseline_delta" },
+				{ type: "radio", label: "Hollow Candle", cmd: "Layout.ChartType()", iconCls: "hollow-candle", value: "hollow_candle" },
+				{ type: "radio", label: "Volume Candle", cmd: "Layout.ChartType()", iconCls: "volume-candle", value: "volume_candle" },
+				{ type: "radio", label: "Colored HLC Bar", cmd: "Layout.ChartType()", iconCls: "colored-hlc", value: "colored_hlc" },
+				{ type: "radio", label: "Scatterplot", cmd: "Layout.ChartType()", iconCls: "scatterplot", value: "scatterplot" },
+				{ type: "radio", label: "Histogram", cmd: "Layout.ChartType()", iconCls: "histogram", value: "histogram" }
 			],
 			menuChartAggregates: [
-				{ type: "separator" },
-				{ type: "radio", label: "Heikin Ashi", cmd: "Layout.ChartType('heikinashi')" },
-				{ type: "radioOptions", label: "Kagi", cmd: "Layout.ChartType('kagi')", options: "Layout.showAggregationEdit('kagi')" },
-				{ type: "radioOptions", label: "Line Break", cmd: "Layout.ChartType('linebreak')", options: "Layout.showAggregationEdit('linebreak')" },
-				{ type: "radioOptions", label: "Renko", cmd: "Layout.ChartType('renko')", options: "Layout.showAggregationEdit('renko')" },
-				{ type: "radioOptions", label: "Range Bars", cmd: "Layout.ChartType('rangebars')", options: "Layout.showAggregationEdit('rangebars')" },
-				{ type: "radioOptions", label: "Point & Figure", cmd: "Layout.ChartType('pandf')", options: "Layout.showAggregationEdit('pandf')" },
+				{ type: "separator"},
+				{ type: "radio", label: "Heikin Ashi", cmd: "Layout.ChartType()", iconCls: "heikinashi", value: "heikinashi" },
+				{ type: "radio", label: "Kagi", cmd: "Layout.ChartType()", options: "Layout.showAggregationEdit('kagi')", iconCls: "kagi", value: "kagi" },
+				{ type: "radio", label: "Line Break", cmd: "Layout.ChartType()", options: "Layout.showAggregationEdit('linebreak')", iconCls: "linebreak", value: "linebreak" },
+				{ type: "radio", label: "Renko", cmd: "Layout.ChartType()", options: "Layout.showAggregationEdit('renko')", iconCls: "renko", value: "renko" },
+				{ type: "radio", label: "Range Bars", cmd: "Layout.ChartType()", options: "Layout.showAggregationEdit('rangebars')", iconCls: "rangebars", value: "rangebars" },
+				{ type: "radio", label: "Point & Figure", cmd: "Layout.ChartType()", options: "Layout.showAggregationEdit('pandf')", iconCls: "pandf", value: "pandf" },
 			],
 			menuChartPreferences: [
 				{ type: "checkbox", label: "Range Selector", cmd: "Layout.RangeSlider()", cls: "rangeslider-ui" },
@@ -335,25 +338,26 @@ import {CIQ} from "../js/chartiq.js";
 					<cq-separator></cq-separator>`,
 				item: ({ label, cmd, cls }) => `
 					<cq-item ${cls ? `class="${cls}"` : "" } stxtap="${cmd}">${label}</cq-item>`,
-				radio: ({ label, cmd, cls }) => `
-					<cq-item
-						${cls ? `class="${cls}"` : ""}
-						stxsetget="${cmd}">${label}<span class="ciq-radio"><span></span></span>
+				radio: ({ label, cmd, options, cls, iconCls, value }, { displayStyleIcons }) => `
+					<cq-item class="${cls || ''}${iconCls && displayStyleIcons ? ' ciq-menu-icon' : ''}"
+						stxsetget="${cmd}"
+						${value ? ` data-value=${JSON.stringify(value)}` : ""}>
+						${iconCls && displayStyleIcons ? `<span ciq-menu-icon class="${'ciq-icon-' + iconCls}"></span>` : "" }
+						${options ? `<span class="ciq-edit" stxtap="${options}" keyboard-selectable-child="true"></span>` : "" }
+						<div><span ciq-label>${label}</span><span class="ciq-radio"><span></span></span></div>
 					</cq-item>`,
+				radioOptions: (...args) => { // alias for deprecated radioOption
+					return config.menuRendering.radio.apply(config, args);
+				},
 				checkbox: ({ label, cmd, cls }) => `
 					<cq-item
 						${cls ? `class="${cls}"` : ""}
-						stxsetget="${cmd}">${label}<span class="ciq-checkbox ciq-active"><span></span></span>
-					</cq-item>`,
-				radioOptions: ({ label, cmd, options, cls }) => `
-					<cq-item ${cls ? `class="${cls}"` : ""} stxsetget="${cmd}">
-						<span class="ciq-edit" stxtap="${options}" keyboard-selectable-child="true"></span>
-						<div>${label}<span class="ciq-radio"><span></span></span></div>
+						stxsetget="${cmd}">${label}<span class="ciq-switch ciq-active"><span></span></span>
 					</cq-item>`,
 				checkboxOptions: ({ label, cmd, options, cls }) => `
 					<cq-item ${cls ? `class="${cls}"` : ""}>
 						<span class="ciq-edit" stxtap="${options}"></span>
-						<div stxsetget="${cmd}">${label}<span class="ciq-checkbox ciq-active"><span></span></span></div>
+						<div stxsetget="${cmd}">${label}<span class="ciq-switch ciq-active"><span></span></span></div>
 					</cq-item>`,
 				doubleslider: ({ label, cmd, attrs, cls }) => `
 					<cq-item
@@ -381,7 +385,7 @@ import {CIQ} from "../js/chartiq.js";
 				if (!menu) return;
 				if (sort === true) sort = (a, b) => (a.label > b.label ? 1 : -1);
 				if (typeof sort === "function") menu = menu.sort(sort);
-				return this[name].map((options) => this.menuRendering[options.type](options));
+				return this[name].map((options) => this.menuRendering[options.type || "item"](options, this));
 			},
 			addOns: {
 				// Floating tooltip on mousehover
@@ -473,10 +477,11 @@ import {CIQ} from "../js/chartiq.js";
 					loadSample: true,
 					// account: undefined,  // Account instance object or a constructor
 					/**
-					 * By default if a constructor is provided in account the first created instance is shared with all tfc instances
+					 * By default if a constructor is provided in account the first created instance is shared with all TFC instances
 					 * set following to true to create unique instances
 					 */
 					// allowUniqueAccountConstruction: true
+					startCompact: true // opens plugin in compact mode
 				},
 				crossSection: {
 					pointFreshnessTimeout: 1, // pointFreshnessTimeout 1 min for demo purposes
@@ -487,10 +492,10 @@ import {CIQ} from "../js/chartiq.js";
 					},
 					postInstall({ uiContext, extension }) {
 						const { stx: { crossSection } } = uiContext;
-						new (CIQ.getFn("UI.CurveEdit"))(null, uiContext, this);
-						new (CIQ.getFn("CrossSection.HUD"))(null, uiContext);
+						CIQ.getFn("UI.CurveEdit")(null, uiContext, this);
+						CIQ.getFn("CrossSection.HUD")(null, uiContext);
 						if (this.timelineDateSelector) {
-							new (CIQ.getFn("CrossSection.TimelineDateSelector"))(
+							CIQ.getFn("CrossSection.TimelineDateSelector")(
 								Object.assign({ crossSection }, this.timelineDateSelector)
 							);
 						}
@@ -504,6 +509,10 @@ import {CIQ} from "../js/chartiq.js";
 				visualEarnings: {
 					menuContainer: ".ciq-dropdowns"
 				},
+				signalIQ: {
+					panelHeight: 150,
+					displayCondition: false
+				}
 			},
 			// path of component communication channels
 			// layout properties are persisted between reloads
@@ -542,62 +551,99 @@ import {CIQ} from "../js/chartiq.js";
 						"cq-study-panel": "alias"
 					}
 				},
+				signaliq: { tag: "cq-signaliq-dialog" },
 				fibSettings: { tag: "cq-fib-settings-dialog" },
 				volumeprofileSettings: { tag: "cq-volumeprofile-settings-dialog" },
 				share: { tag: "cq-share-dialog" }
 			},
 			// Event Markers implementation
-			eventMarkersImplementation: resources.markerSample,
+			eventMarkersImplementation: resources.markerFeed,
 			// Scrollbar styling implementation for cq-scroll component
 			scrollbarStyling: {
 				refresh(component, options = { suppressScrollX: true }) {
 					if (typeof resources.scrollStyle !== "function") return;
 					if (!component.__ps) {
 						component.__ps = new resources.scrollStyle(component, options);
+						component.__ps.scrollbarX.setAttribute('tabindex', -1);
+						component.__ps.scrollbarY.setAttribute('tabindex', -1);
 					}
 					component.__ps.update(component);
 				}
 			},
+			// Copy symbol from the reference chart when a new chart is added
+			multiChartCopySymbol: true,
 			// Class to access and store data about the chart eg preferences, chart layout, and drawings for chart.
 			// If you were using this property previously it stored information for themes which has now been moved to config.themes.nameValueStore
 			nameValueStore: resources.nameValueStore,
-			// optional function to call when web components have initialized
+			// Optional function to call when web components have initialized
 			onWebComponentsReady: () => {},
-			// callback to execute when chart is loaded for first time
+			// Callback to execute prior layout import or instrument loading after addOns and plugins have been initialized.
+			// To set instrument for initial load, use this configuration's initialSymbol property and set the restore property to false or restore.symbol to false
+			onEngineReady: (stx) => {},
+			// Callback to execute when chart is loaded for first time
 			onChartReady: (stx) => {},
-			// function to create a new chart, returns a CIQ.ChartEngine instance
+			// In multichart setting expand active chart by hiding all others for following settings
+			soloActive: {
+				onDraw: {
+					shouldSolo(stx) { // should chart solo when drawing is enabled for chart with stx parameter
+						// Uncomment following if up to medium breakpoint in chart solo on drawing is not required
+						// const { width, height } = stx.container.getBoundingClientRect();
+						// return width < 584 || height < 350;
+						return true;
+					},
+					// notification message
+					notify: {
+						message: "Click on the draw toggle again to close drawing tools and return to grid view",
+					}
+				},
+				onTFC: {
+					notify: {
+						message: "Click on the TFC toggle again to close TFC plugin and return to grid view",
+					}
+				}
+			},
+			// Setting to load initial symbol from url
+			//
+			// If symbolParam defined query string parameter is provided in URL then this configs:
+			// - "initialSymbol" property will be updated based on query string
+			// - "restore" property will be updated to restore.symbol = false
+			// Adjust or delete from config if this default behavior is not desired
+			useQueryString: {
+				symbolObject: {
+					symbol: "symbol",
+					name: "name",
+					exchDisp: "exchDisp"
+				},
+			},
+			updateFromQueryString() {
+				if (!this.useQueryString) return;
+				const queryObj = CIQ.qs();
+				const symbolObject = Object.entries(this.useQueryString.symbolObject)
+					.reduce((acc, [key, val]) => {
+						const value = queryObj[val];
+						if (value !== undefined) acc[key] = value;
+						return acc;
+					}, {});
+				if (symbolObject.symbol) {
+					this.initialSymbol = symbolObject;
+					if (this.restore) { // do not restore symbol use one set in initialSymbol
+						this.restore = { ...this.restore, symbol: false };
+					}
+				}
+			},
+			// Set ariaStates to active instead of hidden
+			ariaActive: [
+				"cq-chart-instructions",
+				"cq-toggle.tableview-ui",
+				"cq-lookup",
+				".ciq-data-table-container"
+			],
+			// Function to create a new chart; returns a CIQ.ChartEngine instance
 			createChart: function(container) {
-				let config = this;
+				this.updateFromQueryString();
+				const config = this;
 				if(CIQ.UI) return (new CIQ.UI.Chart()).createChartAndUI({ container, config }).stx;
 				return CIQ.ChartEngine.create({ container, config });
-			},
-			// Function to create multiple charts with shared footer and header
-			// For use with the sample-template-advanced-multi.html template
-			createCharts: function({ container, charts }) {
-				if (!container) container = document.querySelector("cq-context");
-				const wrappers = Array.from(container.querySelectorAll("cq-context-wrapper"));
-				if (!wrappers.length) {
-					throw "cq-context-wrapper element is required for multichart template setup";
-				}
-				const wrapperContent = wrappers[0].outerHTML;
-				// replicate template for additional charts that
-				charts.slice(0, charts.length - wrappers.length).forEach(() => {
-					wrappers[0].parentElement.insertAdjacentHTML("beforeend", wrapperContent);
-				});
-				const contexts = container.querySelectorAll("cq-context");
-				// reset config root
-				this.root = null;
-				const stxArr = charts.map(({ symbol, chartId }, i) => {
-					// clone parent configuration for each chart
-					const chartConfig = CIQ.clone(this);
-					chartConfig.initialSymbol = typeof symbol !== undefined ? symbol : chartConfig.initialSymbol;
-					chartConfig.chartId = chartId || (this.chartId || "") + "_c" + i;
-					chartConfig.root = contexts[i];
-					const stx = chartConfig.createChart(contexts[i]);
-					return stx;
-				});
-				this.createChart(container);
-				return stxArr;
 			}
 		};
 		if(!resources.quoteFeed) config.quoteFeeds.length=0;

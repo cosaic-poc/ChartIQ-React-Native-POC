@@ -117,6 +117,7 @@ To use this template, move or copy it to the root folder of your library.
       import './mobile/js/nativeSdkAccessibility.js';
       import marker from './examples/markers/markersSample.js';
 
+
       // Create and customize default configuration
 
       // This variable triggers display of the simulated data disclaimer necessary when
@@ -206,6 +207,7 @@ To use this template, move or copy it to the root folder of your library.
       });
 
       // Create the chart...
+      
       let stxx = config.createChart();
 
       // set some settings for the mobile template
@@ -243,7 +245,8 @@ To use this template, move or copy it to the root folder of your library.
         multiplier: 1,
         base: 'day',
       });
-      stxx.loadChart('AAPL');
+
+      stxx.loadChart('MSFT');
       stxx.addEventListener('newChart', () => {
         window.ReactNativeWebView.postMessage(
           JSON.stringify({
