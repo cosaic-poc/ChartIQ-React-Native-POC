@@ -188,7 +188,7 @@ const App = () => {
         <WebView
           ref={(r) => (chartWebview = r)}
           source={{
-            uri: 'http://127.0.0.1:5500/web/sample-template-native-sdk.html',
+            uri: 'http://127.0.0.1:5500/web/mobile-example.html',
           }}
           containerStyle={{flex: 0, height: 260}}
           onMessage={handleMobileBridgeEvent}

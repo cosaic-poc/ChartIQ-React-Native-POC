@@ -147,7 +147,8 @@ CIQ.MobileBridge.determineOs = function () {
 		this.isAndroid = true;
 	} else {
 		// Logging works automatically in Android native apps, so no proxyLogger necessary.
-		this.proxyLogger();
+		// alert(webkit.messageHandlers.logHandler)
+		// this.proxyLogger();
 	}
 };
 /**
